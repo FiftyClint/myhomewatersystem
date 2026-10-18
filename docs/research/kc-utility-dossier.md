@@ -1,0 +1,135 @@
+# Kansas City Metro Utility Dossier
+
+> **Research draft, not reviewed. Do not publish claims from this file without reviewer sign-off.**
+
+- Prepared: 2026-10-18 (all sources accessed 2026-10-18)
+- Method: read-only web research. Every claim below comes from a document that was actually downloaded or opened. No one was contacted.
+- Matching rows are in `docs/research/evidence.csv` (review_status = `unreviewed`).
+- Rules followed: no estimates. Units are given as published. The only conversion (WO-U-07) shows its formula and is marked DERIVED. No figure from one utility is applied to another utility's area.
+- All of these utilities report that they meet federal and state drinking-water standards. Hardness is an aesthetic/scale issue, not a health finding. Nothing here should be used to say the water is unsafe.
+
+## Hardness at a glance (as published)
+
+| Utility | Published hardness | Units | Period | Claim |
+|---|---|---|---|---|
+| KC Water (KCMO) | Not in latest (2025) CCR for KC's own supply. Older/other figures: 140 (single sample, 2020); 136 max, range 84.6-136 (2021); "average 100 (5-6 gpg)" (undated web page) | mg/L / ppm | various, conflicting | KC-U-04..07 |
+| WaterOne (JoCo) | Total 135 avg, range 110-157 | ppm | CY2025 | WO-U-05 |
+| BPU (KCK) | Total as CaCO3 280 ppm = 16.4 grain/gallon (both published) | ppm and gpg | CY2025 | BPU-U-04/05 |
+| Independence | Total 123 (single sample) | mg/L as CaCO3 | sampled 5/6/2024, in 2025 report | IND-U-05 |
+| Lee's Summit | Not published for its own blended supply | n/a | n/a | LS-U-03 |
+| Olathe (city system) | Not obtained (site blocked automated access) | n/a | n/a | none |
+
+---
+
+## 1. KC Water (City of Kansas City, Missouri)
+
+- **Service area:** about 172,000 customers inside and outside the City, plus 34 active wholesale customers (KC-U-01). Source: https://www.kcwater.us/about-us/water/ (undated). The opened pages do not give a city-by-city list of the wholesale customers.
+- **Source water:** Missouri River surface water (~80%) and a Missouri River aquifer well field (~20%) (KC-U-02). The 2025 CCR lists "MISSOURI RIVER" (surface) and "WELL # 1-14" (ground). The CCR also lists purchased water: Kansas City PWS buys from Jackson County PWSD 2, which buys from Independence PWS (KC-U-09). So water quality may differ within the KC Water system.
+- **Disinfectant:** The 2022 Water Quality Report says chlorine is added for disinfection, after lime softening (KC-U-08). None of the sources opened say whether the distribution residual is free chlorine or chloramine. **Unknown. Ask KC Water.**
+- **Hardness:** **The latest CCR does not publish it for KC's own supply.** The 2025 CCR's only hardness row (123 mg/L) is attributed to Independence PWS as a reseller row (KC-U-04). It must not be used as KC Water hardness. Other KC Water figures conflict:
+  - 2024 CCR: HARDNESS, CARBONATE 140 mg/L, single sample 5/12/2020 (KC-U-05)
+  - 2022 Water Quality Report (2021 data): Total Hardness highest 136 ppm, range 84.6-136 ppm (KC-U-06)
+  - Web page (undated): "average hardness ... 100 mg/L (5-6 grains/gallon)" (KC-U-07)
+  - **Ask KC Water** for a current total-hardness average and range, by pressure zone or source if available.
+- **Latest CCR:** 2025 Annual Water Quality Report, PWS MO1010415, page-dated June 18, 2026: http://www.kcwater.us/wp-content/uploads/2026/06/CCR-report-July-1-2026.pdf. It is identical to https://dnrservices.mo.gov/ccr/MO1010415.pdf (KC-U-03). The report index is http://www.kcwater.us/about-us/reports/.
+- **Note:** The 2025 CCR lists three Lead & Copper Rule violations of the monitoring/reporting and consumer-notice types. These are not MCL exceedances (KC-U-10). This is recorded for completeness only. Do not use it in marketing.
+- **Anomaly:** The 2025 CCR gives the contact phone as 563-777-0223. That is an Iowa area code, and KC Water's website lists 816.513.1313. Verify before citing any contact number.
+
+## 2. WaterOne (Water District No. 1 of Johnson County, KS)
+
+- **Service area:** 17 cities (WO-U-01): De Soto (partial), Fairway, Lake Quivira, Leawood, Lenexa, Merriam, Mission, Mission Hills, Mission Woods, Olathe (partial), Overland Park, Prairie Village, Roeland Park, Shawnee, Spring Hill, Westwood and Westwood Hills. It also serves unincorporated Johnson County, and its connections reach into parts of Wyandotte and Miami counties. It does not serve customers in Bonner Springs or Gardner (WO-U-02). Source: https://www.waterone.org/344/WaterOne-Service-Area
+- **Source water:** Kansas and Missouri Rivers, the Wolcott Collector Well (next to the Missouri River) and wells south of the Kansas River. 2025 volumes are given in WO-U-03.
+- **Disinfectant:** Chloramines in the distribution system, with a required minimum residual of 1.0 ppm (WO-U-08). The treatment plant uses lime and soda ash softening (WO-U-09).
+- **Hardness:** Total Hardness averaged 135 ppm (range 110-157 ppm) in calendar year 2025 (WO-U-05). Calcium hardness averaged 79 ppm (range 64-120) (WO-U-06). WaterOne publishes no gpg figure. **DERIVED** using WaterOne's own stated formula (ppm / 17.1): 135 / 17.1 = 7.9 gpg, range 6.4-9.2 gpg (WO-U-07). These are system-wide averages, not per-address values.
+- **Latest CCR:** "Water Quality Report 2026" (data Jan 1 - Dec 31, 2025): https://www.waterone.org/ArchiveCenter/ViewFile/Item/177. It is linked as "most recent" from https://www.waterone.org/339/Water-Quality-Reports (WO-U-04).
+
+## 3. BPU (Kansas City Board of Public Utilities, Kansas City, KS)
+
+- **Service area:** more than 51,000 customers across 152 sq mi. This covers Kansas City KS, Edwardsville, parts of Bonner Springs, southern Leavenworth County and part of northern Johnson County (BPU-U-01).
+- **Source water:** Missouri River watershed, drawn from below the river through collector wells and treated at the Nearman Water Treatment Plant (BPU-U-02).
+- **Disinfectant:** Chloramines in the distribution system: average 2.492 ppm, range 1.10-3.80 ppm, 2025 (BPU-U-07). Chlorine dioxide is also reported at the plant (BPU-U-08).
+- **Hardness:** Total Hardness as CaCO3 was **280 ppm**, which BPU also publishes as **16.4 grain/gallon**. Treatment plant, Jan-Dec 2025 (BPU-U-04/05). The prior year (2024) was 290 ppm / 17.0 gpg (BPU-U-06).
+- **Caveat:** BPU's Argentine system received emergency supply from WaterOne several times in 2025 (BPU-U-09).
+- **Latest CCR:** 2026 Water Quality Report (2025 data): https://bpu.com/wp-content/uploads/2026/08/2026-Water-Quality-Report-FINAL-newformat.pdf (BPU-U-03). It is listed at https://bpu.com/help-center/reports/. Older bpu.com/Portals/... report URLs now return 404.
+
+## 4. Independence, MO Water Department
+
+- **Service area:** about 250,000 people, including Independence residents and 12 wholesale customers (IND-U-01). The wholesale customers are not named in the opened sources. Two of them are documented through other utilities' CCRs: Jackson County PWSD 2 (which sells on to Kansas City PWS) and Lee's Summit.
+- **Source water:** wells in the Missouri River alluvial aquifer, treated at the Courtney Bend Water Treatment Plant (IND-U-02). The well count is inconsistent: 44 in the intro of the city's 2025 report, 42 elsewhere.
+- **Treatment / disinfectant:** The well water is softened and disinfected (IND-U-03). Chloramine averaged 1.89 ppm (range 1.5-2.64 ppm) in 2025 (IND-U-06).
+- **Hardness:** Total hardness was **123 mg/L as calcium carbonate**, a single sample collected 5/6/2024 and reported in the 2025 CCR (IND-U-05). The DNR version labels the row "HARDNESS, CARBONATE". No gpg figure is published.
+- **Latest CCR:** 2025 Annual Water Quality Report, PWS MO1010399, page-dated March 27, 2026: https://dnrservices.mo.gov/ccr/MO1010399.pdf. The city version is at https://www.independencemo.gov/sites/default/files/2026-06/2025%20CCR_Draft%20Final.pdf. Its filename says "Draft Final" (IND-U-04).
+
+## 5. Lee's Summit, MO Water Utilities
+
+- **Service area:** Lee's Summit PWS (MO1010459), equivalent residential population 99,400 (LS-U-02). The opened sources give no boundary description beyond the utility name.
+- **Source water:** purchased from Independence (up to 7.5 MGD, from wells) and Kansas City (up to 25 MGD) (LS-U-01).
+- **Disinfectant:** not documented in the opened sources. **Ask Lee's Summit.**
+- **Hardness:** **not published for Lee's Summit's own blended supply.** The report repeats only Independence's supplier value (123, 2024), and the Kansas City column is blank (LS-U-03). Do not apply 123 to Lee's Summit addresses. **Ask Lee's Summit**, including how the supply mix varies by area.
+- **Latest CCR:** https://dnrservices.mo.gov/ccr/MO1010459.pdf (2025 calendar year). The city's version is the "2026 Water Quality Report" at https://cityofls.net/water-utilities/customer-education/water-system/water-quality/2026-water-quality-report
+
+## 6. Olathe, KS (city water system)
+
+- **Not covered.** Every olatheks.org / olatheks.gov page returned HTTP 403 to both curl and WebFetch on 2026-10-18. The city's bill-pay site links to "Read the latest Olathe Annual Water Quality Report" at https://www.olatheks.org/government/utilities/water/water-quality, but that page could not be opened.
+- The only supported fact: WaterOne serves **part** of Olathe (WO-U-01). WaterOne figures must not be applied to Olathe-city-system addresses.
+- Hardness: **not obtained. Ask the City of Olathe**, or open the report manually in a browser.
+
+---
+
+## Claims table
+
+| claim_id | claim | source URL | publisher | period | excerpt |
+|---|---|---|---|---|---|
+| KC-U-01 | KC Water provides treated water to approximately 172,000 customers inside and outside Kansas City, MO, plus 34 active wholesale customers. | https://www.kcwater.us/about-us/water/ | KC Water (City of Kansas City, Missouri) | undated web page | "Treated water service is provided to approximately 172,000 customers inside and outside the City and 34 active wholesale customers." |
+| KC-U-02 | KC Water raw water is about 80% Missouri River surface water and about 20% groundwater from a Missouri River aquifer well field. | https://www.kcwater.us/about-us/water/ | KC Water (City of Kansas City, Missouri) | undated web page | "Surface water comes from the Missouri River and accounts for approximately 80% of the raw water." |
+| KC-U-03 | Latest CCR found: Kansas City PWS (MO1010415) 2025 Annual Water Quality Report, page-dated June 18, 2026; identical file also hosted by Missouri DNR at dnrservices.mo.gov/ccr/MO1010415.pdf. | http://www.kcwater.us/wp-content/uploads/2026/06/CCR-report-July-1-2026.pdf | KC Water (City of Kansas City, Missouri) | calendar year 2025 | "KANSAS CITY PWS Public Water System ID Number: MO1010415 2025 Annual Water Quality Report (Consumer Confidence Report)" |
+| KC-U-04 | The 2025 KC Water CCR does not list a hardness value for KC Water's own supply; its only hardness row is a reseller row attributed to Independence PWS (water KC buys via Jackson County PWSD 2). Do not use that 123 mg/L as KC Water hardness. | http://www.kcwater.us/wp-content/uploads/2026/06/CCR-report-July-1-2026.pdf | KC Water (City of Kansas City, Missouri) | calendar year 2025 (row sampled 5/6/2024) | "HARDNESS, CARBONATE 5/6/2024 INDEPENDENCE PWS 123 123 MG/L" |
+| KC-U-05 | The 2024 KC Water CCR lists HARDNESS, CARBONATE of 140 mg/L for Kansas City PWS (single sample collected 5/12/2020). | http://www.kcwater.us/wp-content/uploads/2025/05/MO1010415-1.pdf | KC Water (City of Kansas City, Missouri) | CCR for calendar year 2024; sample date 5/12/2020 | "HARDNESS, CARBONATE 5/12/2020 140 140 MG/L" |
+| KC-U-06 | KC Water's 2022 Water Quality Report (2021 data) lists Total Hardness highest sampled result 136 ppm, range 84.6-136 ppm (collection date 2/13/2021). | http://www.kcwater.us/wp-content/uploads/2022/05/2022-Water-Quality-Report_web.pdf | KC Water (City of Kansas City, Missouri) | calendar year 2021 data (2022 report) | "Total Hardness 2/13/2021 136 84.6 - 136 ppm NA" |
+| KC-U-07 | KC Water's water-quality topics web page states average hardness of 100 mg/L (5-6 grains/gallon). | https://www.kcwater.us/water-quality/water-quality-topics/ | KC Water (City of Kansas City, Missouri) | undated web page | "The average hardness of KC Water is 100 mg/L (5-6 grains/gallon)." |
+| KC-U-08 | KC Water's 2022 Water Quality Report describes lime softening and chlorine addition for disinfection at treatment; the documents opened do not state whether the distribution residual is free chlorine or chloramine. | http://www.kcwater.us/wp-content/uploads/2022/05/2022-Water-Quality-Report_web.pdf | KC Water (City of Kansas City, Missouri) | 2022 report (2021 operations) | "lime is added for softening and for improving taste and odor, and where chlorine is added for disinfection." |
+| KC-U-09 | KC Water's 2025 CCR lists purchased water through consecutive connections: Kansas City PWS buys from Jackson County PWSD 2, which buys from Independence PWS. | http://www.kcwater.us/wp-content/uploads/2026/06/CCR-report-July-1-2026.pdf | KC Water (City of Kansas City, Missouri) | calendar year 2025 | "Buyer Name Seller Name KANSAS CITY PWS JACKSON COUNTY PWSD 2 JACKSON COUNTY PWSD 2 INDEPENDENCE PWS" |
+| KC-U-10 | KC Water's 2025 CCR lists three Lead & Copper Rule violations of monitoring/reporting and consumer-notice types (not MCL exceedances); lead 90th percentile 2.08 ppb vs AL 15 ppb. | http://www.kcwater.us/wp-content/uploads/2026/06/CCR-report-July-1-2026.pdf | KC Water (City of Kansas City, Missouri) | calendar year 2025 | "10/1/2025 LEAD & COPPER RULE FOLLOW-UP OR ROUTINE TAP M/R (LCR)" |
+| WO-U-01 | WaterOne serves customers in 17 cities: De Soto (partial), Fairway, Lake Quivira, Leawood, Lenexa, Merriam, Mission, Mission Hills, Mission Woods, Olathe (partial), Overland Park, Prairie Village, Roeland Park, Shawnee, Spring Hill, Westwood, Westwood Hills. | https://www.waterone.org/344/WaterOne-Service-Area | WaterOne (Water District No. 1 of Johnson County, KS) | undated web page | "WaterOne serves customers in the following 17 cities: De Soto (partial) Fairway Lake Quivira Leawood Lenexa Merriam Mission" |
+| WO-U-02 | WaterOne also serves unincorporated Johnson County, with service connections extending into parts of Wyandotte and Miami counties; it does not currently serve customers in Bonner Springs or Gardner. | https://www.waterone.org/344/WaterOne-Service-Area | WaterOne (Water District No. 1 of Johnson County, KS) | undated web page | "WaterOne also serves unincorporated parts of Johnson County. Its service connections in the cities listed above do extend into parts of Wyandotte County and Miami County." |
+| WO-U-03 | WaterOne's source water is the Kansas and Missouri Rivers; in 2025 it treated 25.5 billion gallons (about 5 bn Kansas River, 13.1 bn Missouri River, 7 bn Wolcott Collector Well, 0.4 bn Kansas River-area wells). | https://www.waterone.org/ArchiveCenter/ViewFile/Item/177 | WaterOne (Water District No. 1 of Johnson County, KS) | calendar year 2025 | "In 2025, WaterOne treated a total of 25.5 billion gallons of water - approximately 5 billion gallons of Kansas River water, 13.1 billion gallons of Missouri River water" |
+| WO-U-04 | Latest WaterOne report found: 'Water Quality Report 2026' (most-recent link on waterone.org/339), with data for Jan 1-Dec 31, 2025. | https://www.waterone.org/ArchiveCenter/ViewFile/Item/177 | WaterOne (Water District No. 1 of Johnson County, KS) | calendar year 2025 | "All data is for January 1 to December 31, 2025, except as noted." |
+| WO-U-05 | WaterOne reports Total Hardness average 135 ppm, range 110-157 ppm (2025), in its Unregulated Parameters table (federal recommended level column 400 ppm; WaterOne goal column 200 ppm). | https://www.waterone.org/ArchiveCenter/ViewFile/Item/177 | WaterOne (Water District No. 1 of Johnson County, KS) | calendar year 2025 | "Hardness, Total * 400 ppm 200 ppm 135 ppm 110 ppm - 157 ppm" |
+| WO-U-06 | WaterOne reports Calcium Hardness average 79 ppm, range 64-120 ppm (2025). | https://www.waterone.org/ArchiveCenter/ViewFile/Item/177 | WaterOne (Water District No. 1 of Johnson County, KS) | calendar year 2025 | "Hardness, Calcium* 200 ppm > 60 ppm 79 ppm 64 ppm - 120 ppm" |
+| WO-U-07 | DERIVED, not published: using WaterOne's own stated method (total hardness ppm / 17.1 = gpg), 135 ppm / 17.1 = 7.9 gpg (range 110/17.1 = 6.4 to 157/17.1 = 9.2 gpg). | https://www.waterone.org/189/Do-I-Have-Hard-Water | WaterOne (Water District No. 1 of Johnson County, KS) | applies to calendar year 2025 values in WO-U-05 | "divide our most recent value for total hardness (ppm) by 17.1 to convert to grains per gallon (GPG)" |
+| WO-U-08 | WaterOne uses chloramines for distribution-system disinfection and must maintain a minimum chloramine residual of 1.0 ppm. | https://www.waterone.org/ArchiveCenter/ViewFile/Item/177 | WaterOne (Water District No. 1 of Johnson County, KS) | calendar year 2025 | "To protect against bacteria and other microbes, chloramines are added before the water flows into the distribution system" |
+| WO-U-09 | WaterOne softens its water with lime and soda ash and states the EPA requires it to maintain certain calcium and magnesium levels. | https://www.waterone.org/189/Do-I-Have-Hard-Water | WaterOne (Water District No. 1 of Johnson County, KS) | undated web page | "WaterOne softens our water with lime and soda ash to control the mineral content that causes hard water." |
+| BPU-U-01 | BPU provides drinking water to more than 51,000 customers across a 152-square-mile area including Kansas City KS, Edwardsville, parts of Bonner Springs, southern Leavenworth County, and part of northern Johnson County. | https://bpu.com/wp-content/uploads/2026/08/2026-Water-Quality-Report-FINAL-newformat.pdf | Kansas City Board of Public Utilities (BPU) | 2026 report (calendar year 2025 data) | "more than 51,000 customers across a 152-square-mile service area, including Kansas City, Kansas, Edwardsville, parts of Bonner Springs, southern Leavenworth County, and a portion of northern Johnson County." |
+| BPU-U-02 | BPU's source is the Missouri River watershed, drawn from below the river through collector wells and treated at the Nearman Water Treatment Plant. | https://bpu.com/wp-content/uploads/2026/08/2026-Water-Quality-Report-FINAL-newformat.pdf | Kansas City Board of Public Utilities (BPU) | 2026 report (calendar year 2025 data) | "Water is drawn from deep below the river through collector wells, then cleaned, treated, and tested" |
+| BPU-U-03 | Latest BPU report found: 2026 Water Quality Report (data monitored Jan.-Dec. 2025), listed with 2025 and 2024 editions at https://bpu.com/help-center/reports/. | https://bpu.com/wp-content/uploads/2026/08/2026-Water-Quality-Report-FINAL-newformat.pdf | Kansas City Board of Public Utilities (BPU) | calendar year 2025 | "Monitored at the Treatment Plant Monitored Jan. – Dec. 2025 Secondary Drinking Water Contaminants" |
+| BPU-U-04 | BPU reports Total Hardness as CaCO3 of 280 ppm (average detected; range detected 280) at the treatment plant, Jan.-Dec. 2025. | https://bpu.com/wp-content/uploads/2026/08/2026-Water-Quality-Report-FINAL-newformat.pdf | Kansas City Board of Public Utilities (BPU) | calendar year 2025 | "Total Hardness as CaCO3 ppm NA 280 280" |
+| BPU-U-05 | BPU reports Total Hardness as CaCO3 of 16.4 grain/gallon (as published), Jan.-Dec. 2025. | https://bpu.com/wp-content/uploads/2026/08/2026-Water-Quality-Report-FINAL-newformat.pdf | Kansas City Board of Public Utilities (BPU) | calendar year 2025 | "Total Hardness as CaCO3 Grain/Gallon NA 16.4 16.4" |
+| BPU-U-06 | BPU's prior (2025-edition) report listed Total Hardness as CaCO3 of 290 ppm and 17.0 grain/gallon for Jan.-Dec. 2024. | https://bpu.com/wp-content/uploads/2026/08/2025-Water-Quality-Report-FINAL.pdf | Kansas City Board of Public Utilities (BPU) | calendar year 2024 | "Total Hardness as CaCO3 ppm NA 290 290 ... Total Hardness as CaCO3 Grain/Gallon NA 17.0 17.0" |
+| BPU-U-07 | BPU uses chloramines in the distribution system: average 2.492 ppm, highest RAA 2.72 ppm, range 1.10-3.80 ppm (MRDL 4.0), Jan.-Dec. 2025. | https://bpu.com/wp-content/uploads/2026/08/2026-Water-Quality-Report-FINAL-newformat.pdf | Kansas City Board of Public Utilities (BPU) | calendar year 2025 | "Chloramines ppm 4.0 4.0 2.492 2.72 1.10-3.80 Water additive used to control microbes" |
+| BPU-U-08 | BPU also reports chlorine dioxide at the treatment plant (110 ppb, range <100-240 ppb; MRDL 800 ppb) in 2025. | https://bpu.com/wp-content/uploads/2026/08/2026-Water-Quality-Report-FINAL-newformat.pdf | Kansas City Board of Public Utilities (BPU) | calendar year 2025 | "Chlorine dioxide ppb 800 800 110 <100–240 Water additive used to control microbes" |
+| BPU-U-09 | BPU's consecutive connection with WaterOne was used for emergency supply to BPU's Argentine system several times in 2025. | https://bpu.com/wp-content/uploads/2026/08/2026-Water-Quality-Report-FINAL-newformat.pdf | Kansas City Board of Public Utilities (BPU) | calendar year 2025 | "BPU’s Consecutive Connection with Water District No. 1 of Johnson County was used for emergency purposes to the Argentine system several times during the 2025" |
+| IND-U-01 | Independence Water Department supplies water to about 250,000 people, including Independence residents and 12 wholesale customers. | https://www.independencemo.gov/sites/default/files/2026-06/2025%20CCR_Draft%20Final.pdf | City of Independence, MO Water Department | 2025 Water Quality Report | "We supply water to approximately 250,000 people including residents of Independence and 12 wholesale customers." |
+| IND-U-02 | Independence's water is groundwater from wells in the Missouri River alluvial aquifer, treated at Courtney Bend Water Treatment Plant (city 2025 report says 44 wells; city web page says 42 wells). | https://www.independencemo.gov/sites/default/files/2026-06/2025%20CCR_Draft%20Final.pdf | City of Independence, MO Water Department | 2025 Water Quality Report | "Our water comes from 44 wells that pump water from the Missouri River alluvial aquifer." |
+| IND-U-03 | Independence softens and disinfects its well water at the treatment plant. | https://www.independencemo.gov/government/city-departments/municipal-services/water-division/water-service-area | City of Independence, MO Water Department | undated web page | "The well water is softened and disinfected at the treatment plant, and meets or exceeds all federal and state quality regulations." |
+| IND-U-04 | Latest CCR found: Independence PWS (MO1010399) 2025 Annual Water Quality Report on Missouri DNR, page-dated March 27, 2026; city-formatted 2025 report also posted (file named '2025 CCR_Draft Final'). | https://dnrservices.mo.gov/ccr/MO1010399.pdf | City of Independence, MO Water Department | calendar year 2025 | "INDEPENDENCE PWS Public Water System ID Number: MO1010399 2025 Annual Water Quality Report" |
+| IND-U-05 | Independence reports Hardness, Total of 123 mg/L as calcium carbonate (single sample; DNR CCR shows collection 5/6/2024 and labels it 'HARDNESS, CARBONATE'). | https://www.independencemo.gov/sites/default/files/2026-06/2025%20CCR_Draft%20Final.pdf | City of Independence, MO Water Department | 2025 report; sample date 5/6/2024 | "Hardness, Total (mg/L as Calcium Carbonate) 123" |
+| IND-U-06 | Independence uses chloramine: range 1.5-2.64 ppm, average 1.89 ppm (MRDL 4) in its 2025 report. | https://www.independencemo.gov/sites/default/files/2026-06/2025%20CCR_Draft%20Final.pdf | City of Independence, MO Water Department | calendar year 2025 | "Chloramine control microbes ppm 1.5-2.64 1.89 4 4" |
+| LS-U-01 | Lee's Summit buys its water from Kansas City and Independence (up to 7.5 MGD from Independence wells, up to 25 MGD from Kansas City). | https://cityofls.net/water-utilities/customer-education/water-system/water-quality/2026-water-quality-report | Lee's Summit Water Utilities (City of Lee's Summit, MO) | 2026 Water Quality Report (2025 data) | "Independence supplies Lee's Summit with up to 7.5 million gallons of water daily from wells near the Missouri River. Lee's Summit receives up to 25 million gallons" |
+| LS-U-02 | Latest CCR found: Lee's Summit PWS (MO1010459) 2025 Annual Water Quality Report on Missouri DNR (equivalent residential population 99,400); city publishes it as the '2026 Water Quality Report'. | https://dnrservices.mo.gov/ccr/MO1010459.pdf | Lee's Summit Water Utilities (City of Lee's Summit, MO) | calendar year 2025 | "Population: 99400. This is the equivalent residential population served including non-bill paying customers." |
+| LS-U-03 | Lee's Summit does not publish a hardness value for its own blended tap water; its report reproduces only the Independence supplier value (123, 2024) and leaves the Kansas City column blank. Do not apply 123 to Lee's Summit addresses. | https://cityofls.net/water-utilities/customer-education/water-system/water-quality/2026-water-quality-report | Lee's Summit Water Utilities (City of Lee's Summit, MO) | 2026 report (sample year 2024) | "Hardness, Total (as CAC03) 2024 No 123 123" |
+
+---
+
+## Unknowns
+
+1. **KC Water current hardness.** The 2025 CCR gives no value for KC's own supply. The other figures conflict (100 mg/L undated web page; 136 max for 2021; 140 single sample for 2020). Ask KC Water for a current average and range, and whether it varies by area (river vs. purchased Independence/JCPWSD 2 water).
+2. **KC Water residual disinfectant.** Free chlorine or chloramine is not confirmed in any opened source. Ask KC Water.
+3. **KC Water CCR contact phone.** The CCR lists 563-777-0223, which looks like a template or data error. Confirm.
+4. **KC Water wholesale customer list** (34 per the web page). Not obtained. Wholesale customers' tap water may differ from KC retail.
+5. **Independence wholesale customers** (12). Not named. The well count also conflicts (42 vs 44).
+6. **Independence hardness** is a single 2024 sample, and the two report versions label it differently (Total vs Carbonate). Ask for the average and range.
+7. **Lee's Summit**: no hardness or disinfectant data for its own blended supply. Ask Lee's Summit.
+8. **Olathe city water system**: the report could not be accessed (403). Hardness, disinfectant, source and service boundary are all unknown. The split between Olathe city and WaterOne service areas inside Olathe is also unknown.
+9. **BPU table layout**: the PDF interleaves columns. Raw-mode text extraction confirmed the hardness, chloramine and chlorine dioxide rows, but a reviewer should still check them visually.
+10. **Per-address variation**: all figures are system-wide or plant-level. None of the utilities opened publish address-level hardness. Any customer-facing claim should name the utility and the report year, and should not imply a specific home's value.
+11. **Utilities not researched**: Jackson County PWSD 2, Raytown, Blue Springs, Gladstone, North Kansas City, Liberty, Missouri American Water (Platte/Clay areas), Johnson County RWD 7, and others.

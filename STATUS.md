@@ -54,5 +54,10 @@ T01 pass, T02 pass, T03 pass, T04 pass, T05 pass, T06 pass, T07 pass, T08 pass (
 ## Costs
 Incurred: $0. Recurring added so far: $0. Planned new vendors: none. I have no verified pricing for D1/Workers usage on your plan or for a separate HighLevel sub-account; check those in the account before approving.
 
+## Research (drafts, unreviewed, nobody contacted)
+- `docs/research/dealer-prospects.csv` / `.md`: 20 KC prospects verified on their own sites. Licenses and insurance not yet checked.
+- `docs/research/kc-utility-dossier.md` + `evidence.csv`: 37 sourced claims. Hardness published for BPU, WaterOne, Independence; not for KC Water (current) or Lee's Summit; Olathe site blocked access.
+- `docs/research/dealer-scorecard.md`, `dealer-outreach-draft.md`: drafts, not approved, not sent.
+
 ## Next task
-Research dossiers (plan step 2): Kansas City utility service areas and a source-backed dealer prospect list in `docs/research/dealer-prospects-template.csv`, with drafts only, no outreach.
+Waiting on owner: Claude API key for the agent layer (evaluation set + inquiry triage + dealer status chase, draft-only). Meanwhile: license/insurance verification for the top dealer prospects (public regulator lookups only).
