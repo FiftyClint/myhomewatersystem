@@ -21,9 +21,10 @@ Phase 2 core (plan section 25) is built and tested locally with synthetic data, 
 | Staging can never write to the production HighLevel location | `src/env.ts`, test T17 |
 | Coordinator API: work list, exceptions, transitions, ledger, links, report | `src/internal/api.ts` |
 | Launch preflight: lists 14 blockers today | `npm run preflight` |
+| Dealer economics calculator: raw leads per billable event, contribution, max cost per raw lead, stress test (conversion -30%, ad cost +25%). Reproduces the plan's $200-per-held-appointment illustration | `npm run economics -- inputs.json`, `src/domain/economics.ts` |
 | Full HTTP walkthrough on the real Workers runtime (local) | `npm run demo`, run 2026-10-18: lead, replay, route, accept, 7 status updates, $600 synthetic fee earned, $0 collected |
 
-`npm test`: 41 passed. `npm run typecheck`: clean.
+`npm test`: 45 passed. `npm run typecheck`: clean.
 
 ## Agent layer (built, off by default)
 - **Inquiry sorting (A4)**: `src/agents/`. Reads only the concern, water source, timing and free-text note (no name, phone or email). Returns a schema-checked proposal. A deterministic guard can only make handling more careful. The executor only writes an audit row and, when warranted, a coordinator exception (critical for possible leaks). It never changes pipeline state.
@@ -68,5 +69,6 @@ Incurred: $0. Recurring added so far: $0. Planned new vendors: none. I have no v
 
 ## Next task
 - Waiting on owner: create the My Home Water System sub-account and token; Anthropic API key to run the live eval.
-- In progress: license verification for top KC dealer prospects (public lookups only).
+- Done: license verification (docs/research/kc-licensing.md). Licensed plumbing companies lead the shortlist; dealer gate now requires the dealer or a named subcontracted plumber to hold the city license.
+- Waiting on owner: approval to send dealer outreach (drafts delivered in chat, not saved).
 - Next build: dealer status-chase drafts (A5-lite) on the same pattern.

@@ -3,7 +3,7 @@
 Draft. The weights below are the plan's proposed weights, not a validated model. A high score never overrides a failed gate.
 
 ## Mandatory gates (any "no" = not eligible)
-- [ ] Relevant license(s) verified with the regulator, with check date
+- [ ] Plumbing license for installs in each city served (Johnson County, KCMO, etc.) held by the dealer or a named subcontracted plumber. Dealer sends the copy. Licensing is set city by city in KS and MO (see kc-licensing.md)
 - [ ] Current insurance certificate verified
 - [ ] Agrees to report outcomes per lead (accepted, booked, held, quoted, installed, paid)
 - [ ] Owns customer service, warranty and urgent leak response, with a named urgent contact
