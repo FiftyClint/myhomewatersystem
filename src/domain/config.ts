@@ -63,6 +63,7 @@ export interface Policy {
   content_claim_changes_require_review: true;
   max_job_attempts: number;
   disclosure_version: string;
+  agents: { triage_enabled: boolean; triage_model: string; triage_effort: 'low' | 'medium' | 'high'; monthly_cap_cents: number };
 }
 
 export function slaMinutes(m: MarketConfig): number {

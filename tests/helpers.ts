@@ -15,7 +15,7 @@ import policyJson from '../config/policies/staging.json';
 export function sqliteDb(): Sql & { raw: DatabaseSync } {
   const raw = new DatabaseSync(':memory:');
   raw.exec('PRAGMA foreign_keys = ON');
-  raw.exec(readFileSync(new URL('../migrations/0001_init.sql', import.meta.url), 'utf8'));
+  for (const m of ['0001_init.sql', '0002_agent_runs.sql']) raw.exec(readFileSync(new URL(`../migrations/${m}`, import.meta.url), 'utf8'));
   const clean = (v: unknown[]) => v.map((x) => (x === undefined ? null : x)) as any[];
   const stmt = (q: string, params: unknown[] = []): Stmt & { exec(): { changes: number } } => ({
     bind: (...v: unknown[]) => stmt(q, v),

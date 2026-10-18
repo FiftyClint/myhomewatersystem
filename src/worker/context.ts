@@ -1,6 +1,7 @@
 import type { Sql } from '../db/sql.ts';
 import type { CrmAdapter } from '../adapters/crm.ts';
 import type { MarketConfig, Policy } from '../domain/config.ts';
+import type { TriageModel } from '../agents/triage.ts';
 
 export interface AppContext {
   db: Sql;
@@ -9,6 +10,7 @@ export interface AppContext {
   policy: Policy;
   linkSecret: string;
   baseUrl: string;
+  triageModel?: TriageModel;
   now?: () => Date;
 }
 

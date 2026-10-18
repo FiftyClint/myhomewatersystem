@@ -172,6 +172,9 @@ export async function handleIntake(input: IntakeInput, deps: IntakeDeps): Promis
   if (needsRouting(market.business_mode!, state)) {
     stmts.push(enqueueStmt(db, 'route_lead', { opportunity_id: oppId }, `route:intake:${oppId}`, at, policy.max_job_attempts));
   }
+  if (c.note && policy.agents.triage_enabled) {
+    stmts.push(enqueueStmt(db, 'triage', { opportunity_id: oppId }, `triage:${oppId}`, at, policy.max_job_attempts));
+  }
   if (duplicate) stmts.push(exceptionStmt(db, 'low', 'opportunity', oppId, 'possible duplicate request', at));
 
   try {

@@ -4,6 +4,7 @@ import type { CrmAdapter } from './adapters/crm.ts';
 import { MockCrm } from './adapters/crm-mock.ts';
 import { HighLevelCrm } from './adapters/crm-highlevel.ts';
 import type { AppContext } from './worker/context.ts';
+import { AnthropicTriageModel } from './agents/anthropic-model.ts';
 import kc from '../config/markets/kansas-city.json';
 import fixtures from '../fixtures/markets.staging.json';
 import prodPolicy from '../config/policies/production.json';
@@ -24,6 +25,7 @@ export interface Env {
   HIGHLEVEL_LOCATION_ID?: string;
   HIGHLEVEL_PIPELINE_ID?: string;
   HIGHLEVEL_STAGE_MAP?: string;
+  ANTHROPIC_API_KEY?: string;
 }
 
 export const PRODUCTION_MARKETS = [kc] as unknown as MarketConfig[];
@@ -54,6 +56,8 @@ export function buildContext(env: Env, db: Sql = env.DB as unknown as Sql): AppC
   const { crm, reason } = chooseCrm(env, policy);
   const linkSecret = env.LINK_SECRET ?? (staging ? 'staging-link-secret' : '');
   if (!linkSecret) throw new Error('LINK_SECRET is required in production');
-  return { db, crm, crmReason: reason, env, policy, linkSecret, baseUrl: env.BASE_URL,
+  const triageModel = policy.agents.triage_enabled && env.ANTHROPIC_API_KEY
+    ? new AnthropicTriageModel(env.ANTHROPIC_API_KEY, policy.agents.triage_model, policy.agents.triage_effort) : undefined;
+  return { db, crm, crmReason: reason, env, policy, linkSecret, baseUrl: env.BASE_URL, triageModel,
     markets: staging ? STAGING_MARKETS : PRODUCTION_MARKETS };
 }

@@ -8,7 +8,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "demo": "bash scripts/staging-demo.sh",
-    "preflight": "node --experimental-strip-types --no-warnings scripts/preflight.ts"
+    "preflight": "node --experimental-strip-types --no-warnings scripts/preflight.ts",
+    "eval:triage": "node --experimental-strip-types --no-warnings scripts/eval-triage.ts"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "4.20251008.0",
@@ -16,5 +17,9 @@
     "typescript": "5.9.3",
     "vitest": "3.2.4",
     "wrangler": "4.42.0"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "0.135.0",
+    "zod": "4.6.7"
   }
 }

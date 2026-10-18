@@ -23,7 +23,14 @@ Phase 2 core (plan section 25) is built and tested locally with synthetic data, 
 | Launch preflight: lists 14 blockers today | `npm run preflight` |
 | Full HTTP walkthrough on the real Workers runtime (local) | `npm run demo`, run 2026-10-18: lead, replay, route, accept, 7 status updates, $600 synthetic fee earned, $0 collected |
 
-`npm test`: 29 passed. `npm run typecheck`: clean.
+`npm test`: 41 passed. `npm run typecheck`: clean.
+
+## Agent layer (built, off by default)
+- **Inquiry sorting (A4)**: `src/agents/`. Reads only the concern, water source, timing and free-text note (no name, phone or email). Returns a schema-checked proposal. A deterministic guard can only make handling more careful. The executor only writes an audit row and, when warranted, a coordinator exception (critical for possible leaks). It never changes pipeline state.
+- Every call recorded in `agent_runs` with model, prompt version, tokens and cost; a monthly cap stops calls when reached and falls back to manual triage. Model outage or refusal also falls back to manual triage.
+- Default model `claude-opus-5-5` at low effort; configurable in `config/policies/*.json`. Pricing used for cost: Opus 5.5 $4/$20, Sonnet 5.5 $2/$10, Haiku 5.5 $0.10/$0.50 per million tokens (Anthropic pricing table, cached 2026-10-06).
+- **Eval**: 40 synthetic cases (`fixtures/evals/triage.jsonl`), 14 critical (leaks, health, prompt injection). Gate: 0 critical failures and >=95% correct action. `npm run eval:triage` runs the MOCK keyword model, which FAILS (5 critical misses), showing the gate works. **The real model has not been evaluated**: needs `ANTHROPIC_API_KEY`, then `npm run eval:triage -- --live --confirm`.
+- To turn on: API key secret, live eval passes, then `triage_enabled: true` and a `monthly_cap_cents` in the policy (owner approval).
 
 ## Mocked (labeled)
 - **CRM**: `MockCrm` everywhere. The HighLevel adapter (`src/adapters/crm-highlevel.ts`) is written against operation paths verified in your HighLevel registry but has **never called the live API**.
@@ -32,7 +39,6 @@ Phase 2 core (plan section 25) is built and tested locally with synthetic data, 
 
 ## Not built (by design, for now)
 - Follow-up message sequences: these belong in HighLevel workflows (docs/highlevel-setup.md), not code.
-- AI triage/drafting (plan A4/A5): deferred until the rules-based flow is live; Anthropic API access unconfirmed.
 - Ad spend watchdog (T14) and ad integrations: no ad account connected; nothing can spend.
 - Model-outage handling (T16): no model in the request path, so nothing to fail.
 - Calendar booking integration: dealers book in their own calendar and report "appointment booked" with a reference.
@@ -60,4 +66,6 @@ Incurred: $0. Recurring added so far: $0. Planned new vendors: none. I have no v
 - `docs/research/dealer-scorecard.md`, `dealer-outreach-draft.md`: drafts, not approved, not sent.
 
 ## Next task
-Waiting on owner: Claude API key for the agent layer (evaluation set + inquiry triage + dealer status chase, draft-only). Meanwhile: license/insurance verification for the top dealer prospects (public regulator lookups only).
+- Waiting on owner: create the My Home Water System sub-account and token; Anthropic API key to run the live eval.
+- In progress: license verification for top KC dealer prospects (public lookups only).
+- Next build: dealer status-chase drafts (A5-lite) on the same pattern.

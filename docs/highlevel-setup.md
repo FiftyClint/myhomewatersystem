@@ -3,9 +3,9 @@
 Nothing below has been created. Each step changes the live HighLevel account, so it waits for owner approval.
 
 1. Create a "My Home Water System" sub-account in Clint's own agency account (not under CRMX, not inside CGF).
-2. Create pipeline "My Home Water System" with stages, exactly: New Inquiry, Assigned, Appointment, Assessed, Quoted, Sold, Installed, Paid, On Hold, Lost.
+2. Create pipeline "My Home Water System" (Claude can do this through the API if the token has the pipelines create/write permission; otherwise by hand) with stages, exactly: New Inquiry, Assigned, Appointment, Assessed, Quoted, Sold, Installed, Paid, On Hold, Lost.
 3. Copy the pipeline ID and each stage ID into the `HIGHLEVEL_PIPELINE_ID` and `HIGHLEVEL_STAGE_MAP` secrets.
-4. Create a Private Integration token with scopes contacts.write, opportunities.write (and the read scopes). Store it as `HIGHLEVEL_TOKEN`. Never paste it into chat or git.
+4. In the My Home Water System sub-account: Settings > Private Integrations > create a token with contacts, opportunities, pipelines (create/write), custom fields, custom values, tags and calendars. Store it as an environment secret `HIGHLEVEL_MHWS_TOKEN` (or in Composio's HighLevel connection). Never paste it into chat or git.
 5. Workflows (built in HighLevel, left in draft until launch):
    - Trigger: contact tag added `mhws`. Action: factual acknowledgement by the chosen channel naming the dealer/seller.
    - Follow-up day 1/3/7/14 per the plan. **SMS steps must have the filter "tag is mhws-sms-ok"**.

@@ -6,6 +6,7 @@ import { crmStageFor } from '../domain/crm-stages.ts';
 import { getAssignment, getOpportunity } from '../domain/repo.ts';
 import { route } from '../domain/routing.ts';
 import { makeLink } from '../dealer/links.ts';
+import { runTriage } from '../agents/run-triage.ts';
 
 const asOutcome = (r: CallResult<unknown>): JobOutcome | null =>
   r.status === 'ok' ? null : r.status === 'retryable' ? { kind: 'retry', error: r.error }
@@ -68,6 +69,11 @@ export function handlers(ctx: AppContext): Record<string, Handler> {
       if (!opp) return { kind: 'fatal', error: 'opportunity missing' };
       await route(db, marketById(ctx, opp.market_id), opp.id, now());
       return { kind: 'done' };
+    },
+
+    // A4: model reads the free-text note and proposes; the executor only raises internal exceptions.
+    async triage(p: { opportunity_id: string }) {
+      return runTriage(db, ctx.policy, ctx.triageModel, p.opportunity_id, now());
     },
 
     // Internal task for the coordinator, carrying the provider's single-job link.
