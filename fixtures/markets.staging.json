@@ -1,0 +1,69 @@
+[
+  {
+    "id": "demo-dealer",
+    "slug": "demo-dealer",
+    "name": "Demo Market A (synthetic, dealer partner)",
+    "status": "active",
+    "config_version": "fixture-1",
+    "launch_approval_id": "SYNTHETIC",
+    "business_mode": "dealer_partner",
+    "timezone": "America/Chicago",
+    "zips": ["00001", "00002"],
+    "supported_concerns": ["hardness", "taste_odor", "drinking_water", "not_sure"],
+    "accept_well_water": false,
+    "business_hours": { "days": [1, 2, 3, 4, 5], "start": "08:00", "end": "17:00" },
+    "seller_display_name": "Example Water Dealer (SYNTHETIC)",
+    "dealer_partner": {
+      "commercial_model": "install_referral",
+      "fee_trigger_state": "collected",
+      "fee_cents": 60000,
+      "accept_sla_business_minutes": 30,
+      "duplicate_window_days": 90
+    },
+    "providers": [
+      {
+        "id": "dealer-a", "kind": "dealer", "legal_name": "Example Water Dealer LLC (SYNTHETIC)",
+        "display_name": "Example Water Dealer (SYNTHETIC)", "status": "active",
+        "license_expires_on": "2099-01-01", "insurance_expires_on": "2099-01-01",
+        "weekly_capacity": 3, "agreement_version": "fixture-agreement-1",
+        "urgent_contact": "000-000-0000 (synthetic)", "synthetic": true
+      },
+      {
+        "id": "dealer-b", "kind": "dealer", "legal_name": "Backup Dealer LLC (SYNTHETIC)",
+        "display_name": "Backup Dealer (SYNTHETIC)", "status": "active",
+        "license_expires_on": "2000-01-01", "insurance_expires_on": "2099-01-01",
+        "weekly_capacity": 5, "agreement_version": "fixture-agreement-1",
+        "urgent_contact": "000-000-0000 (synthetic)", "synthetic": true
+      }
+    ]
+  },
+  {
+    "id": "demo-direct",
+    "slug": "demo-direct",
+    "name": "Demo Market B (synthetic, direct sale)",
+    "status": "active",
+    "config_version": "fixture-1",
+    "launch_approval_id": "SYNTHETIC",
+    "business_mode": "direct",
+    "timezone": "America/Chicago",
+    "zips": ["00003"],
+    "supported_concerns": ["hardness", "taste_odor", "drinking_water", "not_sure"],
+    "accept_well_water": false,
+    "business_hours": { "days": [1, 2, 3, 4, 5], "start": "08:00", "end": "17:00" },
+    "seller_display_name": "My Home Water System",
+    "direct": {
+      "standard_installer_payout_cents": null,
+      "accept_sla_business_minutes": 60,
+      "duplicate_window_days": 90
+    },
+    "providers": [
+      {
+        "id": "installer-a", "kind": "installer", "legal_name": "Example Plumbing LLC (SYNTHETIC)",
+        "display_name": "Example Plumbing (SYNTHETIC)", "status": "active",
+        "license_expires_on": "2099-01-01", "insurance_expires_on": "2099-01-01",
+        "weekly_capacity": 4, "agreement_version": "fixture-sub-1",
+        "urgent_contact": "000-000-0000 (synthetic)", "synthetic": true
+      }
+    ]
+  }
+]

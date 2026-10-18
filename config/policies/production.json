@@ -1,0 +1,13 @@
+{
+  "version": "2026-10-18.1",
+  "excluded_orchestrators": ["n8n"],
+  "external_actions_enabled": false,
+  "dry_run": true,
+  "autonomous_spend_increase": false,
+  "outbound_cold_sms": false,
+  "autonomous_outbound_voice": false,
+  "campaign_total_cap_cents": 0,
+  "content_claim_changes_require_review": true,
+  "max_job_attempts": 5,
+  "disclosure_version": "draft-2026-10-18"
+}

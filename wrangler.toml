@@ -1,0 +1,25 @@
+# Cloudflare Worker for myhomewatersystem.com. Nothing here is deployed yet.
+name = "mhws"
+main = "src/index.ts"
+compatibility_date = "2025-09-01"
+
+[triggers]
+crons = ["* * * * *"]
+
+[env.staging]
+name = "mhws-staging"
+vars = { ENVIRONMENT = "staging", BASE_URL = "http://localhost:8787", CRM_PROVIDER = "mock" }
+[[env.staging.d1_databases]]
+binding = "DB"
+database_name = "mhws-staging"
+database_id = "00000000-0000-0000-0000-000000000000" # placeholder until the staging database is created
+migrations_dir = "migrations"
+
+[env.production]
+name = "mhws"
+vars = { ENVIRONMENT = "production", BASE_URL = "https://www.myhomewatersystem.com", CRM_PROVIDER = "mock" }
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "mhws-production"
+database_id = "00000000-0000-0000-0000-000000000000" # placeholder; production is not created until launch approval
+migrations_dir = "migrations"

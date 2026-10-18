@@ -1,0 +1,13 @@
+# Copy to .dev.vars for local staging. Never commit real values. Production values go in
+# Cloudflare secrets: npx wrangler secret put NAME --env production
+ADMIN_TOKEN=
+CRM_WEBHOOK_SECRET=
+LINK_SECRET=
+HASH_PEPPER=
+# Live HighLevel (only after the integration spike is approved):
+# CRM_PROVIDER=highlevel
+# ALLOW_LIVE_CRM_IN_STAGING=yes        # staging only, and never with the production location
+# HIGHLEVEL_TOKEN=
+# HIGHLEVEL_LOCATION_ID=
+# HIGHLEVEL_PIPELINE_ID=
+# HIGHLEVEL_STAGE_MAP={"New Inquiry":"<stageId>","Assigned":"<stageId>", ...}
