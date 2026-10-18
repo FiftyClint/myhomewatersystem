@@ -2,7 +2,7 @@
 
 Nothing below has been created. Each step changes the live HighLevel account, so it waits for owner approval.
 
-1. Decide where it lives: a new pipeline in the existing CGF sub-account (no new cost found) or a separate sub-account (separate brand/number, cost unknown).
+1. Create a "My Home Water System" sub-account in Clint's own agency account (not under CRMX, not inside CGF).
 2. Create pipeline "My Home Water System" with stages, exactly: New Inquiry, Assigned, Appointment, Assessed, Quoted, Sold, Installed, Paid, On Hold, Lost.
 3. Copy the pipeline ID and each stage ID into the `HIGHLEVEL_PIPELINE_ID` and `HIGHLEVEL_STAGE_MAP` secrets.
 4. Create a Private Integration token with scopes contacts.write, opportunities.write (and the read scopes). Store it as `HIGHLEVEL_TOKEN`. Never paste it into chat or git.
