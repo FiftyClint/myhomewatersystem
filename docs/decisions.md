@@ -3,6 +3,7 @@
 | Date | Decision | Owner | Rationale |
 |---|---|---|---|
 | 2026-10-18 | Build for both business models, chosen per market in config. No model is selected yet. | Clint | Keep the option open until dealer conversations show which is viable. |
+| 2026-10-18 | Kansas City runs the dealer partner model. Fee model (dealer-funded, appointment fee or install referral) still open until dealer talks. | Clint | Owner decision. |
 | 2026-10-18 | n8n excluded. | Clint | Owner directive in the plan. |
 | 2026-10-18 | HighLevel is the CRM (existing account, CGF sub-account connected). Default: new pipeline in the CGF sub-account unless a separate sub-account is chosen. | Claude (proposed) | Already paid for and connected; has pipelines, workflows, SMS/email, calendars. Separate sub-account is still open (cost unknown). |
 | 2026-10-18 | Cloudflare Workers + D1 + Cron Triggers for site, intake and ledger. | Claude (proposed) | Account already hosts 22 Workers. Avoids a new vendor. Supabase stays available if Postgres is needed later. |

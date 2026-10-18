@@ -35,7 +35,7 @@ export interface MarketConfig {
   // The party the customer buys from and who installs. Shown in every disclosure.
   seller_display_name: string | null;
   dealer_partner?: {
-    commercial_model: DealerCommercialModel;
+    commercial_model: DealerCommercialModel | null; // null until agreed with the dealer
     // Pipeline state that earns a per-event fee. null for dealer_funded (monthly fee billed outside).
     fee_trigger_state: 'appointment_held' | 'installed' | 'collected' | null;
     fee_cents: number;
@@ -84,7 +84,7 @@ export function marketLaunchBlockers(m: MarketConfig): string[] {
   if (m.zips.length === 0) out.push('no approved ZIP codes');
   if (!m.seller_display_name) out.push('no named seller/installer for disclosures');
   if (!m.launch_approval_id) out.push('no launch approval recorded');
-  if (m.business_mode === 'dealer_partner' && !m.dealer_partner) out.push('dealer_partner terms missing');
+  if (m.business_mode === 'dealer_partner' && !m.dealer_partner?.commercial_model) out.push('dealer fee model not agreed');
   if (m.business_mode === 'direct' && !m.direct) out.push('direct-mode terms missing');
   const kind = m.business_mode === 'direct' ? 'installer' : 'dealer';
   const active = m.providers.filter((p) => p.kind === kind && p.status === 'active' && !p.synthetic);

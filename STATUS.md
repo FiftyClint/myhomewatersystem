@@ -43,7 +43,7 @@ Phase 2 core (plan section 25) is built and tested locally with synthetic data, 
 T01 pass, T02 pass, T03 pass, T04 pass, T05 pass, T06 pass, T07 pass, T08 pass (timezone/DST; reminders live in HighLevel), T09 pass, T10 pass, T11 pass, T12 pass, T13 pass, T14 n/a, T15 pass (content guard + launch blockers), T16 n/a, T17 pass, T18 pass, T19 pass, T20 pass.
 
 ## Blockers (need you or a third party)
-1. Business model for Kansas City (or whichever market has the first willing partner).
+1. Dealer fee model for Kansas City (dealer partner chosen 2026-10-18): dealer-funded, appointment fee or install referral.
 2. Dealer/installer selection, credentials, signed agreement, ZIP list.
 3. Domain ownership for myhomewatersystem.com and kcwatersystems.com: both registered, owner unknown.
 4. Company legal name, phone, email, hours, address.
