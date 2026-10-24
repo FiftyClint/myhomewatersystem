@@ -35,6 +35,7 @@ export async function providerPage(ctx: AppContext, token: string, method: strin
         .bind(nowIso(now), a.id);
       if (role === 'dealer') {
         const r = await transition(ctx.db, market, { opportunityId: opp.id, to: 'dealer_accepted', actor: 'dealer', expectedVersion: expected,
+          evidence: `accepted via dealer link, assignment ${a.id}`,
           extra: (_o, tid) => [ctx.db.prepare(`UPDATE assignments SET status = 'accepted', accepted_at = ?
              WHERE id = ? AND status = 'offered' AND EXISTS (SELECT 1 FROM state_transitions WHERE id = ?)`).bind(nowIso(now), a.id, tid)] });
         notice = r.ok ? 'Accepted.' : 'This job changed since you opened it. Review the current status below.';

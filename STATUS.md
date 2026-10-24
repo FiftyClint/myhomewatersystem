@@ -3,7 +3,7 @@
 Last updated: 2026-10-24
 
 ## Where things stand
-**2026-10-24 pilot:** four dealer-partner markets (Phoenix East Valley, Las Vegas Valley, San Antonio area, Kansas City), all status draft, all "sell the leads" paid per held water test. Nine city pages at /locations/<city>/ with sourced utility hardness figures (New Braunfels has none published), four cluster pages, /sitemap.xml, and 301 forwarding from nine city domains to the hub (content/domains.ts). Every city page shows "Not open yet". Nothing deployed, no DNS touched.
+**2026-10-24 pilot:** four dealer-partner markets (Phoenix East Valley, Las Vegas Valley, San Antonio area, Kansas City), all status draft, all "sell the leads" at $95 per exclusive lead, earned when the one dealer accepts it (starting price, approved 2026-10-24, expected to change after installer talks). Nine city pages at /locations/<city>/ with sourced utility hardness figures (New Braunfels has none published), four cluster pages, /sitemap.xml, and 301 forwarding from nine city domains to the hub (content/domains.ts). Every city page shows "Not open yet". Nothing deployed, no DNS touched.
 
 Phase 2 core (plan section 25) is built and tested locally with synthetic data, for **both** business models. Nothing is deployed, no live account has been written to, nobody has been contacted, and no money has been spent.
 
@@ -23,11 +23,11 @@ Phase 2 core (plan section 25) is built and tested locally with synthetic data, 
 | Staging can never write to the production HighLevel location | `src/env.ts`, test T17 |
 | Coordinator API: work list, exceptions, transitions, ledger, links, report | `src/internal/api.ts` |
 | City pages, cluster pages, sitemap, city-domain 301s; every fact has an evidence row | `content/locations.ts`, `content/domains.ts`, `src/site/locations.ts`, tests/locations.test.ts |
-| Launch preflight: reads every config/markets/*.json; lists 29 blockers on 2026-10-24 | `npm run preflight` |
+| Launch preflight: reads every config/markets/*.json; lists 25 blockers on 2026-10-24 (fee blockers cleared once the $95 price was set) | `npm run preflight` |
 | Dealer economics calculator: raw leads per billable event, contribution, max cost per raw lead, stress test (conversion -30%, ad cost +25%). Reproduces the plan's $200-per-held-appointment illustration | `npm run economics -- inputs.json`, `src/domain/economics.ts` |
 | Full HTTP walkthrough on the real Workers runtime (local) | `npm run demo`, run 2026-10-18: lead, replay, route, accept, 7 status updates, $600 synthetic fee earned, $0 collected |
 
-`npm test`: 54 passed (tests/locations.test.ts added; tests/helpers.ts now fakes Date so default timestamps match the test clock, which fixed three tests that failed once the real date passed 2026-10-20). `npm run typecheck`: clean.
+`npm test`: 57 passed (tests/lead-fee.test.ts added for the per-lead fee; tests/locations.test.ts added earlier; tests/helpers.ts now fakes Date so default timestamps match the test clock, which fixed three tests that failed once the real date passed 2026-10-20). `npm run typecheck`: clean.
 
 ## Agent layer (built, off by default)
 - **Inquiry sorting (A4)**: `src/agents/`. Reads only the concern, water source, timing and free-text note (no name, phone or email). Returns a schema-checked proposal. A deterministic guard can only make handling more careful. The executor only writes an audit row and, when warranted, a coordinator exception (critical for possible leaks). It never changes pipeline state.
@@ -53,7 +53,7 @@ Phase 2 core (plan section 25) is built and tested locally with synthetic data, 
 T01 pass, T02 pass, T03 pass, T04 pass, T05 pass, T06 pass, T07 pass, T08 pass (timezone/DST; reminders live in HighLevel), T09 pass, T10 pass, T11 pass, T12 pass, T13 pass, T14 n/a, T15 pass (content guard + launch blockers), T16 n/a, T17 pass, T18 pass, T19 pass, T20 pass.
 
 ## Blockers (need you or a third party)
-1. Per-test fee amount and the later monthly figure (structure chosen 2026-10-24; fee_cents is 0 in every market). Proposal of $125 per held test plus a volume-based monthly fee is in docs/research/dealer-pricing.md, awaiting Clint. Monthly fee not modeled in code yet.
+1. Monthly fee is not modeled in code. The approved formula (each city's trailing three-month average of accepted leads times $95) is in docs/decisions.md and docs/business-model.md and would be billed by hand until built. The $95 per-lead fee itself is set in all four markets.
 2. Dealer selection, credentials, signed agreement and ZIP list for each of the four markets.
 3. Domain ownership: myhomewatersystem.com and all nine city domains are registered, owner not verified (docs/domain-register.csv).
 3a. Calls to Ryan before a dealer signs: needs a tracking number per market (approval to buy) and consent text naming My Home Water System (counsel). Not built.

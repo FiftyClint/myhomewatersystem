@@ -2,7 +2,7 @@ import type { BusinessHours } from './hours.ts';
 
 export type BusinessMode = 'dealer_partner' | 'direct';
 export type Concern = 'hardness' | 'taste_odor' | 'drinking_water' | 'not_sure';
-export type DealerCommercialModel = 'dealer_funded' | 'appointment_fee' | 'install_referral';
+export type DealerCommercialModel = 'dealer_funded' | 'exclusive_lead' | 'appointment_fee' | 'install_referral';
 
 export interface ProviderConfig {
   id: string;
@@ -37,7 +37,8 @@ export interface MarketConfig {
   dealer_partner?: {
     commercial_model: DealerCommercialModel | null; // null until agreed with the dealer
     // Pipeline state that earns a per-event fee. null for dealer_funded (monthly fee billed outside).
-    fee_trigger_state: 'appointment_held' | 'installed' | 'collected' | null;
+    // exclusive_lead uses dealer_accepted: the fee is earned when the one dealer accepts the lead.
+    fee_trigger_state: 'dealer_accepted' | 'appointment_held' | 'installed' | 'collected' | null;
     fee_cents: number;
     accept_sla_business_minutes: number;
     duplicate_window_days: number;

@@ -120,7 +120,9 @@ No source states a flat monthly fee for an exclusive water treatment territory o
 
 ---
 
-## Proposal sent to Clint, 2026-10-24 (not approved)
+## First proposal, 2026-10-24 (superseded)
+
+Replaced after Clint asked what a water test was and chose to keep selling leads. Kept for the record.
 
 Claude's judgment, built on the figures above. Nothing here is a published price.
 
@@ -128,3 +130,12 @@ Claude's judgment, built on the figures above. Nothing here is a published price
 - **Bill held, not booked.** EBCD's 68% show rate means a booked-test price would charge dealers for about one in three tests that never happen.
 - **Monthly, after volume shows:** a flat fee per city equal to that city's trailing three-month average of held tests times the per-test price. No water source states a monthly territory fee; general rank-and-rent ranges ($300-$3,000) are weak. Example (Claude's, illustrative): 12 held tests a month = $1,500.
 - **What must be true:** dealers close at least 25% of our held tests (below that, 125 / 0.25 = $500 per sale), and our cost to produce a held test, mostly Ryan's time, stays under $125. No data on either yet.
+
+## Approved starting price, 2026-10-24
+
+Claude's judgment, approved by Clint as a starting price he expects to change after talking to installers. Nothing here is a published price.
+
+- **$95 per exclusive lead.** A lead is a homeowner in the city who asked for a softener quote, whose phone Ryan confirmed, and who goes to one dealer only. $95 is the bottom of PeakIntent's exclusive range ($95-$180, table $95-$220) and close to Matyx's $90 average dealer CPL.
+- **Earned when the dealer accepts the lead.** A dealer that releases the lead pays nothing.
+- **Monthly, after volume shows:** a flat fee per city equal to that city's trailing three-month average of accepted leads times $95.
+- **What must be true (not yet known):** dealers close enough of these leads to keep paying, roughly 10% or better by Claude's estimate (no source), and our cost to produce a lead, mostly Ryan's confirmation call, stays under $95.

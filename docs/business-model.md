@@ -13,6 +13,7 @@ Both are built. A market picks one in `config/markets/<market>.json` (`business_
 | Extra launch requirements | Signed dealer agreement, dealer credentials, reporting commitment | Contractor licensing for our role, distributor terms, installer agreements, customer contract, payments, sales tax, warranty and callback reserve, insurance |
 
 Fee options for dealer mode (`dealer_partner.commercial_model`):
+- `exclusive_lead`: per-lead fee, earned when the one dealer accepts the lead (`fee_trigger_state: dealer_accepted`). The dealer's acceptance through their signed link is the evidence. Used in all four pilot markets at $95 (2026-10-24, starting price). The later monthly fee per city (trailing three-month average of accepted leads times the per-lead fee) is not billed by code yet.
 - `install_referral` / `appointment_fee`: per-event fee, earned when the opportunity reaches `fee_trigger_state` with evidence.
 - `dealer_funded`: monthly fee billed outside the per-event ledger; set `fee_trigger_state` to null.
 

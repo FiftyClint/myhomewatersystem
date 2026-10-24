@@ -20,6 +20,7 @@ export type TransitionResult =
   | { ok: false; error: 'not_found' | 'not_allowed' | 'evidence_required' | 'conflict'; detail?: string };
 
 // Per-event dealer fee. Earned only from a recorded transition with evidence, never from an estimate.
+// For exclusive_lead the evidence is the dealer's own acceptance through their signed link.
 function feeStmts(db: Sql, market: MarketConfig, opp: OpportunityRow, to: State, transitionId: string, at: string): Stmt[] {
   if (market.business_mode !== 'dealer_partner' || !market.dealer_partner) return [];
   const { fee_trigger_state, fee_cents } = market.dealer_partner;
@@ -53,6 +54,8 @@ export async function transition(db: Sql, market: MarketConfig, input: Transitio
   const version = input.expectedVersion ?? opp.state_version;
   const at = nowIso();
   const tid = uuid();
+  const extra = input.extra?.(opp, tid) ?? [];
+  const fee = feeStmts(db, market, opp, input.to, tid, at);
   const stmts: Stmt[] = [
     db.prepare(
       `UPDATE opportunities SET state = ?, hold_reason = ?, state_version = state_version + 1, updated_at = ?
@@ -65,18 +68,19 @@ export async function transition(db: Sql, market: MarketConfig, input: Transitio
        WHERE EXISTS (SELECT 1 FROM opportunities WHERE id = ? AND state = ? AND state_version = ?)`,
     ).bind(tid, opp.id, opp.state, input.to, input.actor, input.reason ?? null, input.evidence ?? null, at,
       opp.id, input.to, version + 1),
-    ...feeStmts(db, market, opp, input.to, tid, at),
+    // Caller statements run before the fee, so a fee on dealer_accepted sees the accepted assignment.
+    ...extra,
+    ...fee,
     // Keep the CRM stage in step. One job per transition.
     enqueueStmt(db, 'crm_stage', { opportunity_id: opp.id }, `crm_stage:${tid}`),
     ...(needsRouting(opp.business_mode, input.to)
       ? [enqueueStmt(db, 'route_lead', { opportunity_id: opp.id }, `route:${tid}`)] : []),
-    ...(input.extra?.(opp, tid) ?? []),
   ];
   const results = await db.batch(stmts);
   if (results[0]!.meta.changes !== 1) {
     return { ok: false, error: 'conflict', detail: 'record changed since it was read' };
   }
-  const feeAccrued = (results[2]?.meta.changes ?? 0) === 1 && feeStmts(db, market, opp, input.to, tid, at).length === 1;
+  const feeAccrued = fee.length === 1 && (results[2 + extra.length]?.meta.changes ?? 0) === 1;
   const updated = (await getOpportunity(db, opp.id))!;
   return { ok: true, opportunity: updated, transitionId: tid, feeAccrued };
 }
