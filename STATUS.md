@@ -69,6 +69,7 @@ T01 pass, T02 pass, T03 pass, T04 pass, T05 pass, T06 pass, T07 pass, T08 pass (
 Incurred: $0. Recurring added so far: $0. Planned new vendors: none. I have no verified pricing for D1/Workers usage on your plan or for a separate HighLevel sub-account; check those in the account before approving.
 
 ## Research (drafts, unreviewed, nobody contacted)
+- Pilot dealer target lists, 2026-10-24, in the shared folder water-systems/launch/: East Valley 13 (9 AZ ROC licenses confirmed by name), Las Vegas Valley 12 (9 NV NSCB confirmed), San Antonio area 15 (2 TCEQ confirmed), Kansas City 12 (none checked). Source URLs on every row. Ratings are thin; Google and Yelp were not readable.
 - `docs/research/dealer-prospects.csv` / `.md`: 20 KC prospects verified on their own sites. License fields filled 2026-10-18 from the Johnson County and KCMO public lookups (see `kc-licensing.md`). Insurance is not publicly verifiable. KS/MO Secretary of State searches were blocked here and still need a manual run.
 - `docs/research/kc-licensing.md`: licensing by jurisdiction plus a per-prospect check. Dragonfly and JF Denney are active in both JoCo and KCMO. None of the 7 water-treatment specialists has a public contractor license on record. Whether a softener install needs a permit or license is unclear in every jurisdiction; ask each building department.
 - `docs/research/kc-utility-dossier.md` + `evidence.csv`: 37 sourced claims. Hardness published for BPU, WaterOne, Independence; not for KC Water (current) or Lee's Summit; Olathe site blocked access.
