@@ -1,6 +1,9 @@
 import { buildContext, type Env } from './env.ts';
 import { layout } from './site/layout.ts';
 import { companyBody, homeBody, legalBody, marketBody, outOfAreaBody, serviceAreasBody, STATIC_PAGES, thankYouBody, unavailableBody } from './site/pages.ts';
+import { cityBody, clusterBody, sitemapXml } from './site/locations.ts';
+import { locationBySlug, locationsInMarket } from '../content/locations.ts';
+import { cityRedirect } from '../content/domains.ts';
 import { handleIntake, findMarket } from './intake/intake.ts';
 import { providerPage } from './dealer/page.ts';
 import { internalApi } from './internal/api.ts';
@@ -44,8 +47,14 @@ export default {
     const page = (title: string, description: string, body: string, noindex = false) =>
       layout({ title, description, path, body, noindex: noindex || staging, banner, baseUrl: env.BASE_URL });
 
+    // City domains forward to their page on the hub. Path and query are dropped on purpose.
+    const fwd = cityRedirect(url.host, env.BASE_URL);
+    if (fwd) return Response.redirect(fwd, 301);
+
     if (path === '/healthz') return new Response(JSON.stringify({ ok: true, env: env.ENVIRONMENT, crm: ctx.crm.name, crm_reason: ctx.crmReason }), { headers: { 'content-type': 'application/json' } });
-    if (path === '/robots.txt') return new Response(staging ? 'User-agent: *\nDisallow: /\n' : 'User-agent: *\nDisallow: /p/\nDisallow: /internal/\nDisallow: /api/\n');
+    if (path === '/robots.txt') return new Response(staging ? 'User-agent: *\nDisallow: /\n' : `User-agent: *\nDisallow: /p/\nDisallow: /internal/\nDisallow: /api/\nSitemap: ${env.BASE_URL}/sitemap.xml\n`);
+    if (path === '/sitemap.xml') return new Response(sitemapXml(env.BASE_URL, ctx.markets, STATIC_PAGES.filter((p) => !p.noindex).map((p) => p.path)),
+      { headers: { 'content-type': 'application/xml; charset=utf-8' } });
 
     if (path === '/' && req.method === 'GET') return html(200, page('Home water treatment options | My Home Water System', 'Compare water softening, filtration and drinking-water systems and request a quote from the local company that serves your area.', homeBody(ctx.markets)));
 
@@ -58,11 +67,16 @@ export default {
 
     const loc = path.match(/^\/locations\/([a-z0-9-]+)\/$/);
     if (loc && req.method === 'GET') {
+      const zip = url.searchParams.get('zip') ?? undefined;
+      const city = locationBySlug(loc[1]!);
+      const cityMarket = city && ctx.markets.find((x) => x.id === city.market_id);
+      if (city && cityMarket) return html(200, page(`Water softeners and filtration in ${city.name} | My Home Water System`,
+        `${city.name} water hardness as published by the local utility, and how to get a written water treatment quote.`,
+        cityBody(city, cityMarket, crypto.randomUUID(), { vals: { zip } })));
       const m = ctx.markets.find((x) => x.slug === loc[1]);
       if (!m) return html(404, page('Not found', 'Not found', '<h1>Page not found</h1>', true));
-      const zip = url.searchParams.get('zip') ?? undefined;
       return html(200, page(`Water treatment in ${m.name} | My Home Water System`, `Water treatment options and quotes in ${m.name}.`,
-        marketBody(m, crypto.randomUUID(), { vals: { zip } })));
+        locationsInMarket(m.id).length ? clusterBody(m, crypto.randomUUID(), { vals: { zip } }) : marketBody(m, crypto.randomUUID(), { vals: { zip } })));
     }
 
     if (path === '/service-areas/') return html(200, page('Service areas | My Home Water System', 'Where we take requests.', serviceAreasBody(ctx.markets)));
@@ -93,7 +107,11 @@ export default {
         case 'invalid': {
           const m = r.market ?? ctx.markets.find((x) => x.id === form.market) ?? ctx.markets.find((x) => x.zips.includes(form.zip ?? ''));
           if (!m) return html(422, page('Check your details', 'Error', '<h1>Please check your ZIP code</h1><p><a href="/">Start again</a></p>', true));
-          return html(422, page('Check your details', 'Error', marketBody(m, form.request_id ?? crypto.randomUUID(), { vals: form, errors: r.errors }), true));
+          const rid = form.request_id ?? crypto.randomUUID();
+          const city = locationBySlug((form.page ?? '').replace(/^\/locations\/|\/$/g, ''));
+          const body = city && city.market_id === m.id ? cityBody(city, m, rid, { vals: form, errors: r.errors })
+            : locationsInMarket(m.id).length ? clusterBody(m, rid, { vals: form, errors: r.errors }) : marketBody(m, rid, { vals: form, errors: r.errors });
+          return html(422, page('Check your details', 'Error', body, true));
         }
       }
     }

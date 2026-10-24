@@ -2,6 +2,8 @@ import type { MarketConfig } from '../domain/config.ts';
 import { serviceDisclosure, smsDisclosure } from '../intake/disclosure.ts';
 import { escapeHtml as e } from '../util.ts';
 import { STATIC_PAGES } from '../../content/pages.ts';
+import { LOCATIONS } from '../../content/locations.ts';
+import { areaDirectory } from './locations.ts';
 import company from '../../config/company.json';
 
 type Vals = Record<string, string | undefined>;
@@ -53,6 +55,7 @@ export function homeBody(markets: MarketConfig[]): string {
 <h1>Water treatment options for your home</h1>
 <p>Compare water softening, whole-home filtration and drinking-water systems. Tell us about your home, and we will connect you with the installing company that serves your area for a written recommendation and quote.</p>
 <p>${live.length ? `We currently take requests in: ${live.map((m) => `<a href="/locations/${e(m.slug)}/">${e(m.name)}</a>`).join(', ')}.` : 'We are not taking requests in any area yet.'}</p>
+${LOCATIONS.length ? `<h2>Local water by city</h2><p>${LOCATIONS.filter((l) => markets.some((m) => m.id === l.market_id)).map((l) => `<a href="/locations/${e(l.slug)}/">${e(l.name)}</a>`).join(', ')}</p>` : ''}
 <div class="grid three" style="margin-top:20px">
 <div class="card"><h3>Scale and hard water</h3><p><a href="/water-softeners/">About softeners</a></p></div>
 <div class="card"><h3>Taste and odor</h3><p><a href="/whole-home-filtration/">About whole-home filters</a></p></div>
@@ -80,7 +83,7 @@ export function marketBody(m: MarketConfig, requestId: string, form?: { vals?: V
 }
 
 export function serviceAreasBody(markets: MarketConfig[]): string {
-  const rows = markets.map((m) => `<tr><td><a href="/locations/${e(m.slug)}/">${e(m.name)}</a></td><td>${m.status === 'active' ? 'Taking requests' : 'Not open yet'}</td></tr>`).join('');
+  const rows = areaDirectory(markets);
   return `<h1>Service areas</h1><table><thead><tr><th>Area</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table>
 <p>We list an area only when a qualified local company has agreed to serve it.</p>`;
 }

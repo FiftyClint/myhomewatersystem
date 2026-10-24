@@ -86,6 +86,7 @@ export function marketLaunchBlockers(m: MarketConfig): string[] {
   if (!m.seller_display_name) out.push('no named seller/installer for disclosures');
   if (!m.launch_approval_id) out.push('no launch approval recorded');
   if (m.business_mode === 'dealer_partner' && !m.dealer_partner?.commercial_model) out.push('dealer fee model not agreed');
+  if (m.business_mode === 'dealer_partner' && m.dealer_partner?.fee_trigger_state && !(m.dealer_partner.fee_cents > 0)) out.push('dealer fee amount not set');
   if (m.business_mode === 'direct' && !m.direct) out.push('direct-mode terms missing');
   const kind = m.business_mode === 'direct' ? 'installer' : 'dealer';
   const active = m.providers.filter((p) => p.kind === kind && p.status === 'active' && !p.synthetic);

@@ -1,9 +1,10 @@
 // Launch checklist from config. Prints every blocker. Exit code 1 if anything blocks production.
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { marketLaunchBlockers, type MarketConfig, type Policy } from '../src/domain/config.ts';
 
 const read = (p: string) => JSON.parse(readFileSync(new URL(`../${p}`, import.meta.url), 'utf8'));
-const markets: MarketConfig[] = [read('config/markets/kansas-city.json')];
+const markets: MarketConfig[] = readdirSync(new URL('../config/markets/', import.meta.url)).filter((f) => f.endsWith('.json')).sort()
+  .map((f) => read(`config/markets/${f}`));
 const policy: Policy = read('config/policies/production.json');
 const company = read('config/company.json');
 const out: string[] = [];

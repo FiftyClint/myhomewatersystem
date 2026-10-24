@@ -1,4 +1,5 @@
 import { DatabaseSync } from 'node:sqlite';
+import { vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import type { Sql, Stmt } from '../src/db/sql.ts';
 import { MockCrm } from '../src/adapters/crm-mock.ts';
@@ -53,7 +54,12 @@ export async function app(opts: { markets?: MarketConfig[]; now?: Date } = {}): 
   const db = sqliteDb();
   const crm = new MockCrm();
   // Tuesday 2026-10-20 10:00 America/Chicago, inside business hours.
-  const clock = { t: opts.now ?? new Date('2026-10-20T15:00:00Z') };
+  // Code that defaults to new Date() (job due times, transition timestamps) must agree with the test clock,
+  // so the system clock follows it. Without this, tests fail once the real date passes the fixed clock.
+  vi.useFakeTimers({ toFake: ['Date'] });
+  let cur = opts.now ?? new Date('2026-10-20T15:00:00Z');
+  vi.setSystemTime(cur);
+  const clock = { get t() { return cur; }, set t(v: Date) { cur = v; vi.setSystemTime(v); } };
   const markets = opts.markets ?? structuredClone(MARKETS);
   const ctx: AppContext = { db, crm, markets, policy: POLICY, linkSecret: 'test-secret', baseUrl: 'https://test.local', now: () => clock.t };
   await syncConfig(db, markets);
