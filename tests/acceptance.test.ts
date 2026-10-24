@@ -290,7 +290,7 @@ describe('T15 content and launch guards', () => {
     }
     const blockers = marketLaunchBlockers(kc as unknown as MarketConfig);
     expect(blockers).not.toContain('dealer fee amount not set');
-    expect(blockers).toContain('no approved ZIP codes');
+    expect(blockers).not.toContain('no approved ZIP codes');
     expect(blockers).toContain('no launch approval recorded');
   });
 });

@@ -5,6 +5,8 @@ Last updated: 2026-10-24
 ## Where things stand
 **2026-10-24 pilot:** four dealer-partner markets (Phoenix East Valley, Las Vegas Valley, San Antonio area, Kansas City), all status draft, all "sell the leads" at $95 per exclusive lead, earned when the one dealer accepts it (starting price, approved 2026-10-24, expected to change after installer talks). Nine city pages at /locations/<city>/ with sourced utility hardness figures (New Braunfels has none published), four cluster pages, /sitemap.xml, and 301 forwarding from nine city domains to the hub (content/domains.ts). Every city page shows "Not open yet". Nothing deployed, no DNS touched.
 
+**2026-10-24 launch prep:** ZIP lists are set for all four markets (east-valley 36, las-vegas-valley 52, san-antonio-area 60, kansas-city 68), checked against Census ZCTA-to-place shares (docs/research/market-zips.csv), and each city page lists its ZIPs. Johnson County KS is held out of Kansas City until you decide. 85256 (Salt River Pima-Maricopa land) is held out of Scottsdale. Draft consent text names Aidren LLC, covers one dealer, and covers calls and texts about the request (docs/consent-draft.md); it is marked draft-2026-10-24, so preflight blocks launch until counsel signs off. Domain register updated from RDAP: the ten mapped domains are at GoDaddy, registered 2026-10-18, registrant redacted, so ownership is inferred, not verified.
+
 Phase 2 core (plan section 25) is built and tested locally with synthetic data, for **both** business models. Nothing is deployed, no live account has been written to, nobody has been contacted, and no money has been spent.
 
 ## Working (tested)
@@ -23,11 +25,11 @@ Phase 2 core (plan section 25) is built and tested locally with synthetic data, 
 | Staging can never write to the production HighLevel location | `src/env.ts`, test T17 |
 | Coordinator API: work list, exceptions, transitions, ledger, links, report | `src/internal/api.ts` |
 | City pages, cluster pages, sitemap, city-domain 301s; every fact has an evidence row | `content/locations.ts`, `content/domains.ts`, `src/site/locations.ts`, tests/locations.test.ts |
-| Launch preflight: reads every config/markets/*.json; lists 25 blockers on 2026-10-24 (fee blockers cleared once the $95 price was set) | `npm run preflight` |
+| Launch preflight: reads every config/markets/*.json; lists 20 blockers on 2026-10-24 (fee and ZIP blockers cleared; consent-draft blocker added) | `npm run preflight` |
 | Dealer economics calculator: raw leads per billable event, contribution, max cost per raw lead, stress test (conversion -30%, ad cost +25%). Reproduces the plan's $200-per-held-appointment illustration | `npm run economics -- inputs.json`, `src/domain/economics.ts` |
 | Full HTTP walkthrough on the real Workers runtime (local) | `npm run demo`, run 2026-10-18: lead, replay, route, accept, 7 status updates, $600 synthetic fee earned, $0 collected |
 
-`npm test`: 57 passed (tests/lead-fee.test.ts added for the per-lead fee; tests/locations.test.ts added earlier; tests/helpers.ts now fakes Date so default timestamps match the test clock, which fixed three tests that failed once the real date passed 2026-10-20). `npm run typecheck`: clean.
+`npm test`: 61 passed (tests/launch-config.test.ts added 2026-10-24 for ZIP lists and consent text; tests/lead-fee.test.ts added for the per-lead fee; tests/locations.test.ts added earlier; tests/helpers.ts now fakes Date so default timestamps match the test clock, which fixed three tests that failed once the real date passed 2026-10-20). `npm run typecheck`: clean.
 
 ## Agent layer (built, off by default)
 - **Inquiry sorting (A4)**: `src/agents/`. Reads only the concern, water source, timing and free-text note (no name, phone or email). Returns a schema-checked proposal. A deterministic guard can only make handling more careful. The executor only writes an audit row and, when warranted, a coordinator exception (critical for possible leaks). It never changes pipeline state.
@@ -39,7 +41,7 @@ Phase 2 core (plan section 25) is built and tested locally with synthetic data, 
 ## Mocked (labeled)
 - **CRM**: `MockCrm` everywhere. The HighLevel adapter (`src/adapters/crm-highlevel.ts`) is written against operation paths verified in your HighLevel registry but has **never called the live API**.
 - **Dealer notification**: a HighLevel task for the coordinator to forward the link. No direct email/SMS to dealers.
-- Market data: only synthetic fixture markets have ZIPs and providers.
+- Market data: the four pilot markets have ZIP lists; no market has a verified dealer.
 
 ## Not built (by design, for now)
 - Follow-up message sequences: these belong in HighLevel workflows (docs/highlevel-setup.md), not code.
@@ -54,12 +56,12 @@ T01 pass, T02 pass, T03 pass, T04 pass, T05 pass, T06 pass, T07 pass, T08 pass (
 
 ## Blockers (need you or a third party)
 1. Monthly fee is not modeled in code. The approved formula (each city's trailing three-month average of accepted leads times $95) is in docs/decisions.md and docs/business-model.md and would be billed by hand until built. The $95 per-lead fee itself is set in all four markets.
-2. Dealer selection, credentials, signed agreement and ZIP list for each of the four markets.
-3. Domain ownership: myhomewatersystem.com and all nine city domains are registered, owner not verified (docs/domain-register.csv).
-3a. Calls to Ryan before a dealer signs: needs a tracking number per market (approval to buy) and consent text naming My Home Water System (counsel). Not built.
+2. Dealer selection, credentials and signed agreement for each of the four markets. ZIP lists are done. Target lists (unvetted, nobody contacted) are in the shared folder water-systems/launch/.
+3. Domain ownership: the ten mapped domains are at GoDaddy with registrant redacted; confirm in your GoDaddy account (docs/domain-register.csv). sanantoniowatersystems.com is at Namecheap and is probably not yours.
+3a. Calls to Ryan before a dealer signs: needs a tracking number per market (approval to buy; options and cited prices in the shared folder, water-systems/launch/phone-numbers.md). Consent draft is written and waits on counsel.
 3b. City facts are unreviewed drafts; a named reviewer must check them against the sources. (NBU's 2026-10-15 boil water notice covered about 600 Copper Ridge customers after a main break and was lifted 2026-10-16.)
-4. Company legal name, phone, email, hours, address.
-5. Counsel review of consent text, privacy and terms.
+4. Company phone, email, hours, address. Legal name set to Aidren LLC.
+5. Counsel review of consent text (docs/consent-draft.md, six open questions), privacy and terms.
 6. Approval to create the HighLevel pipeline and a test sub-account for the integration spike.
 7. Approval to create Cloudflare D1 databases and deploy staging.
 

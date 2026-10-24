@@ -2,6 +2,7 @@ import type { MarketConfig } from '../domain/config.ts';
 import { escapeHtml as e } from '../util.ts';
 import { LOCATIONS, locationsInMarket, type CityLocation } from '../../content/locations.ts';
 import { inquiryForm } from './pages.ts';
+import { CITY_ZIPS } from '../../content/zips.ts';
 
 const USGS_HARDNESS = 'https://www.usgs.gov/water-science-school/science/hardness-water';
 
@@ -49,8 +50,14 @@ ${l.notes.length ? `<ul>${l.notes.map((n) => `<li>${e(n)}</li>`).join('')}</ul>`
 <p>Compare options: <a href="/water-softeners/">water softeners</a>, <a href="/whole-home-filtration/">whole-home filtration</a> and <a href="/reverse-osmosis/">reverse osmosis</a>.</p>
 <h2>How it works</h2><ol class="steps"><li>Send a request.</li><li>Assessment at your home.</li><li>Written quote with what is included and what is extra.</li><li>Installation and service.</li></ol>
 <p>Booking an assessment is not a purchase.</p>
+${zipList(l)}
 ${nearby(l, m)}
 </div><div>${requestPanel(m, requestId, `/locations/${l.slug}/`, form)}</div></div>`;
+}
+
+function zipList(l: CityLocation): string {
+  const zips = CITY_ZIPS[l.slug] ?? [];
+  return zips.length ? `<h2>ZIP codes this page covers</h2><p class="small">${zips.map(e).join(', ')}</p>` : '';
 }
 
 // Cluster page: one dealer territory, linking to each city in it.
