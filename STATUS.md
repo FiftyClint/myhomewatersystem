@@ -53,11 +53,11 @@ Phase 2 core (plan section 25) is built and tested locally with synthetic data, 
 T01 pass, T02 pass, T03 pass, T04 pass, T05 pass, T06 pass, T07 pass, T08 pass (timezone/DST; reminders live in HighLevel), T09 pass, T10 pass, T11 pass, T12 pass, T13 pass, T14 n/a, T15 pass (content guard + launch blockers), T16 n/a, T17 pass, T18 pass, T19 pass, T20 pass.
 
 ## Blockers (need you or a third party)
-1. Per-test fee amount and the later monthly figure (structure chosen 2026-10-24; fee_cents is 0 in every market). Monthly fee not modeled in code yet.
+1. Per-test fee amount and the later monthly figure (structure chosen 2026-10-24; fee_cents is 0 in every market). Proposal of $125 per held test plus a volume-based monthly fee is in docs/research/dealer-pricing.md, awaiting Clint. Monthly fee not modeled in code yet.
 2. Dealer selection, credentials, signed agreement and ZIP list for each of the four markets.
 3. Domain ownership: myhomewatersystem.com and all nine city domains are registered, owner not verified (docs/domain-register.csv).
 3a. Calls to Ryan before a dealer signs: needs a tracking number per market (approval to buy) and consent text naming My Home Water System (counsel). Not built.
-3b. City facts are unreviewed drafts; a named reviewer must check them against the sources. New Braunfels Utilities posted a boil water notice dated 2026-10-15 (not opened).
+3b. City facts are unreviewed drafts; a named reviewer must check them against the sources. (NBU's 2026-10-15 boil water notice covered about 600 Copper Ridge customers after a main break and was lifted 2026-10-16.)
 4. Company legal name, phone, email, hours, address.
 5. Counsel review of consent text, privacy and terms.
 6. Approval to create the HighLevel pipeline and a test sub-account for the integration spike.
