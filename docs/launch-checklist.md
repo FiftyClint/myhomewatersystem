@@ -20,18 +20,21 @@
 ## Accounts and config
 - [x] Company legal name and email in `config/company.json`; no hours and no address by Clint's call; phone per market
 - [ ] hello@myhomewatersystem.com forwarded to clint@cgf.solutions (Cloudflare Email Routing, needs his yes)
-- [ ] Cloudflare API token created by Clint and saved with the account ID as GitHub secrets CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID
-- [ ] D1 staging and production databases created; IDs in `wrangler.toml`
-- [ ] Secrets set: LINK_SECRET, HASH_PEPPER, ADMIN_TOKEN, CRM_WEBHOOK_SECRET, HIGHLEVEL_*
+- [ ] Cloudflare API token created by Clint and saved with the account ID as GitHub secrets CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID (the deploy workflow is on the default branch, so it already shows under Actions)
+- [ ] Phone forwarding for the four numbers: last step before go-live
+- [x] D1 databases created 2026-10-26 on Clint's Cloudflare account (the one with the poweredlandco Workers): mhws-staging dc685077-9aae-4beb-81b3-5e5f4d7788b2, mhws-production 91b9be82-4405-4927-9bb0-65a5ec33b1df; IDs in `wrangler.toml`. Tables are created by the deploy workflow's migration step.
+- [x] LINK_SECRET, HASH_PEPPER, ADMIN_TOKEN, CRM_WEBHOOK_SECRET: the deploy workflow makes each one once if it is missing (ADMIN_TOKEN and CRM_WEBHOOK_SECRET come from GitHub secrets of the same name when those exist)
+- [ ] HIGHLEVEL_TOKEN on mhws-staging (MHWS Test token) and mhws (real token), set by Clint; HIGHLEVEL_LOCATION_ID for production is in `wrangler.toml` (1NdIhzTx9ZJlqnXshDkQ) and is on the staging block list in config/protected.json
 - [ ] HighLevel pipeline, workflows and webhook built (docs/highlevel-setup.md); integration spike passed
-- [ ] Cloudflare Access (or equivalent) in front of `/internal/*`
-- [ ] Bot protection on the form (Cloudflare Turnstile) and rate limiting
-- [ ] DNS for the hub and each city domain (apex and www) points at the Worker as a Workers custom domain (needs Clint's yes)
+- [x] `/internal/*` needs the ADMIN_TOKEN bearer token, compared in constant time (src/index.ts); robots.txt disallows it
+- [x] Form rate limit: 5 posts a minute per address (FORM_LIMITER binding, both environments), on top of the honeypot
+- [ ] Turnstile on the form: later, if spam shows up
+- [ ] Hub and nine city domains added to Clint's Cloudflare account and nameservers changed at GoDaddy (Clint, guide Stage 6). The twenty custom domains (apex and www) are already listed in `wrangler.toml`, so the production deploy attaches them.
 - [ ] Each city site checked live: home page 200, www goes to the bare domain, sitemap.xml lists only that site, phone number in the header
 - [ ] Each site submitted to Google Search Console and Bing Webmaster Tools with its sitemap
 
 ## Verification
-- [ ] `npm test` and `npm run typecheck` pass
+- [x] `npm test` (76) and `npm run typecheck` pass, 2026-10-26
 - [ ] Staging walkthrough with the coordinator (`npm run demo`)
 - [ ] One authorized test record through production, then deleted
 - [ ] Restore drill (export D1, restore to a scratch database)

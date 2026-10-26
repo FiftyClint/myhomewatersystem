@@ -3,6 +3,8 @@
 Last updated: 2026-10-26
 
 ## Where things stand
+**2026-10-26 launch prep:** both Cloudflare D1 databases exist (mhws-staging, mhws-production) and their IDs are in wrangler.toml. Production lists all ten domains, apex and www, as custom domains; the bare hub domain forwards to www. Form posts are rate limited. Staging previews a city site at /__site/<domain>. The deploy workflow (on the default branch, so it shows under Actions) sets staging's address, makes the Worker's own secrets once, and checks /healthz. Preflight lists 6 blockers, all Clint's go: policy external actions and dry run, and a launch approval per market. `npm test` 76 passed. Nothing deployed, no DNS touched, nothing bought or sent. Phone forwarding is the last step before go-live.
+
 **2026-10-26 owner answers applied:** hello@ forwards to Clint's CGF inbox (address to confirm, set up at the DNS stage). No hours on any site. Consent wording approved (owner-approved-2026-10-26). Every city site reads "[City] Water Systems by My Home Water System". Sites take requests before a dealer signs: the lead is held and nobody is routed until the homeowner agrees to a named dealer. A manual-only deploy workflow is in .github/workflows/deploy.yml and needs Clint's token in GitHub secrets. Preflight lists 11 blockers. `npm test` 70 passed. Nothing deployed, no DNS touched, nothing bought or sent.
 
 **2026-10-26 standalone city sites:** each of the nine city domains now serves its own site: a home page with the city's sourced water facts, a short published-figure answer at the top, seven FAQs with FAQPage JSON-LD, the request form, about and contact pages, and its own sitemap and robots. www goes to the bare domain. The header shows the market's tracking number once it is set. The hub links out to the city sites and 301s its old /locations/<city>/ pages to them. Johnson County (36 ZIPs) is now in Kansas City (104 ZIPs). Contact pages show hello@myhomewatersystem.com and no mailing address. Preflight lists 21 blockers. Nothing deployed, no DNS touched, nothing bought or sent.
@@ -62,15 +64,15 @@ T01 pass, T02 pass, T03 pass, T04 pass, T05 pass, T06 pass, T07 pass, T08 pass (
 1. Monthly fee is not modeled in code. The approved formula (each city's trailing three-month average of accepted leads times $95) is in docs/decisions.md and docs/business-model.md and would be billed by hand until built. The $95 per-lead fee itself is set in all four markets.
 2. Dealer selection, credentials and signed agreement for each of the four markets. ZIP lists are done. Target lists (unvetted, nobody contacted) are in the shared folder water-systems/launch/.
 3. Domains: confirmed yours on 2026-10-26. DNS for the hub and the nine city domains must point at the Worker before any site serves (needs your yes).
-3a. Tracking numbers: done 2026-10-26. One per market, shared by its city sites: 913-286-7027 Kansas City, 602-962-2652 East Valley, 725-525-0811 Las Vegas Valley, 726-204-2386 San Antonio area. Call forwarding to Ryan is set in HighLevel.
+3a. Tracking numbers: done 2026-10-26. One per market, shared by its city sites: 913-286-7027 Kansas City, 602-962-2652 East Valley, 725-525-0811 Las Vegas Valley, 726-204-2386 San Antonio area. Call forwarding to Ryan is the last step before go-live.
 3b. City facts are unreviewed drafts; a named reviewer must check them against the sources. (NBU's 2026-10-15 boil water notice covered about 600 Copper Ridge customers after a main break and was lifted 2026-10-16.)
 4. hello@myhomewatersystem.com forwards to clint@cgf.solutions once the domain is on Cloudflare. No hours and no mailing address are shown, by your call.
 5. Consent text approved 2026-10-26. Privacy and terms text was drafted 2026-10-26 and waits on your approval; the pages stay marked draft until then.
 6. Approval to create the HighLevel pipeline and a test sub-account for the integration spike.
-7. Approval to create Cloudflare D1 databases and deploy staging. You create the Cloudflare API token and save it as a GitHub secret; the deploy workflow runs only when you start it.
+7. D1 databases created 2026-10-26. You create the Cloudflare API token and save it with the account ID as GitHub secrets; the deploy workflow runs only when you start it.
 
 ## Costs
-Incurred: $0. Recurring added so far: $0. Planned new vendors: none. I have no verified pricing for D1/Workers usage on your plan or for a separate HighLevel sub-account; check those in the account before approving.
+Incurred: $0. Two empty D1 databases were created 2026-10-26; I have no verified D1 price for your plan. Recurring added so far: $0. Planned new vendors: none. I have no verified pricing for D1/Workers usage on your plan or for a separate HighLevel sub-account; check those in the account before approving.
 
 ## Research (drafts, unreviewed, nobody contacted)
 - Pilot dealer target lists, 2026-10-24, in the shared folder water-systems/launch/: East Valley 13 (9 AZ ROC licenses confirmed by name), Las Vegas Valley 12 (9 NV NSCB confirmed), San Antonio area 15 (2 TCEQ confirmed), Kansas City 12 (none checked). Source URLs on every row. Ratings are thin; Google and Yelp were not readable.

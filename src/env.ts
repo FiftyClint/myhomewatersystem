@@ -29,6 +29,7 @@ export interface Env {
   HIGHLEVEL_PIPELINE_ID?: string;
   HIGHLEVEL_STAGE_MAP?: string;
   ANTHROPIC_API_KEY?: string;
+  FORM_LIMITER?: RateLimit;
 }
 
 export const PRODUCTION_MARKETS = [eastValley, lasVegasValley, sanAntonioArea, kc] as unknown as MarketConfig[];

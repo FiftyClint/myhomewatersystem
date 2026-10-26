@@ -1,6 +1,6 @@
 # Manual deploy only. Nothing here runs on a push. Clint starts it from the Actions tab
 # after he approves a deploy. Needs repository secrets CLOUDFLARE_API_TOKEN and
-# CLOUDFLARE_ACCOUNT_ID, and real D1 database IDs in wrangler.toml for the chosen environment.
+# CLOUDFLARE_ACCOUNT_ID. The D1 database IDs in wrangler.toml are real (created 2026-10-26).
 name: Deploy (manual)
 
 on:
@@ -38,4 +38,48 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: npx wrangler deploy --env ${{ inputs.environment }}
+        run: |
+          if [ "${{ inputs.environment }}" = "staging" ]; then
+            # Staging has no domain of its own. Its links point at its workers.dev address.
+            sub=$(curl -fsS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+              "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/subdomain" | jq -r '.result.subdomain')
+            if [ -z "$sub" ] || [ "$sub" = "null" ]; then echo "No workers.dev subdomain on this account. Turn it on under Workers & Pages first."; exit 1; fi
+            npx wrangler deploy --env staging --var "BASE_URL:https://mhws-staging.$sub.workers.dev"
+          else
+            npx wrangler deploy --env production
+          fi
+      - name: Set the Worker's own secrets
+        # LINK_SECRET and HASH_PEPPER are made here once and never change after, because changing them
+        # breaks dealer links already sent. ADMIN_TOKEN and CRM_WEBHOOK_SECRET come from GitHub secrets
+        # of the same name when those exist, and are otherwise made here once. No value is printed.
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          GH_ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+          GH_CRM_WEBHOOK_SECRET: ${{ secrets.CRM_WEBHOOK_SECRET }}
+        run: |
+          e="${{ inputs.environment }}"
+          have=$(npx wrangler secret list --env "$e" --format json | jq -r '.[].name')
+          put() { printf '%s' "$2" | npx wrangler secret put "$1" --env "$e" > /dev/null; echo "set $1"; }
+          for n in LINK_SECRET HASH_PEPPER ADMIN_TOKEN CRM_WEBHOOK_SECRET; do
+            given=""
+            [ "$n" = "ADMIN_TOKEN" ] && given="$GH_ADMIN_TOKEN"
+            [ "$n" = "CRM_WEBHOOK_SECRET" ] && given="$GH_CRM_WEBHOOK_SECRET"
+            if [ -n "$given" ]; then put "$n" "$given"
+            elif ! printf '%s\n' "$have" | grep -qx "$n"; then put "$n" "$(openssl rand -hex 32)"
+            else echo "kept $n"; fi
+          done
+      - name: Check the Worker answers
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ "${{ inputs.environment }}" = "staging" ]; then
+            sub=$(curl -fsS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+              "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/subdomain" | jq -r '.result.subdomain')
+            url="https://mhws-staging.$sub.workers.dev/healthz"
+          else
+            url="https://www.myhomewatersystem.com/healthz"
+          fi
+          for i in 1 2 3 4 5 6; do curl -fsS "$url" && exit 0; sleep 10; done
+          echo "No answer from $url yet. For production this is expected until the domains are on Cloudflare."; exit 1

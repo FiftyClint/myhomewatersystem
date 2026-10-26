@@ -5,7 +5,7 @@ import { cityBody, clusterBody, sitemapXml, urlset } from './site/locations.ts';
 import { cityAboutBody, cityContactBody, cityDescription, cityHomeBody, cityJsonLd, cityTitle } from './site/city.ts';
 import { locationBySlug, locationsInMarket, type CityLocation } from '../content/locations.ts';
 import { CITY_ZIPS } from '../content/zips.ts';
-import { normalizeHost, siteForHost, siteForSlug, siteUrl, type CitySite } from '../content/sites.ts';
+import { CITY_SITES, HUB_DOMAIN, normalizeHost, siteForHost, siteForSlug, siteUrl, type CitySite } from '../content/sites.ts';
 import type { MarketConfig } from './domain/config.ts';
 import { handleIntake, findMarket } from './intake/intake.ts';
 import { providerPage } from './dealer/page.ts';
@@ -89,9 +89,24 @@ export default {
     const staging = env.ENVIRONMENT !== 'production';
     const banner = staging ? 'Staging preview with synthetic data. Not open for real requests. Legal pages and disclosures are drafts pending review.' : null;
 
+    // Staging has one address, so a city site is previewed by cookie: /__site/<domain> picks one, /__site/hub goes back.
+    const pick = staging ? path.match(/^\/__site\/([a-z0-9.-]+)$/) : null;
+    if (pick) {
+      const d = pick[1]!;
+      if (d !== 'hub' && !CITY_SITES.some((s) => s.domain === d)) return new Response('unknown site', { status: 404 });
+      return new Response(null, { status: 303, headers: { location: '/',
+        'set-cookie': d === 'hub' ? 'mhws_site=; Path=/; Max-Age=0; Secure; HttpOnly; SameSite=Lax' : `mhws_site=${d}; Path=/; Max-Age=86400; Secure; HttpOnly; SameSite=Lax` } });
+    }
+    const host = (staging ? (req.headers.get('cookie') ?? '').match(/(?:^|;\s*)mhws_site=([a-z0-9.-]+)/)?.[1] : undefined) ?? url.host;
+
+    // The hub lives at BASE_URL (www). Its bare domain forwards there.
+    if (!staging && normalizeHost(url.host) === HUB_DOMAIN && new URL(env.BASE_URL).host !== HUB_DOMAIN) {
+      return Response.redirect(`${env.BASE_URL}${path}${url.search}`, 301);
+    }
+
     // City sites: each city domain is its own site. www goes to the bare domain.
-    const site = siteForHost(url.host);
-    if (site && normalizeHost(url.host) !== site.domain) return Response.redirect(`${siteUrl(site)}${path}${url.search}`, 301);
+    const site = siteForHost(host);
+    if (site && normalizeHost(host) !== site.domain) return Response.redirect(`${siteUrl(site)}${path}${url.search}`, 301);
     const siteCity = site && locationBySlug(site.slug);
     const siteMarket = siteCity && ctx.markets.find((x) => x.id === siteCity.market_id);
     const base = site ? siteUrl(site) : env.BASE_URL;
@@ -151,6 +166,11 @@ export default {
     }
 
     if (path === '/api/inquiry' && req.method === 'POST') {
+      // Per-address limit on form posts, on top of the honeypot. Approximate per Cloudflare location (Cloudflare docs).
+      if (env.FORM_LIMITER) {
+        const { success } = await env.FORM_LIMITER.limit({ key: `inquiry:${req.headers.get('cf-connecting-ip') ?? 'unknown'}` });
+        if (!success) return html(429, page('Please try again', 'Error', unavailableBody(siteMarket?.tracking_phone), true), { 'retry-after': '60' });
+      }
       const form = await readForm(req);
       if (!form) return html(413, page('Too large', 'Error', '<h1>Request too large</h1>', true));
       if (!staging && !env.HASH_PEPPER) return html(503, page('Unavailable', 'Error', unavailableBody(siteMarket?.tracking_phone), true));

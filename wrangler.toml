@@ -1,4 +1,4 @@
-# Cloudflare Worker for myhomewatersystem.com. Nothing here is deployed yet.
+# Cloudflare Worker for myhomewatersystem.com and the nine city sites. Nothing here is deployed yet.
 name = "mhws"
 main = "src/index.ts"
 compatibility_date = "2025-09-01"
@@ -12,14 +12,47 @@ vars = { ENVIRONMENT = "staging", BASE_URL = "http://localhost:8787", CRM_PROVID
 [[env.staging.d1_databases]]
 binding = "DB"
 database_name = "mhws-staging"
-database_id = "00000000-0000-0000-0000-000000000000" # placeholder until the staging database is created
+database_id = "dc685077-9aae-4beb-81b3-5e5f4d7788b2" # created 2026-10-26, empty until the deploy workflow runs migrations
 migrations_dir = "migrations"
+# Form posts per address per minute. The deploy workflow sets BASE_URL to the staging workers.dev address.
+[[env.staging.ratelimits]]
+name = "FORM_LIMITER"
+namespace_id = "1101"
+simple = { limit = 5, period = 60 }
 
 [env.production]
 name = "mhws"
-vars = { ENVIRONMENT = "production", BASE_URL = "https://www.myhomewatersystem.com", CRM_PROVIDER = "mock" }
+vars = { ENVIRONMENT = "production", BASE_URL = "https://www.myhomewatersystem.com", CRM_PROVIDER = "mock", HIGHLEVEL_LOCATION_ID = "1NdIhzTx9ZJlqnXshDkQ" }
+# The hub and the nine city sites, apex and www. A production deploy attaches these as Workers custom
+# domains, which needs each domain added to this Cloudflare account first (guide Stage 6).
+routes = [
+  { pattern = "myhomewatersystem.com", custom_domain = true },
+  { pattern = "www.myhomewatersystem.com", custom_domain = true },
+  { pattern = "mesawatersystems.com", custom_domain = true },
+  { pattern = "www.mesawatersystems.com", custom_domain = true },
+  { pattern = "chandlerwatersystems.com", custom_domain = true },
+  { pattern = "www.chandlerwatersystems.com", custom_domain = true },
+  { pattern = "gilbertwatersystems.com", custom_domain = true },
+  { pattern = "www.gilbertwatersystems.com", custom_domain = true },
+  { pattern = "scottsdalewatersystems.com", custom_domain = true },
+  { pattern = "www.scottsdalewatersystems.com", custom_domain = true },
+  { pattern = "vegaswatersystems.com", custom_domain = true },
+  { pattern = "www.vegaswatersystems.com", custom_domain = true },
+  { pattern = "hendersonwatersystems.com", custom_domain = true },
+  { pattern = "www.hendersonwatersystems.com", custom_domain = true },
+  { pattern = "sanantoniohomewatersystems.com", custom_domain = true },
+  { pattern = "www.sanantoniohomewatersystems.com", custom_domain = true },
+  { pattern = "newbraunfelswatersystems.com", custom_domain = true },
+  { pattern = "www.newbraunfelswatersystems.com", custom_domain = true },
+  { pattern = "kcwatersystems.com", custom_domain = true },
+  { pattern = "www.kcwatersystems.com", custom_domain = true },
+]
 [[env.production.d1_databases]]
 binding = "DB"
 database_name = "mhws-production"
-database_id = "00000000-0000-0000-0000-000000000000" # placeholder; production is not created until launch approval
+database_id = "91b9be82-4405-4927-9bb0-65a5ec33b1df" # created 2026-10-26, empty until the deploy workflow runs migrations
 migrations_dir = "migrations"
+[[env.production.ratelimits]]
+name = "FORM_LIMITER"
+namespace_id = "1102"
+simple = { limit = 5, period = 60 }
