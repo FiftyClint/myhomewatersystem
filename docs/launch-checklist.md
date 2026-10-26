@@ -10,7 +10,8 @@
 - [x] Domain ownership confirmed by Clint on 2026-10-26 for myhomewatersystem.com and the nine city domains in content/sites.ts
 
 ## Partner and legal
-- [ ] Dealer (or installers) selected, credentials and insurance verified, dates entered in market config
+- [ ] First live lead offered to a dealer per market by hand, after the homeowner agrees to that named dealer (no outreach notes, Clint 2026-10-26)
+- [ ] Dealer (or installers) who want more: credentials and insurance verified, dates entered in market config
 - [ ] Signed agreement; `agreement_version` entered
 - [ ] Approved ZIP list entered
 - [x] Consent text approved by Clint on 2026-10-26 (no counsel review, his call); `disclosure_version` owner-approved-2026-10-26

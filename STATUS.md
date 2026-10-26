@@ -62,7 +62,7 @@ T01 pass, T02 pass, T03 pass, T04 pass, T05 pass, T06 pass, T07 pass, T08 pass (
 
 ## Blockers (need you or a third party)
 1. Monthly fee is not modeled in code. The approved formula (each city's trailing three-month average of accepted leads times $95) is in docs/decisions.md and docs/business-model.md and would be billed by hand until built. The $95 per-lead fee itself is set in all four markets.
-2. Dealer selection, credentials and signed agreement for each of the four markets. ZIP lists are done. Target lists (unvetted, nobody contacted) are in the shared folder water-systems/launch/.
+2. Dealers: no notes go out (Clint, 2026-10-26). Each dealer hears first through a live lead sent by hand after the homeowner agrees to that named dealer; credentials and agreement go in once a dealer wants more. ZIP lists are done. Target lists (unvetted, nobody contacted) are in the shared folder water-systems/launch/.
 3. Domains: confirmed yours on 2026-10-26. DNS for the hub and the nine city domains must point at the Worker before any site serves (needs your yes).
 3a. Tracking numbers: done 2026-10-26. One per market, shared by its city sites: 913-286-7027 Kansas City, 602-962-2652 East Valley, 725-525-0811 Las Vegas Valley, 726-204-2386 San Antonio area. Call forwarding to Ryan is the last step before go-live.
 3b. City facts are unreviewed drafts; a named reviewer must check them against the sources. (NBU's 2026-10-15 boil water notice covered about 600 Copper Ridge customers after a main break and was lifted 2026-10-16.)
@@ -79,7 +79,7 @@ Incurred: $0. Two empty D1 databases were created 2026-10-26; I have no verified
 - `docs/research/dealer-prospects.csv` / `.md`: 20 KC prospects verified on their own sites. License fields filled 2026-10-18 from the Johnson County and KCMO public lookups (see `kc-licensing.md`). Insurance is not publicly verifiable. KS/MO Secretary of State searches were blocked here and still need a manual run.
 - `docs/research/kc-licensing.md`: licensing by jurisdiction plus a per-prospect check. Dragonfly and JF Denney are active in both JoCo and KCMO. None of the 7 water-treatment specialists has a public contractor license on record. Whether a softener install needs a permit or license is unclear in every jurisdiction; ask each building department.
 - `docs/research/kc-utility-dossier.md` + `evidence.csv`: 37 sourced claims. Hardness published for BPU, WaterOne, Independence; not for KC Water (current) or Lee's Summit; Olathe site blocked access.
-- `docs/research/dealer-scorecard.md`, `dealer-outreach-draft.md`: drafts, not approved, not sent.
+- `docs/research/dealer-scorecard.md`, `dealer-outreach-draft.md`: drafts, not used. Clint decided 2026-10-26 that no notes go out.
 
 ## Next task
 - Waiting on owner: create the My Home Water System sub-account and token; Anthropic API key to run the live eval.
