@@ -148,7 +148,7 @@ describe('market config', () => {
     expect(PRODUCTION_MARKETS.find((m) => m.id === 'east-valley')!.zips).not.toContain('85256');
   });
 
-  it('each city site shows its market's tracking number', async () => {
+  it("each city site shows its market's tracking number", async () => {
     const want: Record<string, string> = { 'kansas-city': '+19132867027', 'east-valley': '+16029622652', 'las-vegas-valley': '+17255250811', 'san-antonio-area': '+17262042386' };
     for (const site of CITY_SITES) {
       const market = LOCATIONS.find((l) => l.slug === site.slug)!.market_id;
