@@ -30,7 +30,8 @@
 - [x] `/internal/*` needs the ADMIN_TOKEN bearer token, compared in constant time (src/index.ts); robots.txt disallows it
 - [x] Form rate limit: 5 posts a minute per address (FORM_LIMITER binding, both environments), on top of the honeypot
 - [ ] Turnstile on the form: later, if spam shows up
-- [ ] Hub and nine city domains added to Clint's Cloudflare account and nameservers changed at GoDaddy (Clint, guide Stage 6). The twenty custom domains (apex and www) are already listed in `wrangler.toml`, so the production deploy attaches them.
+- [x] Hub and nine city domains added to Clint's Cloudflare account on the Free plan, 2026-10-26 (status pending, no DNS records yet). All ten were assigned carlos.ns.cloudflare.com and kristina.ns.cloudflare.com.
+- [ ] Nameservers changed at GoDaddy for each of the ten domains (Clint, guide Stage 6), after confirming none has email at GoDaddy. The twenty custom domains (apex and www) are already listed in `wrangler.toml`, so the production deploy attaches them once the zones are active.
 - [ ] Each city site checked live: home page 200, www goes to the bare domain, sitemap.xml lists only that site, phone number in the header
 - [ ] Each site submitted to Google Search Console and Bing Webmaster Tools with its sitemap
 
