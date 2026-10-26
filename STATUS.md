@@ -9,7 +9,10 @@ Last updated: 2026-10-26
 
 **2026-10-26 23:23 UTC nameservers:** registry shows nine of ten on carlos/kristina.ns.cloudflare.com. chandlerwatersystems.com is still on GoDaddy nameservers. phoenixhomewatersystems.com (owned, not in the build, no Cloudflare zone) was also switched to Cloudflare nameservers.
 
-**2026-10-26 Phoenix added (Clint's yes):** phoenixhomewatersystems.com is a standalone city site in its own market `phoenix` (status draft, not open). City page carries the City of Phoenix 2025 report hardness (172-302 ppm, 10-17.6 gpg, range only). 41 ZIPs included; 85086 and 85087 held as check (under half their land is in Phoenix city). No tracking number yet: buying one needs Clint's yes, and preflight lists it as a blocker. No Cloudflare zone yet: the production deploy will fail on the Phoenix route until the zone exists in the account. No dealer contacted.
+**2026-10-26 Phoenix added (Clint's yes):** phoenixhomewatersystems.com is a standalone city site in its own market `phoenix` (status draft, not open). City page carries the City of Phoenix 2025 report hardness (172-302 ppm, 10-17.6 gpg, range only). 41 ZIPs included; 85086 and 85087 held as check (under half their land is in Phoenix city). No tracking number yet: buying one needs Clint's yes, and preflight lists it as a blocker. Cloudflare zone created 23:38 UTC, pending until GoDaddy points at priscilla/sonny; the production deploy may fail on the Phoenix route until the zone is active. No dealer contacted.
+
+**2026-10-26 23:38 UTC Cloudflare:** all ten zones read active (activated 22:43-23:27 UTC). phoenixhomewatersystems.com zone created (Free, no records imported), status pending; Cloudflare assigned priscilla.ns.cloudflare.com and sonny.ns.cloudflare.com, so GoDaddy must be changed from carlos/kristina to those two.
+
 
 
 
