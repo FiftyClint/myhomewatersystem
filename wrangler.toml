@@ -46,6 +46,8 @@ routes = [
   { pattern = "www.newbraunfelswatersystems.com", custom_domain = true },
   { pattern = "kcwatersystems.com", custom_domain = true },
   { pattern = "www.kcwatersystems.com", custom_domain = true },
+  { pattern = "phoenixhomewatersystems.com", custom_domain = true },
+  { pattern = "www.phoenixhomewatersystems.com", custom_domain = true },
 ]
 [[env.production.d1_databases]]
 binding = "DB"

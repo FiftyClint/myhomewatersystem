@@ -9,6 +9,9 @@ Last updated: 2026-10-26
 
 **2026-10-26 23:23 UTC nameservers:** registry shows nine of ten on carlos/kristina.ns.cloudflare.com. chandlerwatersystems.com is still on GoDaddy nameservers. phoenixhomewatersystems.com (owned, not in the build, no Cloudflare zone) was also switched to Cloudflare nameservers.
 
+**2026-10-26 Phoenix added (Clint's yes):** phoenixhomewatersystems.com is a standalone city site in its own market `phoenix` (status draft, not open). City page carries the City of Phoenix 2025 report hardness (172-302 ppm, 10-17.6 gpg, range only). 41 ZIPs included; 85086 and 85087 held as check (under half their land is in Phoenix city). No tracking number yet: buying one needs Clint's yes, and preflight lists it as a blocker. No Cloudflare zone yet: the production deploy will fail on the Phoenix route until the zone exists in the account. No dealer contacted.
+
+
 
 **2026-10-26 owner answers applied:** hello@ forwards to Clint's CGF inbox (address to confirm, set up at the DNS stage). No hours on any site. Consent wording approved (owner-approved-2026-10-26). Every city site reads "[City] Water Systems by My Home Water System". Sites take requests before a dealer signs: the lead is held and nobody is routed until the homeowner agrees to a named dealer. A manual-only deploy workflow is in .github/workflows/deploy.yml and needs Clint's token in GitHub secrets. Preflight lists 11 blockers. `npm test` 70 passed. Nothing deployed, no DNS touched, nothing bought or sent.
 

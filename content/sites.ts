@@ -22,6 +22,7 @@ export const CITY_SITES: CitySite[] = [
   { domain: 'sanantoniohomewatersystems.com', slug: 'san-antonio', brand: 'San Antonio Home Water Systems' },
   { domain: 'newbraunfelswatersystems.com', slug: 'new-braunfels', brand: 'New Braunfels Water Systems' },
   { domain: 'kcwatersystems.com', slug: 'kansas-city', brand: 'KC Water Systems' },
+  { domain: 'phoenixhomewatersystems.com', slug: 'phoenix', brand: 'Phoenix Home Water Systems' },
 ];
 
 export const normalizeHost = (host: string): string => host.toLowerCase().replace(/:\d+$/, '');

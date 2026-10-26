@@ -153,12 +153,15 @@ describe('market config', () => {
     for (const site of CITY_SITES) {
       const market = LOCATIONS.find((l) => l.slug === site.slug)!.market_id;
       const body = await (await get(`https://${site.domain}/`)).text();
+      if (market === 'phoenix') { expect(body, site.domain).not.toContain('href="tel:'); continue; } // no number bought yet
       expect(body, site.domain).toContain(`href="tel:${want[market]}"`);
     }
   });
 
   it('a market cannot launch without a tracking number in +1 form', () => {
-    for (const m of PRODUCTION_MARKETS) expect(marketLaunchBlockers(m).join(), m.id).not.toMatch(/tracking phone/);
+    for (const m of PRODUCTION_MARKETS.filter((x) => x.id !== 'phoenix')) expect(marketLaunchBlockers(m).join(), m.id).not.toMatch(/tracking phone/);
+    // Phoenix was added 2026-10-26 with no number; its number needs Clint's yes to buy.
+    expect(marketLaunchBlockers(PRODUCTION_MARKETS.find((x) => x.id === 'phoenix')!)).toContain('no tracking phone number');
     expect(marketLaunchBlockers({ ...PRODUCTION_MARKETS[0]!, tracking_phone: null })).toContain('no tracking phone number');
     const m = { ...PRODUCTION_MARKETS[0]!, tracking_phone: '602-555-0100' };
     expect(marketLaunchBlockers(m)).toContain('tracking phone number is not in +1XXXXXXXXXX form');

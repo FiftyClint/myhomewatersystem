@@ -7,8 +7,9 @@ import ev from '../config/markets/east-valley.json';
 import lv from '../config/markets/las-vegas-valley.json';
 import sa from '../config/markets/san-antonio-area.json';
 import kc from '../config/markets/kansas-city.json';
+import phx from '../config/markets/phoenix.json';
 
-const MARKETS = [ev, lv, sa, kc] as unknown as MarketConfig[];
+const MARKETS = [ev, lv, sa, kc, phx] as unknown as MarketConfig[];
 
 describe('pilot market ZIP lists', () => {
   it('each market accepts exactly the ZIPs its city pages list, and no ZIP belongs to two markets', () => {

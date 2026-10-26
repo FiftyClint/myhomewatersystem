@@ -37,6 +37,7 @@ const MESA_2025 = 'https://www.mesaaz.gov/files/content/public/v/16/utilities/wa
 const CHANDLER_2025 = 'https://www.chandleraz.gov/sites/default/files/departments/water/City-of-Chandler-2025-Drinking-Water-Quality-Consumer-Confidence-Report.pdf';
 const GILBERT_2025 = 'https://www.gilbertaz.gov/home/showpublisheddocument/54483/639183476630708025';
 const SCOTTSDALE_2026 = 'https://www.scottsdaleaz.gov/docs/default-source/scottsdaleaz/water/water-quality/annual-reports/2026-water-quality-report.pdf?sfvrsn=18a67596_1';
+const PHOENIX_2025 = 'https://phoenix.gov/waterqualityreport';
 
 export const LOCATIONS: CityLocation[] = [
   {
@@ -155,6 +156,18 @@ export const LOCATIONS: CityLocation[] = [
     facts: [],
     notes: [
       "NBU's 2025 water quality report does not publish a hardness figure, and we have not found a current one on its site.",
+    ],
+  },
+  {
+    slug: 'phoenix', name: 'Phoenix', state: 'AZ', market_id: 'phoenix', status: 'draft', reviewer: null,
+    intro: 'Phoenix gets almost all of its water from rivers and lakes, delivered through canals, and a small share from city wells.',
+    facts: [
+      { utility: 'City of Phoenix', label: 'Total hardness', value: '172-302 ppm (10-17.6 grains per gallon), range only', period: 'Calendar year 2025',
+        source_title: 'City of Phoenix 2025 Water Quality Report', source_url: PHOENIX_2025, evidence_ids: ['PHX-U-02'] },
+    ],
+    notes: [
+      'Water from the Salt and Verde Rivers is delivered through the Salt River Project canal network. About 20 city wells supplied about two percent of the water.',
+      'Phoenix disinfects with chlorine.',
     ],
   },
 ];
