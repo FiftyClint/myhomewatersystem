@@ -97,3 +97,8 @@ Incurred: $0. Two empty D1 databases were created 2026-10-26; I have no verified
 - Done: license verification (docs/research/kc-licensing.md). Licensed plumbing companies lead the shortlist; dealer gate now requires the dealer or a named subcontracted plumber to hold the city license.
 - Waiting on owner: approval to send dealer outreach (drafts delivered in chat, not saved).
 - Next build: dealer status-chase drafts (A5-lite) on the same pattern.
+
+## 2026-10-26 23:45 UTC: zones for the remaining water domains
+- RDAP: all 46 water domains at the registry show carlos/kristina.ns.cloudflare.com.
+- Created Cloudflare Free zones (no records) for 35 domains that had none. Cloudflare assigned priscilla/sonny.ns.cloudflare.com to all 35 and to phoenixhomewatersystems.com.
+- Owner step: switch those 36 at GoDaddy to priscilla/sonny. The original ten are correct on carlos/kristina.
