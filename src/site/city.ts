@@ -5,7 +5,7 @@ import type { MarketConfig } from '../domain/config.ts';
 import { escapeHtml as e } from '../util.ts';
 import { locationsInMarket, type CityLocation } from '../../content/locations.ts';
 import { CITY_ZIPS } from '../../content/zips.ts';
-import { siteForSlug, siteUrl, type CitySite } from '../../content/sites.ts';
+import { fullBrand, siteForSlug, siteUrl, type CitySite } from '../../content/sites.ts';
 import { inquiryForm } from './pages.ts';
 import { displayPhone } from './layout.ts';
 import company from '../../config/company.json';
@@ -49,7 +49,7 @@ export function cityFaq(l: CityLocation, m: MarketConfig): Faq[] {
 export function cityJsonLd(site: CitySite, l: CityLocation, m: MarketConfig): object[] {
   const url = `${siteUrl(site)}/`;
   return [
-    { '@context': 'https://schema.org', '@type': 'WebSite', name: site.brand, url },
+    { '@context': 'https://schema.org', '@type': 'WebSite', name: fullBrand(site), alternateName: site.brand, url },
     { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: cityFaq(l, m).map((f) => ({
       '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) },
   ];
@@ -114,13 +114,13 @@ ${nearby(l, m, hubBase)}
 
 export function cityContactBody(site: CitySite, m: MarketConfig): string {
   const phone = m.tracking_phone ? `<a href="tel:${e(m.tracking_phone)}">${e(displayPhone(m.tracking_phone))}</a>` : '<em>Phone not yet published</em>';
-  return `<h1>Contact ${e(site.brand)}</h1>
-<p>Phone: ${phone}<br>Email: ${company.public_email ? `<a href="mailto:${e(company.public_email)}">${e(company.public_email)}</a>` : '<em>Email not yet published</em>'}<br>Hours: ${company.hours_text ? e(company.hours_text) : '<em>Hours not yet published</em>'}</p>
+  return `<h1>Contact ${e(fullBrand(site))}</h1>
+<p>Phone: ${phone}<br>Email: ${company.public_email ? `<a href="mailto:${e(company.public_email)}">${e(company.public_email)}</a>` : '<em>Email not yet published</em>'}</p>
 <p>For a leak or loss of water at a home where a system was installed, call the installing company's service number on your paperwork first.</p>`;
 }
 
 export function cityAboutBody(site: CitySite, l: CityLocation): string {
-  return `<h1>About ${e(site.brand)}</h1>
+  return `<h1>About ${e(fullBrand(site))}</h1>
 <p>${e(site.brand)} helps ${e(l.name)} homeowners compare water treatment options and request a written quote from one qualified local company. The request form names that company before you submit.</p>
-<p>${e(site.brand)} is part of My Home Water System, operated by ${e(company.legal_name)}.</p>`;
+<p>${e(site.brand)} is run by My Home Water System, operated by ${e(company.legal_name)}.</p>`;
 }

@@ -11,7 +11,7 @@
   "campaign_total_cap_cents": 0,
   "content_claim_changes_require_review": true,
   "max_job_attempts": 5,
-  "disclosure_version": "draft-2026-10-24",
+  "disclosure_version": "owner-approved-2026-10-26",
   "agents": {
     "triage_enabled": false,
     "triage_model": "claude-opus-5-5",

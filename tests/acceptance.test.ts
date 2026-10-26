@@ -358,3 +358,25 @@ describe('checks', () => {
     expect(await count(a.db, 'exceptions', "entity_id = 'dealer-b' AND reason LIKE 'license%'")).toBe(1);
   });
 });
+
+describe('requests before a dealer signs', () => {
+  it('holds the lead with us, names only My Home Water System and routes nothing', async () => {
+    const m = { ...DEALER_MARKET(), seller_display_name: null, accept_before_dealer: true, providers: [] } as MarketConfig;
+    expect(marketLaunchBlockers(m).join()).not.toMatch(/named seller|active verified dealer/);
+    const a = await app({ markets: [m] });
+    const r = await a.submit();
+    expect(r.status).toBe('accepted');
+    if (r.status !== 'accepted') return;
+    expect(r.recipient).toBe('My Home Water System');
+    expect(r.state).toBe('consent_hold');
+    await a.drain();
+    expect(await count(a.db, 'assignments')).toBe(0);
+    const ev = await a.db.prepare('SELECT named_parties FROM consent_events LIMIT 1').first<{ named_parties: string }>();
+    expect(JSON.parse(ev!.named_parties)).toEqual(['My Home Water System']);
+  });
+
+  it('still blocks a market with no dealer when the switch is off', () => {
+    const m = { ...DEALER_MARKET(), seller_display_name: null, accept_before_dealer: false, providers: [] } as MarketConfig;
+    expect(marketLaunchBlockers(m)).toContain('no named seller/installer for disclosures');
+  });
+});

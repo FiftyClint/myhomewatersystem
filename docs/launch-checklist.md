@@ -13,11 +13,14 @@
 - [ ] Dealer (or installers) selected, credentials and insurance verified, dates entered in market config
 - [ ] Signed agreement; `agreement_version` entered
 - [ ] Approved ZIP list entered
-- [ ] Counsel review: consent text, privacy, terms, referral/contractor rules, SMS rules. Bump `disclosure_version`
+- [x] Consent text approved by Clint on 2026-10-26 (no counsel review, his call); `disclosure_version` owner-approved-2026-10-26
+- [ ] Privacy and terms pages: still marked draft on the site
 - [ ] Direct mode only: contractor licensing for our role, customer contract, sales tax, payments, warranty reserve, insurance
 
 ## Accounts and config
-- [ ] Company legal name, phone, email, hours, address in `config/company.json`
+- [x] Company legal name and email in `config/company.json`; no hours and no address by Clint's call; phone per market
+- [ ] hello@myhomewatersystem.com forwarded to Clint's CGF inbox (Cloudflare Email Routing, needs his yes)
+- [ ] Cloudflare API token created by Clint and saved with the account ID as GitHub secrets CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID
 - [ ] D1 staging and production databases created; IDs in `wrangler.toml`
 - [ ] Secrets set: LINK_SECRET, HASH_PEPPER, ADMIN_TOKEN, CRM_WEBHOOK_SECRET, HIGHLEVEL_*
 - [ ] HighLevel pipeline, workflows and webhook built (docs/highlevel-setup.md); integration spike passed

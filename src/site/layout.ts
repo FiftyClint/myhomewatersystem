@@ -25,7 +25,7 @@ h1{font-size:1.9rem;margin:.2em 0 .4em}h2{font-size:1.4rem;margin-top:1.8em}
 .wrap{max-width:1040px;margin:0 auto;padding:0 16px}
 header.site{border-bottom:1px solid var(--line)}
 header.site .wrap{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:center;justify-content:space-between;padding:14px 16px}
-.brand{font-weight:700;color:var(--ink);text-decoration:none;font-size:1.1rem}
+.brand{font-weight:700;color:var(--ink);text-decoration:none;font-size:1.1rem}.brand .by{font-weight:400;font-size:.85rem;color:var(--muted)}
 nav a{margin-right:14px;text-decoration:none;color:var(--text)}nav a:last-child{margin-right:0}nav a.phone{font-weight:700;color:var(--accent-dark)}
 .answer{font-size:1.05rem;background:var(--soft);border-radius:10px;padding:14px 16px}
 dl.faq dt{font-weight:700;color:var(--ink);margin-top:14px}dl.faq dd{margin:4px 0 0}
@@ -57,7 +57,7 @@ export function layout(o: PageOpts): string {
     : '<a href="/water-softeners/">Systems</a><a href="/how-it-works/">How it works</a><a href="/service-areas/">Service areas</a><a href="/contact/">Contact</a>';
   const foot = city
     ? `<p><a href="/about/">About</a><a href="/contact/">Contact</a><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a><a href="/communication-preferences/">Communication preferences</a></p>
-<p>${e(brand)} is part of My Home Water System, operated by Aidren LLC. We help homeowners request water treatment quotes. The company that performs your installation is named on the request form before you submit.</p>`
+<p>${e(brand)} is run by My Home Water System, which is operated by Aidren LLC. We help homeowners request water treatment quotes. The company that performs your installation is named on the request form before you submit.</p>`
     : `<p><a href="/about/">About</a><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a><a href="/communication-preferences/">Communication preferences</a><a href="/for-dealers/">For dealers</a></p>
 <p>My Home Water System helps homeowners request water treatment quotes. The company that performs your installation is named on each service-area page and on the request form before you submit.</p>`;
   return `<!doctype html><html lang="en"><head><meta charset="utf-8">
@@ -66,7 +66,7 @@ export function layout(o: PageOpts): string {
 <link rel="canonical" href="${e(canonical)}">${o.noindex ? '<meta name="robots" content="noindex">' : ''}
 ${(o.jsonLd ?? []).map(ld).join('')}<style>${CSS}</style></head><body>
 ${o.banner ? `<div class="banner" role="note"><div class="wrap">${o.banner}</div></div>` : ''}
-<header class="site"><div class="wrap"><a class="brand" href="/">${e(brand)}</a>
+<header class="site"><div class="wrap"><a class="brand" href="/">${e(brand)}${city ? ' <span class="by">by My Home Water System</span>' : ''}</a>
 <nav aria-label="Main">${nav}${phone}</nav></div></header>
 <main><div class="wrap">${o.body}</div></main>
 <footer><div class="wrap">

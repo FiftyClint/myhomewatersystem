@@ -30,6 +30,8 @@ export const apexOf = (host: string): string => normalizeHost(host).replace(/^ww
 export const siteForHost = (host: string): CitySite | undefined => CITY_SITES.find((s) => s.domain === apexOf(host));
 export const siteForSlug = (slug: string): CitySite | undefined => CITY_SITES.find((s) => s.slug === slug);
 export const siteUrl = (s: CitySite): string => `https://${s.domain}`;
+// Clint's call (2026-10-26): every site reads as "[City] Water Systems by My Home Water System".
+export const fullBrand = (s: CitySite): string => `${s.brand} by ${HUB_BRAND}`;
 
 // Where the hub links for a city: its own site if it has one, otherwise the hub's city page.
 export const cityHref = (slug: string): string => {

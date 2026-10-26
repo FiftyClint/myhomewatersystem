@@ -25,7 +25,7 @@ export function inquiryForm(o: { requestId: string; market: MarketConfig; vals?:
   return `<form class="inquiry" method="post" action="/api/inquiry" id="request" novalidate>
 <h2 style="margin-top:0">Request a quote</h2>
 ${party ? `<p class="small">Your request goes to <strong>${e(party)}</strong>.</p>` : ''}
-${o.brand ? `<p class="small">${e(o.brand)} is part of My Home Water System.</p>` : ''}
+${o.brand ? `<p class="small">${e(o.brand)} is run by My Home Water System.</p>` : ''}
 ${Object.keys(er).length ? '<p class="err" role="alert">Please fix the items marked below.</p>' : ''}
 <input type="hidden" name="request_id" value="${e(o.requestId)}"><input type="hidden" name="page" value="${e(o.page)}"><input type="hidden" name="market" value="${e(m.id)}">
 <div class="hp" aria-hidden="true"><label>Website <input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
@@ -113,7 +113,7 @@ export function companyBody(kind: 'about' | 'contact'): string {
 <p>Legal entity: ${pending(company.legal_name, 'Legal name')}.</p>`;
   }
   const sites = CITY_SITES.map((s) => `<a href="${e(`https://${s.domain}/contact/`)}">${e(s.brand)}</a>`).join(', ');
-  return `<h1>Contact</h1><p>Email: ${pending(company.public_email, 'Email')}<br>Hours: ${pending(company.hours_text, 'Hours')}</p>
+  return `<h1>Contact</h1><p>Email: ${pending(company.public_email, 'Email')}</p>
 <p>Each city's site lists its local phone number: ${sites}.</p>
 <p>For a leak or loss of water at a home where a system was installed, call the installing company's service number on your paperwork first.</p>`;
 }

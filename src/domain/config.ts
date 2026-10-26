@@ -37,6 +37,9 @@ export interface MarketConfig {
   // The market's call-tracking number in E.164 (+1 and ten digits), shown on its city sites.
   // Clint buys these himself. null until bought.
   tracking_phone?: string | null;
+  // Clint's call (2026-10-26): take requests before a dealer signs. Each one waits in consent_hold,
+  // and the homeowner is asked before it goes to the dealer once one signs.
+  accept_before_dealer?: boolean;
   dealer_partner?: {
     commercial_model: DealerCommercialModel | null; // null until agreed with the dealer
     // Pipeline state that earns a per-event fee. null for dealer_funded (monthly fee billed outside).
@@ -87,7 +90,8 @@ export function marketLaunchBlockers(m: MarketConfig): string[] {
   const out: string[] = [];
   if (!m.business_mode) out.push('business_mode not chosen');
   if (m.zips.length === 0) out.push('no approved ZIP codes');
-  if (!m.seller_display_name) out.push('no named seller/installer for disclosures');
+  const holding = m.business_mode === 'dealer_partner' && m.accept_before_dealer && !m.seller_display_name;
+  if (!m.seller_display_name && !holding) out.push('no named seller/installer for disclosures');
   if (!m.launch_approval_id) out.push('no launch approval recorded');
   if (!m.tracking_phone) out.push('no tracking phone number');
   else if (!/^\+1\d{10}$/.test(m.tracking_phone)) out.push('tracking phone number is not in +1XXXXXXXXXX form');
@@ -96,7 +100,7 @@ export function marketLaunchBlockers(m: MarketConfig): string[] {
   if (m.business_mode === 'direct' && !m.direct) out.push('direct-mode terms missing');
   const kind = m.business_mode === 'direct' ? 'installer' : 'dealer';
   const active = m.providers.filter((p) => p.kind === kind && p.status === 'active' && !p.synthetic);
-  if (active.length === 0) out.push(`no active verified ${kind}`);
+  if (active.length === 0 && !holding) out.push(`no active verified ${kind}`);
   for (const p of active) {
     if (!p.license_expires_on) out.push(`${p.id}: license not verified`);
     if (!p.insurance_expires_on) out.push(`${p.id}: insurance not verified`);

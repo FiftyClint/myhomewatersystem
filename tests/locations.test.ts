@@ -98,7 +98,8 @@ describe('city sites', () => {
     const body = await (await get('https://hendersonwatersystems.com/water-softeners/')).text();
     expect(body).toContain('<title>Water softeners | Henderson Water Systems</title>');
     expect(body).toContain(`<link rel="canonical" href="${BASE}/water-softeners/">`);
-    expect(body).toContain('Henderson Water Systems is part of My Home Water System');
+    expect(body).toContain('Henderson Water Systems is run by My Home Water System');
+    expect(body).toContain('Henderson Water Systems <span class="by">by My Home Water System</span>');
     const privacy = await (await get('https://hendersonwatersystems.com/privacy/')).text();
     expect(privacy).toContain('Henderson Water Systems');
     expect((await get('https://hendersonwatersystems.com/service-areas/')).headers.get('location')).toBe(`${BASE}/service-areas/`);
@@ -110,7 +111,10 @@ describe('city sites', () => {
       expect(body, url).toContain('hello@myhomewatersystem.com');
       expect(body.toLowerCase(), url).not.toMatch(/mailing address|po box|suite \d/);
     }
-    expect(await (await get('https://kcwatersystems.com/contact/')).text()).toContain('Phone not yet published');
+    const kcContact = await (await get('https://kcwatersystems.com/contact/')).text();
+    expect(kcContact).toContain('Phone not yet published');
+    expect(kcContact).toContain('Contact KC Water Systems by My Home Water System');
+    expect(kcContact).not.toContain('Hours');
   });
 
   it('city home pages carry FAQ and website JSON-LD with no address, price or rating', async () => {

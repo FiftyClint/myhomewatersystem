@@ -101,7 +101,9 @@ export async function handleIntake(input: IntakeInput, deps: IntakeDeps): Promis
   if (input.market !== market.id) {
     return { status: 'invalid', errors: { zip: 'This ZIP code is served by a different company than the one shown. Please review the details and submit again.' }, market };
   }
-  const recipient = market.seller_display_name!;
+  // With no dealer named yet, the request stays with us (the form's consent text says so).
+  const noDealer = market.business_mode === 'dealer_partner' && !market.seller_display_name;
+  const recipient = market.seller_display_name ?? 'My Home Water System';
 
   const replay = await db.prepare(
     'SELECT o.id, o.state FROM lead_receipts r JOIN opportunities o ON o.receipt_id = r.id WHERE r.request_id = ?',
@@ -119,6 +121,7 @@ export async function handleIntake(input: IntakeInput, deps: IntakeDeps): Promis
   const contactId = existing?.id ?? uuid();
 
   let { state, reason } = qualify(market, c);
+  if (noDealer && state === 'qualified') { state = 'consent_hold'; reason = 'no dealer named yet: ask the homeowner before sharing with a dealer'; }
   let duplicate = false;
   if (existing) {
     const since = new Date(now.getTime() - duplicateWindowDays(market) * 86400000).toISOString();
@@ -134,7 +137,7 @@ export async function handleIntake(input: IntakeInput, deps: IntakeDeps): Promis
   const payload = JSON.stringify(c);
   const svcText = serviceDisclosure(market), smsText = smsDisclosure(market);
   const svcHash = await sha256Hex(svcText), smsHash = await sha256Hex(smsText);
-  const parties = JSON.stringify(market.business_mode === 'direct' ? ['My Home Water System'] : ['My Home Water System', recipient]);
+  const parties = JSON.stringify(market.business_mode === 'direct' || noDealer ? ['My Home Water System'] : ['My Home Water System', recipient]);
 
   const stmts: Stmt[] = [
     ...syncConfigStmts(db, [market]),

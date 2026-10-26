@@ -3,6 +3,8 @@
 Last updated: 2026-10-26
 
 ## Where things stand
+**2026-10-26 owner answers applied:** hello@ forwards to Clint's CGF inbox (address to confirm, set up at the DNS stage). No hours on any site. Consent wording approved (owner-approved-2026-10-26). Every city site reads "[City] Water Systems by My Home Water System". Sites take requests before a dealer signs: the lead is held and nobody is routed until the homeowner agrees to a named dealer. A manual-only deploy workflow is in .github/workflows/deploy.yml and needs Clint's token in GitHub secrets. Preflight lists 11 blockers. `npm test` 70 passed. Nothing deployed, no DNS touched, nothing bought or sent.
+
 **2026-10-26 standalone city sites:** each of the nine city domains now serves its own site: a home page with the city's sourced water facts, a short published-figure answer at the top, seven FAQs with FAQPage JSON-LD, the request form, about and contact pages, and its own sitemap and robots. www goes to the bare domain. The header shows the market's tracking number once it is set. The hub links out to the city sites and 301s its old /locations/<city>/ pages to them. Johnson County (36 ZIPs) is now in Kansas City (104 ZIPs). Contact pages show hello@myhomewatersystem.com and no mailing address. Preflight lists 21 blockers. Nothing deployed, no DNS touched, nothing bought or sent.
 
 **2026-10-24 pilot:** four dealer-partner markets (Phoenix East Valley, Las Vegas Valley, San Antonio area, Kansas City), all status draft, all "sell the leads" at $95 per exclusive lead, earned when the one dealer accepts it (starting price, approved 2026-10-24, expected to change after installer talks). Nine city pages at /locations/<city>/ with sourced utility hardness figures (New Braunfels has none published), four cluster pages, /sitemap.xml, and 301 forwarding from nine city domains to the hub (content/domains.ts). Every city page shows "Not open yet". Nothing deployed, no DNS touched.
@@ -60,12 +62,12 @@ T01 pass, T02 pass, T03 pass, T04 pass, T05 pass, T06 pass, T07 pass, T08 pass (
 1. Monthly fee is not modeled in code. The approved formula (each city's trailing three-month average of accepted leads times $95) is in docs/decisions.md and docs/business-model.md and would be billed by hand until built. The $95 per-lead fee itself is set in all four markets.
 2. Dealer selection, credentials and signed agreement for each of the four markets. ZIP lists are done. Target lists (unvetted, nobody contacted) are in the shared folder water-systems/launch/.
 3. Domains: confirmed yours on 2026-10-26. DNS for the hub and the nine city domains must point at the Worker before any site serves (needs your yes).
-3a. Tracking numbers: you are buying the four (602, 702, 726, 816). Each goes into its market config as +1 and ten digits. Consent draft waits on your approval of the wording.
+3a. Tracking numbers: you are buying the four (602, 702, 726, 816). Each goes into its market config as +1 and ten digits. Still open: one number per market (four) or one per city site (nine).
 3b. City facts are unreviewed drafts; a named reviewer must check them against the sources. (NBU's 2026-10-15 boil water notice covered about 600 Copper Ridge customers after a main break and was lifted 2026-10-16.)
-4. Hours. Email is hello@myhomewatersystem.com; no mailing address is shown; phone numbers are per market. Legal name set to Aidren LLC.
-5. Your approval of the consent text (docs/consent-draft.md), privacy and terms. No counsel review, your call.
+4. Which CGF inbox hello@myhomewatersystem.com forwards to. No hours and no mailing address are shown, by your call.
+5. Consent text approved 2026-10-26. Privacy and terms pages are still marked draft on the site.
 6. Approval to create the HighLevel pipeline and a test sub-account for the integration spike.
-7. Approval to create Cloudflare D1 databases and deploy staging.
+7. Approval to create Cloudflare D1 databases and deploy staging. You create the Cloudflare API token and save it as a GitHub secret; the deploy workflow runs only when you start it.
 
 ## Costs
 Incurred: $0. Recurring added so far: $0. Planned new vendors: none. I have no verified pricing for D1/Workers usage on your plan or for a separate HighLevel sub-account; check those in the account before approving.
