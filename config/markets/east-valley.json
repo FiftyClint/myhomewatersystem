@@ -3,7 +3,7 @@
   "slug": "east-valley",
   "name": "Phoenix East Valley",
   "status": "draft",
-  "config_version": "2026-10-26.2",
+  "config_version": "2026-10-26.3",
   "launch_approval_id": null,
   "business_mode": "dealer_partner",
   "timezone": "America/Phoenix",
@@ -64,7 +64,7 @@
     "end": "17:00"
   },
   "seller_display_name": null,
-  "tracking_phone": null,
+  "tracking_phone": "+16029622652",
   "accept_before_dealer": true,
   "providers": [],
   "dealer_partner": {

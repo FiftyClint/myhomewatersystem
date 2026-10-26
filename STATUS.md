@@ -62,7 +62,7 @@ T01 pass, T02 pass, T03 pass, T04 pass, T05 pass, T06 pass, T07 pass, T08 pass (
 1. Monthly fee is not modeled in code. The approved formula (each city's trailing three-month average of accepted leads times $95) is in docs/decisions.md and docs/business-model.md and would be billed by hand until built. The $95 per-lead fee itself is set in all four markets.
 2. Dealer selection, credentials and signed agreement for each of the four markets. ZIP lists are done. Target lists (unvetted, nobody contacted) are in the shared folder water-systems/launch/.
 3. Domains: confirmed yours on 2026-10-26. DNS for the hub and the nine city domains must point at the Worker before any site serves (needs your yes).
-3a. Tracking numbers: you are buying the four (602, 702, 726, 816). Each goes into its market config as +1 and ten digits. Still open: one number per market (four) or one per city site (nine).
+3a. Tracking numbers: done 2026-10-26. One per market, shared by its city sites: 913-286-7027 Kansas City, 602-962-2652 East Valley, 725-525-0811 Las Vegas Valley, 726-204-2386 San Antonio area. Call forwarding to Ryan is set in HighLevel.
 3b. City facts are unreviewed drafts; a named reviewer must check them against the sources. (NBU's 2026-10-15 boil water notice covered about 600 Copper Ridge customers after a main break and was lifted 2026-10-16.)
 4. hello@myhomewatersystem.com forwards to clint@cgf.solutions once the domain is on Cloudflare. No hours and no mailing address are shown, by your call.
 5. Consent text approved 2026-10-26. Privacy and terms text was drafted 2026-10-26 and waits on your approval; the pages stay marked draft until then.

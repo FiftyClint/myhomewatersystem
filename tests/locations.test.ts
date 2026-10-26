@@ -112,7 +112,8 @@ describe('city sites', () => {
       expect(body.toLowerCase(), url).not.toMatch(/mailing address|po box|suite \d/);
     }
     const kcContact = await (await get('https://kcwatersystems.com/contact/')).text();
-    expect(kcContact).toContain('Phone not yet published');
+    expect(kcContact).toContain('href="tel:+19132867027"');
+    expect(kcContact).toContain('(913) 286-7027');
     expect(kcContact).toContain('Contact KC Water Systems by My Home Water System');
     expect(kcContact).not.toContain('Hours');
   });
@@ -147,8 +148,18 @@ describe('market config', () => {
     expect(PRODUCTION_MARKETS.find((m) => m.id === 'east-valley')!.zips).not.toContain('85256');
   });
 
+  it('each city site shows its market's tracking number', async () => {
+    const want: Record<string, string> = { 'kansas-city': '+19132867027', 'east-valley': '+16029622652', 'las-vegas-valley': '+17255250811', 'san-antonio-area': '+17262042386' };
+    for (const site of CITY_SITES) {
+      const market = LOCATIONS.find((l) => l.slug === site.slug)!.market_id;
+      const body = await (await get(`https://${site.domain}/`)).text();
+      expect(body, site.domain).toContain(`href="tel:${want[market]}"`);
+    }
+  });
+
   it('a market cannot launch without a tracking number in +1 form', () => {
-    for (const m of PRODUCTION_MARKETS) expect(marketLaunchBlockers(m), m.id).toContain('no tracking phone number');
+    for (const m of PRODUCTION_MARKETS) expect(marketLaunchBlockers(m).join(), m.id).not.toMatch(/tracking phone/);
+    expect(marketLaunchBlockers({ ...PRODUCTION_MARKETS[0]!, tracking_phone: null })).toContain('no tracking phone number');
     const m = { ...PRODUCTION_MARKETS[0]!, tracking_phone: '602-555-0100' };
     expect(marketLaunchBlockers(m)).toContain('tracking phone number is not in +1XXXXXXXXXX form');
     expect(marketLaunchBlockers({ ...m, tracking_phone: '+16025550100' }).join()).not.toMatch(/tracking phone/);
