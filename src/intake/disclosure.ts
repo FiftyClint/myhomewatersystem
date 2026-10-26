@@ -1,9 +1,9 @@
 import type { MarketConfig } from '../domain/config.ts';
 import company from '../../config/company.json';
 
-// DRAFT consent language. Must be reviewed by counsel before launch (launch checklist item).
+// DRAFT consent language. Clint approves the wording himself before launch; no counsel review (his call, 2026-10-26).
 // Any wording change must bump policy.disclosure_version so stored proof matches what was shown.
-// Drafting notes for counsel: docs/consent-draft.md.
+// Drafting notes: docs/consent-draft.md.
 const operator = (): string => `My Home Water System, operated by ${company.legal_name ?? '[legal name not set]'}`;
 
 export function serviceDisclosure(m: MarketConfig): string {

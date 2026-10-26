@@ -1,9 +1,12 @@
 import { buildContext, type Env } from './env.ts';
 import { layout } from './site/layout.ts';
 import { companyBody, homeBody, legalBody, marketBody, outOfAreaBody, serviceAreasBody, STATIC_PAGES, thankYouBody, unavailableBody } from './site/pages.ts';
-import { cityBody, clusterBody, sitemapXml } from './site/locations.ts';
-import { locationBySlug, locationsInMarket } from '../content/locations.ts';
-import { cityRedirect } from '../content/domains.ts';
+import { cityBody, clusterBody, sitemapXml, urlset } from './site/locations.ts';
+import { cityAboutBody, cityContactBody, cityDescription, cityHomeBody, cityJsonLd, cityTitle } from './site/city.ts';
+import { locationBySlug, locationsInMarket, type CityLocation } from '../content/locations.ts';
+import { CITY_ZIPS } from '../content/zips.ts';
+import { normalizeHost, siteForHost, siteForSlug, siteUrl, type CitySite } from '../content/sites.ts';
+import type { MarketConfig } from './domain/config.ts';
 import { handleIntake, findMarket } from './intake/intake.ts';
 import { providerPage } from './dealer/page.ts';
 import { internalApi } from './internal/api.ts';
@@ -25,6 +28,11 @@ function html(status: number, page: string, extra: Record<string, string> = {}):
   return new Response(page, { status, headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', ...SECURITY_HEADERS, ...extra } });
 }
 
+// The city a ZIP belongs to, within the market that serves it.
+function cityForZip(zip: string, m: MarketConfig): CityLocation | undefined {
+  return locationsInMarket(m.id).find((l) => (CITY_ZIPS[l.slug] ?? []).includes(zip));
+}
+
 async function readForm(req: Request): Promise<Record<string, string> | null> {
   const len = Number(req.headers.get('content-length') ?? '0');
   if (len > MAX_BODY) return null;
@@ -37,6 +45,42 @@ async function readForm(req: Request): Promise<Record<string, string> | null> {
   return Object.fromEntries(new URLSearchParams(text));
 }
 
+type PageFn = (title: string, description: string, body: string, noindex?: boolean, more?: { canonical?: string; jsonLd?: object[] }) => string;
+
+// Routes that differ on a city site. Returns null for routes every host shares (intake, legal pages,
+// dealer links, internal API, hooks), which the main handler serves with the city's branding.
+async function citySite(req: Request, url: URL, env: Env, site: CitySite, city: CityLocation, m: MarketConfig, page: PageFn, staging: boolean): Promise<Response | null> {
+  const path = url.pathname;
+  const base = siteUrl(site);
+  if (req.method !== 'GET' && req.method !== 'HEAD') return null;
+  if (path === '/robots.txt') return new Response(staging ? 'User-agent: *\nDisallow: /\n' : `User-agent: *\nDisallow: /p/\nDisallow: /internal/\nDisallow: /api/\nSitemap: ${base}/sitemap.xml\n`);
+  if (path === '/sitemap.xml') return new Response(urlset([`${base}/`, `${base}/about/`, `${base}/contact/`]), { headers: { 'content-type': 'application/xml; charset=utf-8' } });
+  if (path === '/') {
+    const zip = url.searchParams.get('zip') ?? undefined;
+    return html(200, page(cityTitle(site, city), cityDescription(city), cityHomeBody(site, city, m, crypto.randomUUID(), env.BASE_URL, { vals: { zip } }),
+      false, { canonical: `${base}/`, jsonLd: cityJsonLd(site, city, m) }));
+  }
+  if (path === '/check') {
+    const zip = (url.searchParams.get('zip') ?? '').trim();
+    const found = /^\d{5}$/.test(zip) ? findMarket([m], zip, !staging) : null;
+    if (found) {
+      const c = cityForZip(zip, found);
+      const other = c && c.slug !== city.slug ? siteForSlug(c.slug) : undefined;
+      return Response.redirect(other ? `${siteUrl(other)}/?zip=${zip}#request` : `${base}/?zip=${zip}#request`, 303);
+    }
+    // Another market, or not served: the hub works out where to send it.
+    return Response.redirect(`${env.BASE_URL}/check?zip=${encodeURIComponent(zip)}`, 303);
+  }
+  if (path === '/about/') return html(200, page(`About | ${site.brand}`, `About ${site.brand}`, cityAboutBody(site, city)));
+  if (path === '/contact/') return html(200, page(`Contact | ${site.brand}`, `How to reach ${site.brand}`, cityContactBody(site, m)));
+  // Hub-only sections forward to the hub.
+  if (path === '/service-areas/' || path === '/for-dealers/' || path.startsWith('/locations/')) return Response.redirect(`${env.BASE_URL}${path}${url.search}`, 301);
+  // Shared guides: served on the city site for visitors, canonical on the hub so the copies do not compete.
+  const st = STATIC_PAGES.find((p) => p.path === path);
+  if (st) return html(200, page(st.title, st.description, st.html, st.noindex, { canonical: `${env.BASE_URL}${st.path}` }));
+  return null;
+}
+
 export default {
   async fetch(req: Request, env: Env): Promise<Response> {
     const ctx = buildContext(env);
@@ -44,15 +88,25 @@ export default {
     const path = url.pathname;
     const staging = env.ENVIRONMENT !== 'production';
     const banner = staging ? 'Staging preview with synthetic data. Not open for real requests. Legal pages and disclosures are drafts pending review.' : null;
-    const page = (title: string, description: string, body: string, noindex = false) =>
-      layout({ title, description, path, body, noindex: noindex || staging, banner, baseUrl: env.BASE_URL });
 
-    // City domains forward to their page on the hub. Path and query are dropped on purpose.
-    const fwd = cityRedirect(url.host, env.BASE_URL);
-    if (fwd) return Response.redirect(fwd, 301);
+    // City sites: each city domain is its own site. www goes to the bare domain.
+    const site = siteForHost(url.host);
+    if (site && normalizeHost(url.host) !== site.domain) return Response.redirect(`${siteUrl(site)}${path}${url.search}`, 301);
+    const siteCity = site && locationBySlug(site.slug);
+    const siteMarket = siteCity && ctx.markets.find((x) => x.id === siteCity.market_id);
+    const base = site ? siteUrl(site) : env.BASE_URL;
+
+    const page = (title: string, description: string, body: string, noindex = false, more: { canonical?: string; jsonLd?: object[] } = {}) =>
+      layout({ title: site ? title.replace(/ \| My Home Water System$/, ` | ${site.brand}`) : title, description, path, body,
+        noindex: noindex || staging, banner, baseUrl: base, brand: site?.brand, phone: siteMarket?.tracking_phone ?? null, ...more });
+
+    if (site && siteCity && siteMarket) {
+      const r = await citySite(req, url, env, site, siteCity, siteMarket, page, staging);
+      if (r) return r;
+    }
 
     if (path === '/healthz') return new Response(JSON.stringify({ ok: true, env: env.ENVIRONMENT, crm: ctx.crm.name, crm_reason: ctx.crmReason }), { headers: { 'content-type': 'application/json' } });
-    if (path === '/robots.txt') return new Response(staging ? 'User-agent: *\nDisallow: /\n' : `User-agent: *\nDisallow: /p/\nDisallow: /internal/\nDisallow: /api/\nSitemap: ${env.BASE_URL}/sitemap.xml\n`);
+    if (path === '/robots.txt') return new Response(staging ? 'User-agent: *\nDisallow: /\n' : `User-agent: *\nDisallow: /p/\nDisallow: /internal/\nDisallow: /api/\nSitemap: ${base}/sitemap.xml\n`);
     if (path === '/sitemap.xml') return new Response(sitemapXml(env.BASE_URL, ctx.markets, STATIC_PAGES.filter((p) => !p.noindex).map((p) => p.path)),
       { headers: { 'content-type': 'application/xml; charset=utf-8' } });
 
@@ -61,13 +115,21 @@ export default {
     if (path === '/check' && req.method === 'GET') {
       const zip = (url.searchParams.get('zip') ?? '').trim();
       const m = /^\d{5}$/.test(zip) ? findMarket(ctx.markets, zip, !staging) : null;
-      if (m) return Response.redirect(`${env.BASE_URL}/locations/${m.slug}/?zip=${zip}#request`, 303);
+      if (m) {
+        const c = cityForZip(zip, m);
+        const s2 = c && siteForSlug(c.slug);
+        if (s2) return Response.redirect(`${siteUrl(s2)}/?zip=${zip}#request`, 303);
+        return Response.redirect(`${env.BASE_URL}/locations/${c?.slug ?? m.slug}/?zip=${zip}#request`, 303);
+      }
       return html(200, page('Not in our service area | My Home Water System', 'Service availability', /^\d{5}$/.test(zip) ? outOfAreaBody(zip) : '<h1>Enter a 5-digit ZIP code</h1><p><a href="/">Back</a></p>', true));
     }
 
     const loc = path.match(/^\/locations\/([a-z0-9-]+)\/$/);
     if (loc && req.method === 'GET') {
       const zip = url.searchParams.get('zip') ?? undefined;
+      // A city with its own site lives there. The hub page for it forwards.
+      const own = siteForSlug(loc[1]!);
+      if (own) return Response.redirect(`${siteUrl(own)}/${url.search}`, 301);
       const city = locationBySlug(loc[1]!);
       const cityMarket = city && ctx.markets.find((x) => x.id === city.market_id);
       if (city && cityMarket) return html(200, page(`Water softeners and filtration in ${city.name} | My Home Water System`,
@@ -91,7 +153,7 @@ export default {
     if (path === '/api/inquiry' && req.method === 'POST') {
       const form = await readForm(req);
       if (!form) return html(413, page('Too large', 'Error', '<h1>Request too large</h1>', true));
-      if (!staging && !env.HASH_PEPPER) return html(503, page('Unavailable', 'Error', unavailableBody(), true));
+      if (!staging && !env.HASH_PEPPER) return html(503, page('Unavailable', 'Error', unavailableBody(siteMarket?.tracking_phone), true));
       const r = await handleIntake(form, { db: ctx.db, markets: ctx.markets, policy: ctx.policy,
         hashPepper: env.HASH_PEPPER ?? 'staging-pepper', requireLaunchable: !staging });
       const wantsJson = (req.headers.get('accept') ?? '').includes('application/json');
@@ -103,11 +165,14 @@ export default {
           return html(200, page('Request received', 'Request received', thankYouBody(r.recipient, r.mode, r.duplicate), true));
         case 'discarded': return html(200, page('Request received', 'Request received', '<h1>Thanks.</h1>', true));
         case 'out_of_area': return html(200, page('Not in our service area', 'Service availability', outOfAreaBody(r.zip), true));
-        case 'unavailable': return html(503, page('Please try again', 'Error', unavailableBody(), true));
+        case 'unavailable': return html(503, page('Please try again', 'Error', unavailableBody(siteMarket?.tracking_phone), true));
         case 'invalid': {
           const m = r.market ?? ctx.markets.find((x) => x.id === form.market) ?? ctx.markets.find((x) => x.zips.includes(form.zip ?? ''));
           if (!m) return html(422, page('Check your details', 'Error', '<h1>Please check your ZIP code</h1><p><a href="/">Start again</a></p>', true));
           const rid = form.request_id ?? crypto.randomUUID();
+          if (site && siteCity && siteMarket && siteMarket.id === m.id) {
+            return html(422, page('Check your details', 'Error', cityHomeBody(site, siteCity, m, rid, env.BASE_URL, { vals: form, errors: r.errors }), true));
+          }
           const city = locationBySlug((form.page ?? '').replace(/^\/locations\/|\/$/g, ''));
           const body = city && city.market_id === m.id ? cityBody(city, m, rid, { vals: form, errors: r.errors })
             : locationsInMarket(m.id).length ? clusterBody(m, rid, { vals: form, errors: r.errors }) : marketBody(m, rid, { vals: form, errors: r.errors });

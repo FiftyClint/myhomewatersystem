@@ -7,7 +7,7 @@
 - [ ] Pilot loss cap, ad budget cap, daily target
 - [ ] HighLevel placement (pipeline in CGF vs separate sub-account)
 - [ ] Coordinator and backup named; technical maintainer named
-- [ ] Domain ownership verified for myhomewatersystem.com (and kcwatersystems.com if used)
+- [x] Domain ownership confirmed by Clint on 2026-10-26 for myhomewatersystem.com and the nine city domains in content/sites.ts
 
 ## Partner and legal
 - [ ] Dealer (or installers) selected, credentials and insurance verified, dates entered in market config
@@ -23,7 +23,9 @@
 - [ ] HighLevel pipeline, workflows and webhook built (docs/highlevel-setup.md); integration spike passed
 - [ ] Cloudflare Access (or equivalent) in front of `/internal/*`
 - [ ] Bot protection on the form (Cloudflare Turnstile) and rate limiting
-- [ ] DNS for the domain points at the Worker
+- [ ] DNS for the hub and each city domain (apex and www) points at the Worker as a Workers custom domain (needs Clint's yes)
+- [ ] Each city site checked live: home page 200, www goes to the bare domain, sitemap.xml lists only that site, phone number in the header
+- [ ] Each site submitted to Google Search Console and Bing Webmaster Tools with its sitemap
 
 ## Verification
 - [ ] `npm test` and `npm run typecheck` pass

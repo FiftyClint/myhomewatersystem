@@ -34,6 +34,9 @@ export interface MarketConfig {
   business_hours: BusinessHours;
   // The party the customer buys from and who installs. Shown in every disclosure.
   seller_display_name: string | null;
+  // The market's call-tracking number in E.164 (+1 and ten digits), shown on its city sites.
+  // Clint buys these himself. null until bought.
+  tracking_phone?: string | null;
   dealer_partner?: {
     commercial_model: DealerCommercialModel | null; // null until agreed with the dealer
     // Pipeline state that earns a per-event fee. null for dealer_funded (monthly fee billed outside).
@@ -86,6 +89,8 @@ export function marketLaunchBlockers(m: MarketConfig): string[] {
   if (m.zips.length === 0) out.push('no approved ZIP codes');
   if (!m.seller_display_name) out.push('no named seller/installer for disclosures');
   if (!m.launch_approval_id) out.push('no launch approval recorded');
+  if (!m.tracking_phone) out.push('no tracking phone number');
+  else if (!/^\+1\d{10}$/.test(m.tracking_phone)) out.push('tracking phone number is not in +1XXXXXXXXXX form');
   if (m.business_mode === 'dealer_partner' && !m.dealer_partner?.commercial_model) out.push('dealer fee model not agreed');
   if (m.business_mode === 'dealer_partner' && m.dealer_partner?.fee_trigger_state && !(m.dealer_partner.fee_cents > 0)) out.push('dealer fee amount not set');
   if (m.business_mode === 'direct' && !m.direct) out.push('direct-mode terms missing');

@@ -23,8 +23,8 @@ describe('pilot market ZIP lists', () => {
       }
     }
   });
-  it('Johnson County KS ZIPs stay out until decided', () => {
-    for (const z of ['66062', '66210', '66213', '66221']) expect(kc.zips).not.toContain(z);
+  it('Johnson County KS ZIPs are in (Clint, 2026-10-26)', () => {
+    for (const z of ['66062', '66210', '66213', '66221']) expect(kc.zips).toContain(z);
   });
 });
 

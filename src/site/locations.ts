@@ -3,6 +3,7 @@ import { escapeHtml as e } from '../util.ts';
 import { LOCATIONS, locationsInMarket, type CityLocation } from '../../content/locations.ts';
 import { inquiryForm } from './pages.ts';
 import { CITY_ZIPS } from '../../content/zips.ts';
+import { cityHref, siteForSlug } from '../../content/sites.ts';
 
 const USGS_HARDNESS = 'https://www.usgs.gov/water-science-school/science/hardness-water';
 
@@ -65,14 +66,14 @@ export function clusterBody(m: MarketConfig, requestId: string, form?: { vals?: 
   const cities = locationsInMarket(m.id);
   const list = cities.map((c) => {
     const f = c.facts.find((x) => /hardness/i.test(x.label));
-    return `<li><a href="/locations/${e(c.slug)}/">${e(c.name)}</a>${f ? `: ${e(f.label.toLowerCase())} ${e(f.value)} (${e(f.utility)}, ${e(f.period)})` : ''}</li>`;
+    return `<li><a href="${e(cityHref(c.slug))}">${e(c.name)}</a>${f ? `: ${e(f.label.toLowerCase())} ${e(f.value)} (${e(f.utility)}, ${e(f.period)})` : ''}</li>`;
   }).join('');
   return `<div class="grid two"><div>
 <p class="small"><a href="/service-areas/">Service areas</a> / ${e(m.name)}</p>
 <h1>Water treatment options in the ${e(m.name)}</h1>
 <div class="disclosure"><strong>Who you are working with.</strong> ${relationship(m)}</div>
 <h2>Cities</h2>${cities.length ? `<ul>${list}</ul>` : '<p>No city pages yet.</p>'}
-<p class="small">Each city page shows its own utility's published figures and links to the report.</p>
+<p class="small">Each city's site shows its own utility's published figures and links to the report.</p>
 <h2>How it works</h2><ol class="steps"><li>Send a request.</li><li>Assessment at your home.</li><li>Written quote with what is included and what is extra.</li><li>Installation and service.</li></ol>
 </div><div>${requestPanel(m, requestId, `/locations/${m.slug}/`, form)}</div></div>`;
 }
@@ -81,14 +82,18 @@ export function areaDirectory(markets: MarketConfig[]): string {
   return markets.map((m) => {
     const cities = locationsInMarket(m.id);
     const head = cities.length === 1 && cities[0]!.slug === m.slug ? '' : `<a href="/locations/${e(m.slug)}/">${e(m.name)}</a>: `;
-    const links = cities.map((c) => `<a href="/locations/${e(c.slug)}/">${e(c.name)}</a>`).join(', ');
+    const links = cities.map((c) => `<a href="${e(cityHref(c.slug))}">${e(c.name)}</a>`).join(', ');
     return `<tr><td>${head}${links || `<a href="/locations/${e(m.slug)}/">${e(m.name)}</a>`}</td><td>${isOpen(m) ? 'Taking requests' : 'Not open yet'}</td></tr>`;
   }).join('');
 }
 
+// Hub sitemap. Cities with their own site are listed in that site's sitemap instead.
 export function sitemapXml(baseUrl: string, markets: MarketConfig[], staticPaths: string[]): string {
   const paths = ['/', '/service-areas/', ...staticPaths,
     ...markets.filter((m) => !LOCATIONS.some((l) => l.slug === m.slug)).map((m) => `/locations/${m.slug}/`),
-    ...LOCATIONS.filter((l) => markets.some((m) => m.id === l.market_id)).map((l) => `/locations/${l.slug}/`)];
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${[...new Set(paths)].map((p) => `<url><loc>${e(baseUrl + p)}</loc></url>`).join('\n')}\n</urlset>\n`;
+    ...LOCATIONS.filter((l) => markets.some((m) => m.id === l.market_id) && !siteForSlug(l.slug)).map((l) => `/locations/${l.slug}/`)];
+  return urlset([...new Set(paths)].map((p) => baseUrl + p));
 }
+
+export const urlset = (urls: string[]): string =>
+  `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map((u) => `<url><loc>${e(u)}</loc></url>`).join('\n')}\n</urlset>\n`;

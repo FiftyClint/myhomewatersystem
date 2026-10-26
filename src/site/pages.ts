@@ -5,6 +5,7 @@ import { STATIC_PAGES } from '../../content/pages.ts';
 import { LOCATIONS } from '../../content/locations.ts';
 import { areaDirectory } from './locations.ts';
 import company from '../../config/company.json';
+import { cityHref, CITY_SITES } from '../../content/sites.ts';
 
 type Vals = Record<string, string | undefined>;
 
@@ -15,7 +16,7 @@ const aria = (errors: Record<string, string>, k: string) => (errors[k] ? ` aria-
 
 // The form is only ever shown for one market, so the consent text the person sees names the
 // exact party it is stored against. Intake rejects a submission whose ZIP belongs to another market.
-export function inquiryForm(o: { requestId: string; market: MarketConfig; vals?: Vals; errors?: Record<string, string>; page: string }): string {
+export function inquiryForm(o: { requestId: string; market: MarketConfig; vals?: Vals; errors?: Record<string, string>; page: string; brand?: string }): string {
   const v = o.vals ?? {}, er = o.errors ?? {};
   const m = o.market;
   const party = m.business_mode === 'direct' ? 'My Home Water System' : m.seller_display_name;
@@ -24,6 +25,7 @@ export function inquiryForm(o: { requestId: string; market: MarketConfig; vals?:
   return `<form class="inquiry" method="post" action="/api/inquiry" id="request" novalidate>
 <h2 style="margin-top:0">Request a quote</h2>
 ${party ? `<p class="small">Your request goes to <strong>${e(party)}</strong>.</p>` : ''}
+${o.brand ? `<p class="small">${e(o.brand)} is part of My Home Water System.</p>` : ''}
 ${Object.keys(er).length ? '<p class="err" role="alert">Please fix the items marked below.</p>' : ''}
 <input type="hidden" name="request_id" value="${e(o.requestId)}"><input type="hidden" name="page" value="${e(o.page)}"><input type="hidden" name="market" value="${e(m.id)}">
 <div class="hp" aria-hidden="true"><label>Website <input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
@@ -55,7 +57,7 @@ export function homeBody(markets: MarketConfig[]): string {
 <h1>Water treatment options for your home</h1>
 <p>Compare water softening, whole-home filtration and drinking-water systems. Tell us about your home, and we will connect you with the installing company that serves your area for a written recommendation and quote.</p>
 <p>${live.length ? `We currently take requests in: ${live.map((m) => `<a href="/locations/${e(m.slug)}/">${e(m.name)}</a>`).join(', ')}.` : 'We are not taking requests in any area yet.'}</p>
-${LOCATIONS.length ? `<h2>Local water by city</h2><p>${LOCATIONS.filter((l) => markets.some((m) => m.id === l.market_id)).map((l) => `<a href="/locations/${e(l.slug)}/">${e(l.name)}</a>`).join(', ')}</p>` : ''}
+${LOCATIONS.length ? `<h2>Local water by city</h2><p>${LOCATIONS.filter((l) => markets.some((m) => m.id === l.market_id)).map((l) => `<a href="${e(cityHref(l.slug))}">${e(l.name)}</a>`).join(', ')}</p>` : ''}
 <div class="grid three" style="margin-top:20px">
 <div class="card"><h3>Scale and hard water</h3><p><a href="/water-softeners/">About softeners</a></p></div>
 <div class="card"><h3>Taste and odor</h3><p><a href="/whole-home-filtration/">About whole-home filters</a></p></div>
@@ -99,8 +101,8 @@ export function outOfAreaBody(zip: string): string {
   return `<h1>We do not serve ${e(zip)} yet</h1><p>We did not store your request or share it with anyone. See <a href="/service-areas/">service areas</a> for where we work today.</p>`;
 }
 
-export function unavailableBody(): string {
-  return `<h1>We could not save your request</h1><p>Nothing was submitted. Please try again in a few minutes.${company.public_phone ? ` You can also call ${e(company.public_phone)}.` : ''}</p>`;
+export function unavailableBody(phone?: string | null): string {
+  return `<h1>We could not save your request</h1><p>Nothing was submitted. Please try again in a few minutes.${phone ? ` You can also call ${e(phone)}.` : ''}</p>`;
 }
 
 const pending = (v: string | null, label: string) => (v ? e(v) : `<em>${label} not yet published</em>`);
@@ -110,7 +112,9 @@ export function companyBody(kind: 'about' | 'contact'): string {
     return `<h1>About My Home Water System</h1><p>My Home Water System helps homeowners compare water treatment options and request quotes from a qualified local company. Each service-area page names the company that performs the work.</p>
 <p>Legal entity: ${pending(company.legal_name, 'Legal name')}.</p>`;
   }
-  return `<h1>Contact</h1><p>Phone: ${pending(company.public_phone, 'Phone')}<br>Email: ${pending(company.public_email, 'Email')}<br>Hours: ${pending(company.hours_text, 'Hours')}</p>
+  const sites = CITY_SITES.map((s) => `<a href="${e(`https://${s.domain}/contact/`)}">${e(s.brand)}</a>`).join(', ');
+  return `<h1>Contact</h1><p>Email: ${pending(company.public_email, 'Email')}<br>Hours: ${pending(company.hours_text, 'Hours')}</p>
+<p>Each city's site lists its local phone number: ${sites}.</p>
 <p>For a leak or loss of water at a home where a system was installed, call the installing company's service number on your paperwork first.</p>`;
 }
 
@@ -118,7 +122,7 @@ export function legalBody(kind: 'privacy' | 'terms' | 'communication-preferences
   const title = { privacy: 'Privacy', terms: 'Terms', 'communication-preferences': 'Communication preferences' }[kind];
   const extra = kind === 'communication-preferences'
     ? '<p>To stop text messages, reply STOP to any text. To stop calls or email, tell whoever contacts you, and we will record it for every company handling your request.</p>' : '';
-  return `<h1>${title}</h1><p><strong>Draft. This page has not been reviewed by counsel and is not in effect.</strong></p>${extra}`;
+  return `<h1>${title}</h1><p><strong>Draft. This page is not in effect yet.</strong></p>${extra}`;
 }
 
 export { STATIC_PAGES };

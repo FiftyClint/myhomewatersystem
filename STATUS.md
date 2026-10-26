@@ -1,8 +1,10 @@
 # Status
 
-Last updated: 2026-10-24
+Last updated: 2026-10-26
 
 ## Where things stand
+**2026-10-26 standalone city sites:** each of the nine city domains now serves its own site: a home page with the city's sourced water facts, a short published-figure answer at the top, seven FAQs with FAQPage JSON-LD, the request form, about and contact pages, and its own sitemap and robots. www goes to the bare domain. The header shows the market's tracking number once it is set. The hub links out to the city sites and 301s its old /locations/<city>/ pages to them. Johnson County (36 ZIPs) is now in Kansas City (104 ZIPs). Contact pages show hello@myhomewatersystem.com and no mailing address. Preflight lists 21 blockers. Nothing deployed, no DNS touched, nothing bought or sent.
+
 **2026-10-24 pilot:** four dealer-partner markets (Phoenix East Valley, Las Vegas Valley, San Antonio area, Kansas City), all status draft, all "sell the leads" at $95 per exclusive lead, earned when the one dealer accepts it (starting price, approved 2026-10-24, expected to change after installer talks). Nine city pages at /locations/<city>/ with sourced utility hardness figures (New Braunfels has none published), four cluster pages, /sitemap.xml, and 301 forwarding from nine city domains to the hub (content/domains.ts). Every city page shows "Not open yet". Nothing deployed, no DNS touched.
 
 **2026-10-24 launch prep:** ZIP lists are set for all four markets (east-valley 36, las-vegas-valley 52, san-antonio-area 60, kansas-city 68), checked against Census ZCTA-to-place shares (docs/research/market-zips.csv), and each city page lists its ZIPs. Johnson County KS is held out of Kansas City until you decide. 85256 (Salt River Pima-Maricopa land) is held out of Scottsdale. Draft consent text names Aidren LLC, covers one dealer, and covers calls and texts about the request (docs/consent-draft.md); it is marked draft-2026-10-24, so preflight blocks launch until counsel signs off. Domain register updated from RDAP: the ten mapped domains are at GoDaddy, registered 2026-10-18, registrant redacted, so ownership is inferred, not verified.
@@ -24,7 +26,7 @@ Phase 2 core (plan section 25) is built and tested locally with synthetic data, 
 | Opt-out webhook from HighLevel (shared-secret header) | `src/hooks/crm.ts`, test T04 |
 | Staging can never write to the production HighLevel location | `src/env.ts`, test T17 |
 | Coordinator API: work list, exceptions, transitions, ledger, links, report | `src/internal/api.ts` |
-| City pages, cluster pages, sitemap, city-domain 301s; every fact has an evidence row | `content/locations.ts`, `content/domains.ts`, `src/site/locations.ts`, tests/locations.test.ts |
+| Standalone city sites per domain (home, FAQ and JSON-LD, contact, about, sitemap, robots), hub links out and forwards old city pages; every fact has an evidence row | `content/sites.ts`, `content/locations.ts`, `src/site/city.ts`, `src/site/locations.ts`, tests/locations.test.ts |
 | Launch preflight: reads every config/markets/*.json; lists 20 blockers on 2026-10-24 (fee and ZIP blockers cleared; consent-draft blocker added) | `npm run preflight` |
 | Dealer economics calculator: raw leads per billable event, contribution, max cost per raw lead, stress test (conversion -30%, ad cost +25%). Reproduces the plan's $200-per-held-appointment illustration | `npm run economics -- inputs.json`, `src/domain/economics.ts` |
 | Full HTTP walkthrough on the real Workers runtime (local) | `npm run demo`, run 2026-10-18: lead, replay, route, accept, 7 status updates, $600 synthetic fee earned, $0 collected |
@@ -57,11 +59,11 @@ T01 pass, T02 pass, T03 pass, T04 pass, T05 pass, T06 pass, T07 pass, T08 pass (
 ## Blockers (need you or a third party)
 1. Monthly fee is not modeled in code. The approved formula (each city's trailing three-month average of accepted leads times $95) is in docs/decisions.md and docs/business-model.md and would be billed by hand until built. The $95 per-lead fee itself is set in all four markets.
 2. Dealer selection, credentials and signed agreement for each of the four markets. ZIP lists are done. Target lists (unvetted, nobody contacted) are in the shared folder water-systems/launch/.
-3. Domain ownership: the ten mapped domains are at GoDaddy with registrant redacted; confirm in your GoDaddy account (docs/domain-register.csv). sanantoniowatersystems.com is at Namecheap and is probably not yours.
-3a. Calls to Ryan before a dealer signs: needs a tracking number per market (approval to buy; options and cited prices in the shared folder, water-systems/launch/phone-numbers.md). Consent draft is written and waits on counsel.
+3. Domains: confirmed yours on 2026-10-26. DNS for the hub and the nine city domains must point at the Worker before any site serves (needs your yes).
+3a. Tracking numbers: you are buying the four (602, 702, 726, 816). Each goes into its market config as +1 and ten digits. Consent draft waits on your approval of the wording.
 3b. City facts are unreviewed drafts; a named reviewer must check them against the sources. (NBU's 2026-10-15 boil water notice covered about 600 Copper Ridge customers after a main break and was lifted 2026-10-16.)
-4. Company phone, email, hours, address. Legal name set to Aidren LLC.
-5. Counsel review of consent text (docs/consent-draft.md, six open questions), privacy and terms.
+4. Hours. Email is hello@myhomewatersystem.com; no mailing address is shown; phone numbers are per market. Legal name set to Aidren LLC.
+5. Your approval of the consent text (docs/consent-draft.md), privacy and terms. No counsel review, your call.
 6. Approval to create the HighLevel pipeline and a test sub-account for the integration spike.
 7. Approval to create Cloudflare D1 databases and deploy staging.
 
