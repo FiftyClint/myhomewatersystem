@@ -118,11 +118,38 @@ export function companyBody(kind: 'about' | 'contact'): string {
 <p>For a leak or loss of water at a home where a system was installed, call the installing company's service number on your paperwork first.</p>`;
 }
 
+// Privacy and terms text, drafted 2026-10-26 from what the build actually does. It stays marked
+// draft until Clint approves this wording; then set LEGAL_APPROVED to the approval date.
+const LEGAL_APPROVED: string | null = null;
+const LEGAL_UPDATED = 'October 26, 2026';
+
+function legalText(kind: 'privacy' | 'terms'): string {
+  const mail = company.public_email ? `<a href="mailto:${e(company.public_email)}">${e(company.public_email)}</a>` : 'the email on our contact page';
+  if (kind === 'privacy') {
+    return `<p>My Home Water System and its city sites, such as KC Water Systems, are run by ${e(company.legal_name)}. Email ${mail} with any question about your information.</p>
+<h2>What we collect</h2><p>When you send a request, we collect what you type into the form: your name, phone number, email, ZIP code, the water problem you describe, your timing, how you prefer to be contacted, and any note. We also keep a record of your consent: the exact wording you agreed to, its version, the companies it names, the page and the time.</p>
+<h2>How we use it</h2><p>We use your information to answer your request, to call or text you about it by the method you chose, and to arrange an assessment with one local company.</p>
+<h2>Who sees it</h2><p>Your request goes to one local company only: the one named when you agreed, or one you agree to later. Local companies pay us when they accept a request. Companies that run our systems for us also handle your information for that purpose only: Cloudflare hosts these sites and stores requests, and HighLevel holds our customer records and sends our calls and texts. We may also share information when the law requires it.</p>
+<h2>Texts and calls</h2><p>Reply STOP to any text to stop texts. To stop calls or email, tell whoever contacts you, and we record it for every company handling your request.</p>
+<h2>Cookies</h2><p>These sites do not use advertising or analytics cookies.</p>
+<h2>Keeping and deleting</h2><p>We keep your request and consent record for as long as we need them to handle your request and to show what you agreed to. To ask us to delete your information, email ${mail}.</p>`;
+  }
+  return `<p>These terms cover your use of My Home Water System and its city sites, which are run by ${e(company.legal_name)}.</p>
+<h2>What we do</h2><p>We help homeowners compare water treatment options and pass each request to one local company. We do not sell, install or service equipment.</p>
+<h2>The local company</h2><p>Your estimate, contract, installation, warranty and service come from the local company, not from us. Its own terms apply to any work you buy from it. Local companies pay us when they accept a request.</p>
+<h2>No obligation</h2><p>Sending a request or booking an assessment is not a purchase and does not commit you to anything.</p>
+<h2>Water information</h2><p>Water figures on these sites are copied from published utility reports, with their dates and sources. Water at your home can differ, so these figures are general information and not a test of your water.</p>
+<h2>Prices</h2><p>We do not publish prices. Quotes come from the local company after an assessment at your home.</p>
+<h2>Changes</h2><p>We post any change on this page with a new date. Questions go to ${mail}.</p>`;
+}
+
 export function legalBody(kind: 'privacy' | 'terms' | 'communication-preferences'): string {
   const title = { privacy: 'Privacy', terms: 'Terms', 'communication-preferences': 'Communication preferences' }[kind];
-  const extra = kind === 'communication-preferences'
-    ? '<p>To stop text messages, reply STOP to any text. To stop calls or email, tell whoever contacts you, and we will record it for every company handling your request.</p>' : '';
-  return `<h1>${title}</h1><p><strong>Draft. This page is not in effect yet.</strong></p>${extra}`;
+  if (kind === 'communication-preferences') {
+    return `<h1>${title}</h1><p>To stop text messages, reply STOP to any text. To stop calls or email, tell whoever contacts you, and we will record it for every company handling your request.</p>`;
+  }
+  const status = LEGAL_APPROVED ? `<p class="small">Last updated ${LEGAL_UPDATED}.</p>` : '<p><strong>Draft. This page is not in effect yet.</strong></p>';
+  return `<h1>${title}</h1>${status}${legalText(kind)}`;
 }
 
 export { STATIC_PAGES };

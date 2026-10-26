@@ -14,12 +14,12 @@
 - [ ] Signed agreement; `agreement_version` entered
 - [ ] Approved ZIP list entered
 - [x] Consent text approved by Clint on 2026-10-26 (no counsel review, his call); `disclosure_version` owner-approved-2026-10-26
-- [ ] Privacy and terms pages: still marked draft on the site
+- [ ] Privacy and terms text approved by Clint (drafted 2026-10-26 in src/site/pages.ts); set LEGAL_APPROVED
 - [ ] Direct mode only: contractor licensing for our role, customer contract, sales tax, payments, warranty reserve, insurance
 
 ## Accounts and config
 - [x] Company legal name and email in `config/company.json`; no hours and no address by Clint's call; phone per market
-- [ ] hello@myhomewatersystem.com forwarded to Clint's CGF inbox (Cloudflare Email Routing, needs his yes)
+- [ ] hello@myhomewatersystem.com forwarded to clint@cgf.solutions (Cloudflare Email Routing, needs his yes)
 - [ ] Cloudflare API token created by Clint and saved with the account ID as GitHub secrets CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID
 - [ ] D1 staging and production databases created; IDs in `wrangler.toml`
 - [ ] Secrets set: LINK_SECRET, HASH_PEPPER, ADMIN_TOKEN, CRM_WEBHOOK_SECRET, HIGHLEVEL_*

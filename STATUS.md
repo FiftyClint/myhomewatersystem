@@ -64,8 +64,8 @@ T01 pass, T02 pass, T03 pass, T04 pass, T05 pass, T06 pass, T07 pass, T08 pass (
 3. Domains: confirmed yours on 2026-10-26. DNS for the hub and the nine city domains must point at the Worker before any site serves (needs your yes).
 3a. Tracking numbers: you are buying the four (602, 702, 726, 816). Each goes into its market config as +1 and ten digits. Still open: one number per market (four) or one per city site (nine).
 3b. City facts are unreviewed drafts; a named reviewer must check them against the sources. (NBU's 2026-10-15 boil water notice covered about 600 Copper Ridge customers after a main break and was lifted 2026-10-16.)
-4. Which CGF inbox hello@myhomewatersystem.com forwards to. No hours and no mailing address are shown, by your call.
-5. Consent text approved 2026-10-26. Privacy and terms pages are still marked draft on the site.
+4. hello@myhomewatersystem.com forwards to clint@cgf.solutions once the domain is on Cloudflare. No hours and no mailing address are shown, by your call.
+5. Consent text approved 2026-10-26. Privacy and terms text was drafted 2026-10-26 and waits on your approval; the pages stay marked draft until then.
 6. Approval to create the HighLevel pipeline and a test sub-account for the integration spike.
 7. Approval to create Cloudflare D1 databases and deploy staging. You create the Cloudflare API token and save it as a GitHub secret; the deploy workflow runs only when you start it.
 
