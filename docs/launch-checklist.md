@@ -37,6 +37,7 @@
 
 ## Verification
 - [x] `npm test` (76) and `npm run typecheck` pass, 2026-10-26
+- [x] Staging deployed 2026-10-26 23:03 UTC (workflow run 40417089168): migrations applied, secrets made, /healthz ok at https://mhws-staging.clint-bfa.workers.dev
 - [ ] Staging walkthrough with the coordinator (`npm run demo`)
 - [ ] One authorized test record through production, then deleted
 - [ ] Restore drill (export D1, restore to a scratch database)
