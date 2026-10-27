@@ -213,8 +213,10 @@ export default {
       const form = await readForm(req);
       if (!form) return html(413, page('Too large', 'Error', '<h1>Request too large</h1>', true));
       if (!staging && !env.HASH_PEPPER) return html(503, page('Unavailable', 'Error', unavailableBody(siteMarket?.tracking_phone), true));
-      const r = await handleIntake(form, { db: ctx.db, markets: ctx.markets, policy: ctx.policy,
-        hashPepper: env.HASH_PEPPER ?? 'staging-pepper', requireLaunchable: !staging });
+      // A database error (for example D1's daily limit) shows the try-again page, never a raw Worker error.
+      const r: Awaited<ReturnType<typeof handleIntake>> = await handleIntake(form, { db: ctx.db, markets: ctx.markets, policy: ctx.policy,
+        hashPepper: env.HASH_PEPPER ?? 'staging-pepper', requireLaunchable: !staging })
+        .catch((err) => { console.error('intake failed', err instanceof Error ? err.message : String(err)); return { status: 'unavailable' as const, reason: 'storage_error' }; });
       const wantsJson = (req.headers.get('accept') ?? '').includes('application/json');
       if (wantsJson) return new Response(JSON.stringify(r.status === 'invalid' ? { status: r.status, errors: r.errors } : r), {
         status: r.status === 'accepted' ? 200 : r.status === 'invalid' ? 422 : r.status === 'unavailable' ? 503 : 200,
