@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { sqliteDb } from './helpers.ts';
+import { app, sqliteDb } from './helpers.ts';
 import { syncConfig } from '../src/domain/repo.ts';
 import { PRODUCTION_MARKETS } from '../src/env.ts';
 
@@ -22,6 +22,14 @@ describe('cron cost', () => {
     const changed = PRODUCTION_MARKETS.map((m) => (m.id === 'phoenix' ? { ...m, zips: m.zips.slice(1) } : m));
     await syncConfig(db, changed);
     expect(batches).toBe(2);
+  });
+
+  it('a lead does not rewrite its market when the stored config matches', async () => {
+    const t = await app();
+    t.db.raw.prepare(`DELETE FROM zip_codes WHERE market_id = 'demo-dealer' AND zip = '00001'`).run();
+    await t.submit();
+    expect(t.db.raw.prepare(`SELECT COUNT(*) AS n FROM zip_codes WHERE market_id = 'demo-dealer' AND zip = '00001'`).get()).toEqual({ n: 0 });
+    vi.useRealTimers();
   });
 
   it('staging has no cron', () => {

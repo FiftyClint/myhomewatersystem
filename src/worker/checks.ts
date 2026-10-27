@@ -2,7 +2,8 @@ import type { AppContext } from './context.ts';
 import { enqueueStmt, exceptionStmt } from '../domain/repo.ts';
 import type { Stmt } from '../db/sql.ts';
 
-// Scheduled checks. Each writes at most one open exception per issue.
+// Scheduled checks. Each writes at most one open exception per issue. Every query here runs once a
+// minute, so each must read through an index; tests/query-plans.test.ts fails on a full table scan.
 export async function runChecks(ctx: AppContext): Promise<number> {
   const { db } = ctx;
   const now = ctx.now?.() ?? new Date();
@@ -17,8 +18,9 @@ export async function runChecks(ctx: AppContext): Promise<number> {
 
   // W07 outcome chase: accepted work with no status change in 7 days.
   const stale = await db.prepare(
-    `SELECT o.id FROM opportunities o JOIN assignments a ON a.opportunity_id = o.id AND a.status = 'accepted'
-     WHERE o.updated_at < ? AND o.state NOT IN ('collected','closed','declined','cancelled','no_response','disputed')`,
+    `SELECT o.id FROM assignments a CROSS JOIN opportunities o ON o.id = a.opportunity_id
+     WHERE a.status = 'accepted' AND o.updated_at < ?
+       AND o.state NOT IN ('collected','closed','declined','cancelled','no_response','disputed')`,
   ).bind(new Date(now.getTime() - 7 * 86400000).toISOString()).all<{ id: string }>();
   for (const r of stale.results) stmts.push(exceptionStmt(db, 'medium', 'opportunity', r.id, 'status update overdue', at));
 

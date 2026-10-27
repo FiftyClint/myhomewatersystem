@@ -139,8 +139,11 @@ export async function handleIntake(input: IntakeInput, deps: IntakeDeps): Promis
   const svcHash = await sha256Hex(svcText), smsHash = await sha256Hex(smsText);
   const parties = JSON.stringify(market.business_mode === 'direct' || noDealer ? ['My Home Water System'] : ['My Home Water System', recipient]);
 
+  // Store the market's config only when it differs from what is stored. Rewriting it on every lead
+  // deleted and re-inserted the market's ZIP rows each time.
+  const stored = await db.prepare('SELECT config_json FROM markets WHERE id = ?').bind(market.id).first<{ config_json: string }>();
   const stmts: Stmt[] = [
-    ...syncConfigStmts(db, [market]),
+    ...(stored?.config_json === JSON.stringify(market) ? [] : syncConfigStmts(db, [market])),
     db.prepare(
       `INSERT INTO lead_receipts (id, request_id, source, form_version, received_at, payload_hash, payload_json, utm_json)
        VALUES (?, ?, 'website', ?, ?, ?, ?, ?)`,

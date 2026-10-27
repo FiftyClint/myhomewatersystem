@@ -1,6 +1,6 @@
 import { DatabaseSync } from 'node:sqlite';
 import { vi } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import type { Sql, Stmt } from '../src/db/sql.ts';
 import { MockCrm } from '../src/adapters/crm-mock.ts';
 import type { MarketConfig, Policy } from '../src/domain/config.ts';
@@ -16,7 +16,8 @@ import policyJson from '../config/policies/staging.json';
 export function sqliteDb(): Sql & { raw: DatabaseSync } {
   const raw = new DatabaseSync(':memory:');
   raw.exec('PRAGMA foreign_keys = ON');
-  for (const m of ['0001_init.sql', '0002_agent_runs.sql']) raw.exec(readFileSync(new URL(`../migrations/${m}`, import.meta.url), 'utf8'));
+  const dir = new URL('../migrations/', import.meta.url);
+  for (const m of readdirSync(dir).filter((f) => f.endsWith('.sql')).sort()) raw.exec(readFileSync(new URL(m, dir), 'utf8'));
   const clean = (v: unknown[]) => v.map((x) => (x === undefined ? null : x)) as any[];
   const stmt = (q: string, params: unknown[] = []): Stmt & { exec(): { changes: number } } => ({
     bind: (...v: unknown[]) => stmt(q, v),
