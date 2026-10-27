@@ -61,7 +61,6 @@ export const LOCATIONS: CityLocation[] = [
     ],
     notes: [
       "KC Water's figures do not agree across its own documents: an undated web page gives an average of 100 mg/L, its 2022 report gives a range of 84.6-136 ppm for 2021, and its latest report does not list hardness for its own supply.",
-      'WaterOne, BPU and Independence use chloramine to disinfect water in their distribution systems.',
     ],
   },
   {
@@ -75,7 +74,6 @@ export const LOCATIONS: CityLocation[] = [
     ],
     notes: [
       'The City Zone gets Salt River Project water from the Salt and Verde Rivers. The Eastern and Southern Zones get Central Arizona Project water from the Colorado River. Groundwater wells supply all zones.',
-      'Mesa disinfects with chlorine.',
       "Mesa's undated water quality concerns page gives a wider range of 12 to 22 grains per gallon depending on the source serving the area.",
     ],
   },
@@ -157,13 +155,17 @@ export const LOCATIONS: CityLocation[] = [
     ],
   },
   {
-    slug: 'new-braunfels', name: 'New Braunfels', state: 'TX', market_id: 'san-antonio-area', scale_mgl: null, checked_on: '2026-10-26', status: 'draft', reviewer: null,
+    slug: 'new-braunfels', name: 'New Braunfels', state: 'TX', market_id: 'san-antonio-area', scale_mgl: [234, 298], scale_converted: true, checked_on: '2026-10-27', status: 'draft', reviewer: null,
     intro: 'New Braunfels Utilities treats most of its water from the Guadalupe River and also uses Edwards and Trinity aquifer groundwater.',
-    facts: [],
+    facts: [
+      { utility: 'New Braunfels Utilities', label: 'Water hardness range', value: '13.7 to 17.4 grains per gallon, described as "very hard"', period: 'Undated web page (the same range appears as 2017 data in NBU\'s 2018 report)',
+        source_title: 'The Facts About Hard Water | New Braunfels Utilities', source_url: 'https://nbutexas.com/?p=1145', evidence_ids: ['NB-U-01', 'NB-U-02'] },
+    ],
     notes: [
-      "NBU's 2025 water quality report does not publish a hardness figure, and we have not found a current one on its site.",
+      "NBU's water quality reports for 2019 through 2025 do not list hardness, so the newest dated figure is from 2017. NBU's hard-water page still states the same range.",
     ],
   },
+
   {
     slug: 'phoenix', name: 'Phoenix', state: 'AZ', market_id: 'phoenix', scale_mgl: [172, 302], checked_on: '2026-10-26', status: 'draft', reviewer: null,
     intro: 'Phoenix gets almost all of its water from rivers and lakes, delivered through canals, and a small share from city wells.',
@@ -173,7 +175,6 @@ export const LOCATIONS: CityLocation[] = [
     ],
     notes: [
       'Water from the Salt and Verde Rivers is delivered through the Salt River Project canal network. About 20 city wells supplied about two percent of the water.',
-      'Phoenix disinfects with chlorine.',
     ],
   },
   // Added 2026-10-27 from each utility's own published documents. Draft until a reviewer checks them.
@@ -185,7 +186,6 @@ export const LOCATIONS: CityLocation[] = [
         source_title: 'Allentown Division, PWSID: 3390024, Annual Water Quality Report for 2025', source_url: 'https://lcawaterworks.org/wp-content/uploads/ALD.pdf', evidence_ids: ['ALN-U-01'] },
     ],
     notes: [
-      'Lehigh County Authority disinfects with chlorine.',
       'An undated Lehigh County Authority web page gives 13 grains per gallon for the Allentown Division, lower than the average in its 2025 report.',
     ],
   },
@@ -195,10 +195,11 @@ export const LOCATIONS: CityLocation[] = [
     facts: [
     ],
     notes: [
-      'Atlanta disinfects with chlorine.',
-      'We did not find a hardness figure in the city\'s 2023, 2024 or 2025 water quality reports.',
+      "None of the city's water quality reports we read (2006, 2013, 2017 through 2022 and 2025) publishes a hardness figure.",
+      'The nearest published measure we found is a 1951 U.S. Geological Survey study that put Chattahoochee River water at Atlanta under 22 parts per million total hardness in 1937-38 samples. That is untreated river water from decades ago, not tap water, so we do not use it as a figure for Atlanta homes.',
     ],
   },
+
   {
     slug: 'austin', name: 'Austin', state: 'TX', market_id: 'austin', scale_mgl: [70, 126], checked_on: '2026-10-27', status: 'draft', reviewer: null,
     intro: 'Austin Water draws water from the Lower Colorado River through Lake Travis and Lake Austin and treats it at three plants.',
@@ -207,19 +208,23 @@ export const LOCATIONS: CityLocation[] = [
         source_title: 'Water Quality Reports | Austin Water | AustinTexas.gov (2025 Consumer Confidence Report section)', source_url: 'https://www.austintexas.gov/water/programs/water-quality-reports', evidence_ids: ['AUS-U-01'] },
     ],
     notes: [
-      'Austin Water uses chloramine to disinfect water in its distribution system.',
     ],
   },
   {
-    slug: 'baltimore', name: 'Baltimore', state: 'MD', market_id: 'baltimore', scale_mgl: null, checked_on: '2026-10-27', status: 'draft', reviewer: null,
-    intro: 'Baltimore City Department of Public Works supplies water from the Liberty, Loch Raven and Prettyboy reservoirs.',
+    slug: 'baltimore', name: 'Baltimore', state: 'MD', market_id: 'baltimore', scale_mgl: [109, 120], checked_on: '2026-10-27', status: 'draft', reviewer: null,
+    intro: "Baltimore City Department of Public Works treats reservoir water at two plants, Ashburton and Montebello, and each plant's lab publishes its own mineral analysis.",
     facts: [
+      { utility: 'Baltimore City DPW (Montebello laboratory)', label: 'Hardness, annual average of monthly results', value: '114 mg/L (monthly range 109-120)', period: 'Calendar year 2022',
+        source_title: 'Montebello Water Quality Laboratory Mineral Analyses 2022', source_url: 'https://publicworks.baltimorecity.gov/files/min-anal-2022pdf', evidence_ids: ['BAL-U-01'] },
+      { utility: 'Baltimore City DPW (Ashburton laboratory)', label: 'Hardness, annual average of monthly results', value: '80 (monthly range 76-84; the form prints no unit)', period: 'Calendar year 2022',
+        source_title: 'Ashburton Water Quality Laboratory Mineral Analyses 2022', source_url: 'https://publicworks.baltimorecity.gov/files/min-anal-2022-ashburton-labpdf', evidence_ids: ['BAL-U-02'] },
     ],
     notes: [
-      'Baltimore disinfects with chlorine.',
-      'We did not find a hardness figure in the city\'s 2023, 2024 or 2025 water quality reports.',
+      "The city's 2023, 2024 and 2025 water quality reports list no hardness figure, and we found no mineral analyses newer than 2022.",
+      'The scale on this page uses the Montebello figures only, because the Ashburton form does not print a unit.',
     ],
   },
+
   {
     slug: 'boston', name: 'Boston', state: 'MA', market_id: 'boston', scale_mgl: [14.3, 20], checked_on: '2026-10-27', status: 'draft', reviewer: null,
     intro: 'Boston Water and Sewer Commission buys treated water from the MWRA, which draws it from the Quabbin and Wachusett reservoirs.',
@@ -230,7 +235,6 @@ export const LOCATIONS: CityLocation[] = [
         source_title: 'Water Quality Update: An Analysis of July 2026 Sampling Data (MWRA)', source_url: 'https://www.mwra.com/media/file/wq-update-072026', evidence_ids: ['BOS-U-02'] },
     ],
     notes: [
-      'The MWRA disinfects with chloramine.',
       'The MWRA\'s July 2026 update describes hardness as about 15 to 20 mg/L, or about 1 grain per gallon.',
     ],
   },
@@ -242,21 +246,22 @@ export const LOCATIONS: CityLocation[] = [
         source_title: '2025 Annual Drinking Water Quality Report (Consumer Confidence Report 2025 - Charlotte Water)', source_url: 'https://www.charlottenc.gov/files/sharedassets/cltwater/v/3/documents/water-quality/ccr/current-consumer-confidence-report.pdf', evidence_ids: ['CLT-U-01'] },
     ],
     notes: [
-      'Charlotte Water disinfects with chlorine.',
       'A single September 2026 sample at the Franklin plant, posted on Charlotte Water\'s site, read 39 ppm.',
     ],
   },
   {
-    slug: 'chicago', name: 'Chicago', state: 'IL', market_id: 'chicago', scale_mgl: null, checked_on: '2026-10-27', status: 'draft', reviewer: null,
-    intro: 'The Chicago Department of Water Management draws water from Lake Michigan and treats it at two plants.',
+    slug: 'chicago', name: 'Chicago', state: 'IL', market_id: 'chicago', scale_mgl: [129, 158], checked_on: '2026-10-27', status: 'draft', reviewer: null,
+    intro: 'The Chicago Department of Water Management draws water from Lake Michigan and treats it at two plants. The newest hardness figures the city has published are from 2014.',
     facts: [
+      { utility: 'Chicago Department of Water Management', label: 'Hardness as CaCO3, quarterly samples at both plants', value: '129 to 158 mg/L', period: 'Three 2014 quarterly samplings (March, June and August 2014)',
+        source_title: 'Chicago 2014 Comprehensive Chemical Analysis', source_url: 'https://www.chicago.gov/content/dam/city/depts/water/WaterQltyResultsNRpts/ccReports/cca14.pdf', evidence_ids: ['CHI-U-01'] },
     ],
     notes: [
-      'Chicago disinfects with chlorine.',
-      'We did not find a hardness figure in the city\'s 2023 or 2024 water quality reports, and its newer chemical analyses would not load for us.',
-      'The city\'s 2013 chemical analysis lists hardness of 134 to 143 mg/L. That is more than a decade old, so we do not show it as a current figure.',
+      "The city's water quality reports for 2017 and 2021 through 2024 list no hardness figure, and its newer chemical analyses would not load for us, so the 2014 analysis is the newest published number we found.",
+      'The 2014 figures cover raw and treated samples from both plants together.',
     ],
   },
+
   {
     slug: 'cincinnati', name: 'Cincinnati', state: 'OH', market_id: 'cincinnati', scale_mgl: [126, 140], checked_on: '2026-10-27', status: 'draft', reviewer: null,
     intro: 'Greater Cincinnati Water Works supplies the city from the Ohio River and the Great Miami Buried Valley Aquifer.',
@@ -279,7 +284,6 @@ export const LOCATIONS: CityLocation[] = [
         source_title: '2003 Dallas Drinking Water Quality Report', source_url: 'https://dallascityhall.com/departments/waterutilities/DCH%20Documents/pdf/03engWQR.pdf', evidence_ids: ['DAL-U-01'] },
     ],
     notes: [
-      'Dallas Water Utilities disinfects with chloramine.',
       'The newest Dallas report we found that publishes hardness covers 2003. Later reports we checked, through 2025, have no hardness line.',
     ],
   },
@@ -291,7 +295,6 @@ export const LOCATIONS: CityLocation[] = [
         source_title: '2026 Drinking Water Quality Report (DC Water), summarizing 2025 water quality test results', source_url: 'https://www.dcwater.com/waterreport', evidence_ids: ['DCW-U-01'] },
     ],
     notes: [
-      'DC Water disinfects with chloramine.',
     ],
   },
   {
@@ -304,7 +307,6 @@ export const LOCATIONS: CityLocation[] = [
         source_title: 'Denver Water: Water Hardness', source_url: 'https://www.denverwater.org/your-water/water-quality/water-hardness', evidence_ids: ['DEN-U-02'] },
     ],
     notes: [
-      'Denver Water disinfects with chloramine.',
       'Denver Water publishes hardness in parts per billion. 1,000 ppb equals 1 ppm, so its 2025 range is 55 to 124 ppm. Its own description, soft to moderately hard, is milder than the USGS class for the top of that range.',
     ],
   },
@@ -316,21 +318,21 @@ export const LOCATIONS: CityLocation[] = [
         source_title: 'Detroit Water Quality Report, 2025 Results (DWSD - WQR - 2025 - Final)', source_url: 'https://detroitmi.gov/sites/detroitmi.localhost/files/2026-06/DWSD%20-%20WQR%20-%202025%20-%20Final%20-1.pdf', evidence_ids: ['DET-U-01'] },
     ],
     notes: [
-      'Detroit disinfects with chlorine.',
     ],
   },
   {
-    slug: 'fort-worth', name: 'Fort Worth', state: 'TX', market_id: 'dallas-fort-worth', scale_mgl: [100, 171], checked_on: '2026-10-27', status: 'draft', reviewer: null,
+    slug: 'fort-worth', name: 'Fort Worth', state: 'TX', market_id: 'dallas-fort-worth', scale_mgl: [76.5, 175], checked_on: '2026-10-27', status: 'draft', reviewer: null,
     intro: 'Fort Worth Water uses surface water from area lakes, including Lake Worth, Lake Bridgeport and Eagle Mountain Lake.',
     facts: [
-      { utility: 'Fort Worth Water', label: 'Total hardness', value: '100-171 ppm (6-10 grains per gallon), range only', period: 'Calendar year 2022',
-        source_title: '2022 Water Quality Report', source_url: 'https://www.fortworthtexas.gov/files/assets/public/water/documents/water-quality-reports/water-quality-report-2022.pdf', evidence_ids: ['FTW-U-01'] },
+      { utility: 'Fort Worth Water', label: 'Total hardness as CaCO3', value: '76.5 to 175 ppm (5 to 10 grains per gallon), range only', period: 'Calendar year 2024',
+        source_title: "Fort Worth Water's 2024 water quality data for wholesale customers, as printed in Westworth Village's 2024 report", source_url: 'https://www.cityofwestworth.com/ArchiveCenter/ViewFile/Item/67', evidence_ids: ['FTW-U-02', 'FTW-U-03'] },
     ],
     notes: [
-      'Fort Worth Water disinfects with chloramine.',
-      'The newest Fort Worth report we could read covers 2022.',
+      "Fort Worth's own 2023 and 2024 reports would not load for us. The 2024 figures above are Fort Worth Water's data as reprinted by Westworth Village, a city that buys Fort Worth water.",
+      "Fort Worth's own 2022 report gave 100 to 171 ppm (6 to 10 grains per gallon).",
     ],
   },
+
   {
     slug: 'houston', name: 'Houston', state: 'TX', market_id: 'houston', scale_mgl: [43.5, 229], checked_on: '2026-10-27', status: 'draft', reviewer: null,
     intro: 'Houston Public Works supplies the city from the Trinity and San Jacinto rivers and from groundwater.',
@@ -351,7 +353,6 @@ export const LOCATIONS: CityLocation[] = [
         source_title: '2025 Drinking Water Report (Citizens Energy Group, 2025 Water Quality Report)', source_url: 'https://info.citizensenergygroup.com/hubfs/site/water/2025%20Citizens%20Water%20Quality%20Report.pdf', evidence_ids: ['INDY-U-01'] },
     ],
     notes: [
-      'Citizens Energy Group disinfects with chloramine.',
       'The same 2025 report also says hardness averages 320 mg/L in its text.',
     ],
   },
@@ -361,9 +362,11 @@ export const LOCATIONS: CityLocation[] = [
     facts: [
     ],
     notes: [
-      'We have not read JEA\'s water quality report yet.',
+      "JEA's website stopped us with a bot check, so we have not read its water quality report and do not show a figure.",
+      'The nearest published measure we found is a 1977 U.S. Geological Survey report that put Floridan aquifer water in metropolitan Jacksonville at about 250 to more than 300 mg/L hardness. That is untreated groundwater, not JEA tap water.',
     ],
   },
+
   {
     slug: 'los-angeles', name: 'Los Angeles', state: 'CA', market_id: 'los-angeles', scale_mgl: [78, 280], checked_on: '2026-10-27', status: 'draft', reviewer: null,
     intro: 'LADWP serves Los Angeles from the Los Angeles Aqueduct, water bought from the Metropolitan Water District, groundwater and recycled water.',
@@ -383,7 +386,6 @@ export const LOCATIONS: CityLocation[] = [
     ],
     notes: [
       'In 2025 the Aqueduct supplied 44 percent and Metropolitan Water District water 52 percent.',
-      'LADWP disinfects with chloramine.',
       'LADWP\'s FAQ gives older 2022 figures by area: about 8.6 grains per gallon in the San Fernando Valley and western Los Angeles, and about 16.3 in eastern Los Angeles and the Harbor.',
     ],
   },
@@ -399,7 +401,6 @@ export const LOCATIONS: CityLocation[] = [
         source_title: 'Unit Well #14 water quality report', source_url: 'https://www.cityofmadison.com/water/documents/water-quality/Well14QualityReport.pdf', evidence_ids: ['MAD-U-03'] },
     ],
     notes: [
-      'Madison disinfects with chlorine and does not use chloramine.',
       'Hardness differs from well to well. Two of the well reports we read are harder than the citywide FAQ figure.',
     ],
   },
@@ -409,8 +410,8 @@ export const LOCATIONS: CityLocation[] = [
     facts: [
     ],
     notes: [
-      'McAllen Public Utility disinfects with chloramine.',
-      'We did not find a hardness figure in McAllen\'s water quality reports.',
+      "McAllen's water quality reports for 2019 through 2025 list no hardness figure. The 2025 report says secondary measures like this are not required to be reported.",
+      'The nearest published measure we found is U.S. Geological Survey river data for the Rio Grande below Falcon Dam (1996-2000), which lists calcium and magnesium but no hardness value, so we show no figure.',
     ],
   },
   {
@@ -419,10 +420,11 @@ export const LOCATIONS: CityLocation[] = [
     facts: [
     ],
     notes: [
-      'Miami-Dade disinfects with chloramine.',
-      'We did not find a hardness figure in Miami-Dade\'s water quality reports.',
+      "None of Miami-Dade's water quality reports we read (2003, 2013, 2014, 2015, 2023 and 2025) publishes a hardness figure.",
+      'The U.S. Geological Survey Ground Water Atlas describes Biscayne Aquifer water as hard, with no number. That describes untreated aquifer water, not tap water.',
     ],
   },
+
   {
     slug: 'minneapolis', name: 'Minneapolis', state: 'MN', market_id: 'minneapolis', scale_mgl: [80, 113], checked_on: '2026-10-27', status: 'draft', reviewer: null,
     intro: 'Minneapolis draws its drinking water from the Mississippi River.',
@@ -444,7 +446,6 @@ export const LOCATIONS: CityLocation[] = [
         source_title: '2025 Water Quality Report (Nashville Metro Water Service PWSID TN0000494)', source_url: 'https://www.nashville.gov/sites/default/files/2026-04/Water_Quality_Report-2025.pdf?ct=1777578711', evidence_ids: ['NSH-U-02'] },
     ],
     notes: [
-      'Metro Water Services disinfects with chlorine.',
       'Metro Water Services calls Nashville\'s water moderately hard. Calcium hardness is only part of total hardness.',
     ],
   },
@@ -456,7 +457,6 @@ export const LOCATIONS: CityLocation[] = [
         source_title: 'New York City Drinking Water Supply and Quality Report 2025', source_url: 'https://www.nyc.gov/assets/dep/downloads/pdf/water/drinking-water/drinking-water-supply-quality-report/2025-drinking-water-supply-quality-report.pdf', evidence_ids: ['NYC-U-01'] },
     ],
     notes: [
-      'NYC DEP disinfects with chlorine.',
     ],
   },
   {
@@ -465,8 +465,8 @@ export const LOCATIONS: CityLocation[] = [
     facts: [
     ],
     notes: [
-      'OKC Utilities disinfects with chloramine.',
-      'We did not find a hardness figure. A 2017 city plan describes Hefner water as generally hard and Draper water as much softer.',
+      "OKC's water quality reports for 2016, 2017 and 2019 through 2025 list no hardness figure.",
+      'A 2017 city plan describes Hefner water as generally hard and Draper water as much softer, and a 2024 city project document describes raw Lake Hefner water as high in hardness. Neither gives a number.',
     ],
   },
   {
@@ -477,7 +477,6 @@ export const LOCATIONS: CityLocation[] = [
         source_title: 'Water Services (OUC)', source_url: 'https://www.ouc.com/about/water-services/', evidence_ids: ['ORL-U-01'] },
     ],
     notes: [
-      'OUC disinfects with chlorine and says it does not use chloramine.',
     ],
   },
   {
@@ -493,7 +492,6 @@ export const LOCATIONS: CityLocation[] = [
     ],
     notes: [
       'Baxter draws from the Delaware River. Belmont and Queen Lane draw from the Schuylkill.',
-      'Philadelphia disinfects with chloramine.',
     ],
   },
   {
@@ -504,7 +502,7 @@ export const LOCATIONS: CityLocation[] = [
         source_title: 'Water Quality FAQ | Pittsburgh Water', source_url: 'https://www.pgh2o.com/node/5164', evidence_ids: ['PGH-U-01'] },
     ],
     notes: [
-      'Pittsburgh Water disinfects with chlorine.',
+      "Pittsburgh Water's 2019, 2020 and 2022 water quality reports list calcium but no hardness figure, and its 2021, 2024 and 2025 reports and its treatment FAQ are closed to automated reading, so we have no published number.",
     ],
   },
   {
@@ -515,7 +513,6 @@ export const LOCATIONS: CityLocation[] = [
         source_title: 'Riverside Public Utilities 2025 Water Quality Report', source_url: 'https://www.riversideca.gov/utilities/sites/riversideca.gov.utilities/files/pdf/water-quality/2025%20Water%20Quality%20Report.pdf', evidence_ids: ['RIV-U-01'] },
     ],
     notes: [
-      'Riverside Public Utilities disinfects with chlorine.',
     ],
   },
   {
@@ -533,7 +530,6 @@ export const LOCATIONS: CityLocation[] = [
     ],
     notes: [
       'Most of the supply is imported from the Colorado River and the State Water Project.',
-      'San Diego uses chloramine in its distribution system.',
     ],
   },
   {
@@ -544,7 +540,6 @@ export const LOCATIONS: CityLocation[] = [
         source_title: '2025 Annual Water Quality Report (City of San Francisco)', source_url: 'https://www.sfpuc.gov/vi/sites/default/files/accounts-and-services/water-quality/water-quality-en-SF-2025.pdf', evidence_ids: ['SF-U-01'] },
     ],
     notes: [
-      'The SFPUC uses chloramine in its distribution system.',
     ],
   },
   {
@@ -558,7 +553,6 @@ export const LOCATIONS: CityLocation[] = [
     ],
     notes: [
       'In 2025, 62 percent of the water came from the Cedar River and 38 percent from the Tolt.',
-      'Seattle Public Utilities disinfects with chlorine.',
       'Seattle publishes these as informational single samples, not an annual average.',
     ],
   },
@@ -570,7 +564,6 @@ export const LOCATIONS: CityLocation[] = [
         source_title: 'ST. LOUIS CITY WATER - A HISTORY OF EXCELLENCE (2025 Consumer Confidence Report)', source_url: 'https://www.stlwater.com/ccr.pdf', evidence_ids: ['STL-U-01'] },
     ],
     notes: [
-      'St. Louis uses chloramine.',
     ],
   },
   {
@@ -581,8 +574,7 @@ export const LOCATIONS: CityLocation[] = [
         source_title: 'Tucson Water: Water Quality Parameter Explanation', source_url: 'https://www.tucsonaz.gov/files/sharedassets/public/v/1/city-services/tucson-water/water-quality/parameter-explanation-table.pdf', evidence_ids: ['TUC-U-01'] },
     ],
     notes: [
-      'Tucson Water disinfects with chlorine.',
-      'Tucson Water shows hardness by address on an interactive map that we could not read.',
+      'Tucson Water shows hardness by address on an interactive map that we could not read, and its 2023 and 2025 reports list hardness as monitored without a value.',
     ],
   },
   {

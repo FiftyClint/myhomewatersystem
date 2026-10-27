@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import worker from '../src/index.ts';
 import { LOCATIONS } from '../content/locations.ts';
+import { GENERAL, LOCAL_DETAILS } from '../content/local-details.ts';
+import { cityFaq } from '../src/site/city.ts';
 import { CITY_SITES, siteForHost, siteForSlug } from '../content/sites.ts';
 import { CITY_ZIPS } from '../content/zips.ts';
 import { marketLaunchBlockers } from '../src/domain/config.ts';
@@ -27,6 +29,25 @@ describe('city pages', () => {
       expect(f.source_url, `${l.slug} ${f.label}`).toMatch(/^https:\/\//);
       expect(f.evidence_ids.length, `${l.slug} ${f.label}`).toBeGreaterThan(0);
       for (const id of f.evidence_ids) expect(evidenceIds.has(id), `${l.slug}: ${id} missing from evidence.csv`).toBe(true);
+    }
+  });
+
+  it('every local detail and general statement cites a source and evidence rows that exist', () => {
+    const all = [...Object.entries(LOCAL_DETAILS).flatMap(([slug, d]) => Object.values(d).map((x) => [slug, x] as const)), ['general', GENERAL.chloramine_filters] as const];
+    for (const [slug, d] of all) {
+      if (!d) continue;
+      expect(LOCATIONS.some((l) => l.slug === slug) || slug === 'general', slug).toBe(true);
+      expect(d.source_url, `${slug} ${d.text}`).toMatch(/^https:\/\//);
+      for (const id of d.evidence_ids) expect(evidenceIds.has(id), `${slug}: ${id} missing from evidence.csv`).toBe(true);
+    }
+  });
+
+  it('each city site asks its own questions, and every sourced answer links its source', () => {
+    for (const l of LOCATIONS) {
+      const m = PRODUCTION_MARKETS.find((x) => x.id === l.market_id)!;
+      const faq = cityFaq(l, m);
+      expect(new Set(faq.map((f) => f.q)).size, l.slug).toBe(faq.length);
+      for (const f of faq) if (f.src) expect(f.a, `${l.slug} ${f.q}`).toContain(` Source: ${f.src.title}.`);
     }
   });
 

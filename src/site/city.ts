@@ -6,19 +6,20 @@
 // answer first, a scale they can read at a glance, and the request panel beside it.
 import { takesRequests, type MarketConfig } from '../domain/config.ts';
 import { escapeHtml as e } from '../util.ts';
-import { locationsInMarket, type CityLocation } from '../../content/locations.ts';
+import { LOCATIONS, locationsInMarket, type CityLocation } from '../../content/locations.ts';
+import { GENERAL, localOf, type DisinfectantKind, type LocalDetail } from '../../content/local-details.ts';
 import { CITY_ZIPS } from '../../content/zips.ts';
 import { fullBrand, HUB_BRAND, siteForSlug, siteUrl, type CitySite } from '../../content/sites.ts';
 import { inquiryForm } from './pages.ts';
 import { displayPhone } from './layout.ts';
-import { classBadge, classLabel, classSentence, cityData, hardnessAnswer, hardnessFacts, hardnessScale, longDate, USGS_HARDNESS } from './water.ts';
+import { classBadge, classLabel, classSentence, cityData, hardnessAnswer, hardnessFacts, hardnessScale, longDate, MGL_PER_GRAIN, USGS_HARDNESS } from './water.ts';
 import company from '../../config/company.json';
 
 type Form = { vals?: Record<string, string | undefined>; errors?: Record<string, string> };
 
 export const isOpen = takesRequests;
 
-export interface Faq { q: string; a: string }
+export interface Faq { q: string; a: string; src?: { title: string; url: string } }
 
 function installerAnswer(m: MarketConfig, l: CityLocation): string {
   if (m.business_mode === 'dealer_partner' && m.seller_display_name) {
@@ -29,17 +30,69 @@ function installerAnswer(m: MarketConfig, l: CityLocation): string {
 
 export const utilitiesOf = (l: CityLocation) => [...new Set(l.facts.map((f) => f.utility))];
 
+const sourced = (q: string, d: LocalDetail, extra = ''): Faq =>
+  ({ q, a: `${d.text} Source: ${d.source_title}.${extra ? ` ${extra}` : ''}`, src: { title: d.source_title, url: d.source_url } });
+
+const grains = (mgl: number) => (mgl / MGL_PER_GRAIN).toFixed(1);
+
+// Grains per gallon: the utility's own grains figure where it publishes one, otherwise our stated conversion.
+function grainsAnswer(l: CityLocation): string | null {
+  const published = hardnessFacts(l).flatMap((f) => {
+    const g = f.value.match(/([\d.]+(?:\s*(?:-|to|and)\s*[\d.]+)?)\s*(?:grains|gpg)/i);
+    return g ? [`${g[1]!.replace(/\s*-\s*/, ' to ')} grains per gallon (${f.utility}, ${f.label.toLowerCase()}, ${f.period})`] : [];
+  });
+  const rest = hardnessFacts(l).length > published.length ? ` The other figures on this page are published in mg/L only; one grain per gallon is ${MGL_PER_GRAIN} mg/L.` : '';
+  if (published.length) return `In grains per gallon, as published: ${published.join('; ')}.${rest}`;
+  if (!l.scale_mgl) return null;
+  const [lo, hi] = l.scale_mgl;
+  const span = lo === hi ? `${lo} mg/L is about ${grains(lo)} grains per gallon` : `${lo} to ${hi} mg/L is about ${grains(lo)} to ${grains(hi)} grains per gallon`;
+  return `The utility publishes hardness in mg/L, not grains. The published ${span}, converted by us at ${MGL_PER_GRAIN} mg/L per grain.`;
+}
+
+// Other covered cities in the same market, then the same state, with their published spans.
+function compareAnswer(l: CityLocation): string | null {
+  const pool = LOCATIONS.filter((x) => x.slug !== l.slug && x.scale_mgl);
+  const near = [...pool.filter((x) => x.market_id === l.market_id), ...pool.filter((x) => x.market_id !== l.market_id && x.state === l.state)].slice(0, 4);
+  if (!l.scale_mgl || !near.length) return null;
+  const span = (x: CityLocation) => { const [lo, hi] = x.scale_mgl!; return `${lo === hi ? lo : `${lo} to ${hi}`} mg/L${x.scale_converted ? ' (converted from grains)' : ''}`; };
+  return `Published hardness in ${l.name} spans ${span(l)}. Nearby cities we cover: ${near.map((x) => `${x.name} ${span(x)}`).join('; ')}. Each figure comes from that city's own utility, linked on its page.`;
+}
+
+function softenerAnswer(l: CityLocation): string {
+  const c = classLabel(l);
+  const lead = c ? `The published figures for ${l.name} read as ${c} on the USGS scale, but that describes the whole system.` : `${l.name}'s utility does not publish a hardness figure we could find, so a test at the house matters more.`;
+  return `${lead} Scale on fixtures, spotty glassware and buildup in a water heater point to hardness, which a softener addresses. Have your water tested at the house before buying anything.`;
+}
+
+function disinfectantExtra(kind: DisinfectantKind): string {
+  const g = GENERAL.chloramine_filters;
+  if ((kind === 'chloramine' || kind === 'both' || kind === 'varies') && g) return `${g.text} (${g.source_title}.) A water softener does not remove chlorine or chloramine.`;
+  return 'A water softener does not remove either one; whole-home filtration is the system usually compared for taste and odor.';
+}
+
 export function cityFaq(l: CityLocation, m: MarketConfig, brand = `${l.name} Water Systems`): Faq[] {
+  const d = localOf(l.slug);
   const cls = classSentence(l);
   const out: Faq[] = [
     { q: `How hard is the water in ${l.name}?`, a: hardnessAnswer(l) },
   ];
   if (cls) out.push({ q: `Is ${l.name} water hard or soft?`, a: `${cls} USGS treats water above 180 mg/L as calcium carbonate as very hard and 60 mg/L or less as soft.` });
+  const gpg = grainsAnswer(l);
+  if (gpg) out.push({ q: `How many grains per gallon is ${l.name} water?`, a: gpg });
+  if (d.service) out.push(sourced(`Which utility supplies water in ${l.name}?`, d.service));
+  if (d.source_water) out.push(sourced(`Where does ${l.name} tap water come from?`, d.source_water));
+  if (d.softening) out.push(sourced(`Does the utility soften ${l.name} water?`, d.softening));
+  if (d.by_area) out.push(sourced(`Does water differ across ${l.name}?`, d.by_area));
+  if (d.seasonal) out.push(sourced(`Does ${l.name} water change over time?`, d.seasonal));
+  if (d.disinfectant) out.push(sourced(`Is ${l.name} water treated with chlorine or chloramine?`, d.disinfectant, disinfectantExtra(d.disinfectant.kind)));
+  const cmp = compareAnswer(l);
+  if (cmp) out.push({ q: `How does ${l.name} water compare with nearby cities?`, a: cmp });
   out.push(
-    { q: `Do I need a water softener in ${l.name}?`, a: 'It depends on what you see at home. Scale on fixtures, spotty glassware and buildup in a water heater point to hardness, which a softener addresses. Chlorine taste and drinking water are different problems with different systems. Have your water tested at the house before buying anything.' },
+    { q: `Do I need a water softener in ${l.name}?`, a: softenerAnswer(l) },
     { q: `Is the water the same in every ${l.name} home?`, a: 'Utility reports describe the water system as a whole. Water at a single address can differ, especially in older plumbing, so the installing company should test your water before recommending equipment.' },
-    { q: 'What counts as very hard water?', a: 'The U.S. Geological Survey classifies water above 180 mg/L as calcium carbonate as very hard. One grain per gallon equals about 17.1 mg/L.' },
-    { q: 'Does a water softener remove chlorine?', a: 'A softener is not a general drinking-water filter. It is not designed to remove chlorine taste or most other contaminants. Whole-home filtration and reverse osmosis are the systems usually compared for taste and drinking water.' },
+  );
+  if (!d.disinfectant) out.push({ q: 'Does a water softener remove chlorine?', a: 'A softener is not a general drinking-water filter. It is not designed to remove chlorine taste or most other contaminants. Whole-home filtration and reverse osmosis are the systems usually compared for taste and drinking water.' });
+  out.push(
     { q: `How much does a water softener cost in ${l.name}?`, a: 'We do not publish prices. You get a written quote after an assessment at your home, and it lists what is included and what is extra.' },
     { q: 'Who installs the system?', a: installerAnswer(m, l) },
     { q: `Is ${brand} part of the city or the water utility?`, a: `No. We are not a water utility and are not affiliated with ${utilitiesOf(l).join(' or ') || 'the local utility'}. We copy the utility's published figures and link to its report.` },
@@ -47,6 +100,13 @@ export function cityFaq(l: CityLocation, m: MarketConfig, brand = `${l.name} Wat
   );
   return out;
 }
+
+// Distinct sources behind the local details, for citations.
+const localSources = (l: CityLocation) => {
+  const seen = new Map<string, string>();
+  for (const d of Object.values(localOf(l.slug))) if (d && !seen.has(d.source_url)) seen.set(d.source_url, d.source_title);
+  return [...seen].map(([url, title]) => ({ url, title }));
+};
 
 const ORG = { '@type': 'Organization', name: HUB_BRAND, url: 'https://www.myhomewatersystem.com/', parentOrganization: { '@type': 'Organization', name: company.legal_name } };
 
@@ -58,7 +118,8 @@ export function cityJsonLd(site: CitySite, l: CityLocation, m: MarketConfig): ob
       '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) },
     { '@context': 'https://schema.org', '@type': 'WebPage', url, name: cityTitle(site, l), dateModified: l.checked_on, lastReviewed: l.checked_on,
       about: { '@type': 'City', name: l.name, containedInPlace: { '@type': 'State', name: l.state } },
-      citation: hardnessFacts(l).map((f) => ({ '@type': 'CreativeWork', name: f.source_title, url: f.source_url, publisher: { '@type': 'Organization', name: f.utility } })),
+      citation: [...hardnessFacts(l).map((f) => ({ '@type': 'CreativeWork', name: f.source_title, url: f.source_url, publisher: { '@type': 'Organization', name: f.utility } })),
+        ...localSources(l).filter((u) => !hardnessFacts(l).some((f) => f.source_url === u.url)).map((u) => ({ '@type': 'CreativeWork', name: u.title, url: u.url }))],
       mainEntity: { '@type': 'Service', serviceType: 'Water treatment quote requests', areaServed: { '@type': 'City', name: l.name }, provider: ORG } },
   ];
 }
@@ -133,7 +194,7 @@ ${classLabel(l) ? `<p>${e(classSentence(l)!)} Utility figures describe the whole
 <div class="grid three"><a class="card link" href="/water-softeners/"><strong>Water softener</strong><span>For scale and hard water.</span></a><a class="card link" href="/whole-home-filtration/"><strong>Whole-home filter</strong><span>For chlorine taste and odor.</span></a><a class="card link" href="/reverse-osmosis/"><strong>Reverse osmosis</strong><span>For drinking water at one tap.</span></a></div>
 <h2 id="how">How does getting a quote work?</h2><ol class="steps"><li>Send a request.</li><li>Assessment at your home.</li><li>Written quote with what is included and what is extra.</li><li>Installation and service.</li></ol>
 <h2 id="faq">Common questions</h2>
-<dl class="faq">${faq.map((f) => `<dt>${e(f.q)}</dt><dd>${e(f.a)}</dd>`).join('')}</dl>
+<dl class="faq">${faq.map((f) => `<dt>${e(f.q)}</dt><dd>${f.src ? e(f.a).replace(e(` Source: ${f.src.title}.`), ` Source: <a href="${e(f.src.url)}" rel="noopener">${e(f.src.title)}</a>.`) : e(f.a)}</dd>`).join('')}</dl>
 ${zips.length ? `<h2>Which ZIP codes does this page cover?</h2><p class="small">${zips.map(e).join(', ')}</p>` : ''}
 ${nearby(l, m, hubBase)}
 <p class="small">Machine-readable facts: <a href="/water.json">water.json</a>. Summary for AI assistants: <a href="/llms.txt">llms.txt</a>.</p>
@@ -168,6 +229,7 @@ export function cityLlmsTxt(site: CitySite, l: CityLocation, m: MarketConfig, hu
     ...(facts.length ? facts : [`- No published hardness figure found for ${l.name} as of ${l.checked_on}.`]),
     ...(classLabel(l) ? [`- USGS class, our reading of the published figures: ${classLabel(l)}. Classes: ${USGS_HARDNESS}`] : []),
     ...l.notes.map((n) => `- ${n}`),
+    ...Object.values(localOf(l.slug)).filter((d): d is LocalDetail => !!d).map((d) => `- ${d.text} Source: ${d.source_title}, ${d.source_url}`),
     `- Sources last checked: ${l.checked_on}`, '',
     '## Pages',
     `- [${l.name} water and quotes](${base}/): the answer, the sources, common questions`,

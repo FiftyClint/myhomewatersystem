@@ -2,6 +2,7 @@
 // published fact in content/locations.ts or from the USGS hardness classes. Nothing here is estimated.
 import { escapeHtml as e } from '../util.ts';
 import type { CityLocation } from '../../content/locations.ts';
+import { localOf } from '../../content/local-details.ts';
 
 export const USGS_HARDNESS = 'https://www.usgs.gov/water-science-school/science/hardness-water';
 export const MGL_PER_GRAIN = 17.1;
@@ -77,7 +78,7 @@ export function cityData(l: CityLocation, site: { url: string; brand: string } |
       source_title: f.source_title, source_url: f.source_url })),
     published_span_mg_per_l: l.scale_mgl, span_converted_from_grains: !!l.scale_converted,
     usgs_class: classLabel(l), usgs_class_source: USGS_HARDNESS,
-    notes: l.notes, sources_checked_on: l.checked_on,
+    notes: l.notes, local_details: localOf(l.slug), sources_checked_on: l.checked_on,
     site: site?.url ?? null, brand: site?.brand ?? null, taking_requests: open,
   };
 }

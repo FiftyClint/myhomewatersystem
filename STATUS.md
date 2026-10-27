@@ -2,6 +2,13 @@
 
 Last updated: 2026-10-27
 
+## 2026-10-27 15:00 UTC: local figures and local questions on every city site (staging)
+
+- New hardness figures: Chicago (2014, newest the city has published), Baltimore (2022 lab analyses), New Braunfels (NBU's own range, matches 2017 data). Fort Worth moved to 2024 data (Fort Worth Water's wholesale-customer table).
+- Still no published number after the utility reports, state data and USGS: Atlanta, Miami, Jacksonville (JEA site behind a bot check), McAllen, Oklahoma City, Pittsburgh, Tucson. Each page says so and names the nearest authoritative source. Dallas (2003), Jersey City (2022) and Nashville (2023 data) have no newer figure.
+- content/local-details.ts: sourced source water, disinfectant, softening, seasonal, by-area and which-utility details for 46 of 47 cities (Jacksonville none), each with an evidence row. City FAQ adds grains per gallon, nearby-city comparison and those details, with source links; mirrored in FAQPage JSON-LD, llms.txt and water.json.
+- Text shared with a typical other site, after swapping names: median 71% before, 57% after (41-64%). Table: /mnt/project-files/water-systems/duplicate-text-2026-10-27.csv.
+
 ## Where things stand
 **2026-10-27 14:10 UTC Live forms on every site; Jersey and Tampa Bay added (staging only):** Clint: every site takes requests now and phone numbers come later. One rule (takesRequests) drives pages and intake: a draft market with no dealer takes requests through the accept_before_dealer hold (consent names only My Home Water System, nothing routed, lead held for Ryan). No-dealer pages say a local specialist will contact the homeowner, with no time promise. A missing phone is no longer a launch blocker; pages with no number show no phone line. Production still shows "Not open yet" for any market with launch blockers (every market today lacks a launch approval), so going live stays a per-market yes. New sites: jerseywatersystems.com read as Jersey City (Veolia/JCMUA 2022 report, the newest readable) and tampabaywatersystems.com read as the City of Tampa (2024 report), 48 sites in all. Idle D1 unchanged: a held lead is not live work, so the idle tick stays one lookup (at most 864 reads a day, 0 writes, production only; staging has no cron). Staging deployed 14:10 UTC without migration 0003, because D1 is still over today's free read limit from the 02:30 incident until 00:00 UTC. A live staging form post at 14:12 UTC hit that limit and showed a raw Worker error; form posts now catch database errors and show the try-again page. KC and Denver posts pass end to end against the local database stand-in (consent_hold, consent names only My Home Water System). The live staging test and migration 0003 wait for the reset.
 
