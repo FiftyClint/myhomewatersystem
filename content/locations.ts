@@ -253,7 +253,8 @@ export const LOCATIONS: CityLocation[] = [
     ],
     notes: [
       'Chicago disinfects with chlorine.',
-      'We did not find a hardness figure in the city\'s 2023 or 2024 water quality reports.',
+      'We did not find a hardness figure in the city\'s 2023 or 2024 water quality reports, and its newer chemical analyses would not load for us.',
+      'The city\'s 2013 chemical analysis lists hardness of 134 to 143 mg/L. That is more than a decade old, so we do not show it as a current figure.',
     ],
   },
   {
