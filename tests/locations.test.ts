@@ -58,7 +58,8 @@ describe('city pages', () => {
       expect(l, slug).toBeDefined();
       expect(siteForSlug(slug), slug).toBeDefined();
       for (const a of p.areas) {
-        if (a.mgl) expect(l!.facts.filter(a.facts).length, `${slug} ${a.name}`).toBeGreaterThan(0);
+        if (a.mgl) expect(l!.facts.filter(a.facts).length + (a.figures?.length ?? 0), `${slug} ${a.name}`).toBeGreaterThan(0);
+        for (const f of a.figures ?? []) for (const id of f.evidence_ids) expect(evidenceIds.has(id), `${slug}: ${id} missing from evidence.csv`).toBe(true);
         for (const d of [a.where, ...a.points]) {
           expect(d.source_url, `${slug} ${a.name}`).toMatch(/^https:\/\//);
           for (const id of d.evidence_ids) expect(evidenceIds.has(id), `${slug}: ${id} missing from evidence.csv`).toBe(true);

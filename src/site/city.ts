@@ -258,14 +258,17 @@ function areaReading(a: Area, publishedGrains: boolean): string {
   const [lo, hi] = a.mgl;
   const cls = classOf(lo) === classOf(hi) ? classOf(lo) : `${classOf(lo)} to ${classOf(hi)}`;
   const g = lo === hi ? grains(lo) : `${grains(lo)} to ${grains(hi)}`;
+  const figure = lo === hi ? `The published figure here is ${lo} mg/L` : `Published figures here run from ${lo} to ${hi} mg/L`;
   return a.converted
     ? `About ${span(a.mgl)} mg/L, which is our conversion of the published grains at ${MGL_PER_GRAIN} mg/L per grain. That reads as ${cls} on the USGS scale.`
-    : publishedGrains ? `${span(a.mgl)} mg/L as published reads as ${cls} on the USGS scale.`
-    : `${span(a.mgl)} mg/L as published, about ${g} grains per gallon by our conversion. That reads as ${cls} on the USGS scale.`;
+    : publishedGrains ? `${figure}, which reads as ${cls} on the USGS scale.`
+    : `${figure}, about ${g} grains per gallon by our conversion. That reads as ${cls} on the USGS scale.`;
 }
 
+const areaFacts = (l: CityLocation, a: Area) => [...l.facts.filter(a.facts), ...(a.figures ?? [])];
+
 function areaSection(l: CityLocation, a: Area, i: number): string {
-  const facts = l.facts.filter(a.facts);
+  const facts = areaFacts(l, a);
   const rows = facts.map((f) => `<tr><td>${e(f.label)}</td><td>${e(f.value)}</td><td>${e(f.period)}</td><td><a href="${e(f.source_url)}" rel="noopener">${e(f.source_title)}</a></td></tr>`).join('');
   return `<section aria-labelledby="area-${i}">
 <h2 id="area-${i}">${e(a.name)}</h2>
@@ -291,7 +294,7 @@ export function cityAreaJsonLd(site: CitySite, l: CityLocation, p: AreaPage): ob
   const seen = new Map<string, string>();
   for (const a of p.areas) {
     for (const d of [a.where, ...a.points]) if (!seen.has(d.source_url)) seen.set(d.source_url, d.source_title);
-    for (const f of l.facts.filter(a.facts)) if (!seen.has(f.source_url)) seen.set(f.source_url, f.source_title);
+    for (const f of areaFacts(l, a)) if (!seen.has(f.source_url)) seen.set(f.source_url, f.source_title);
   }
   return [{ '@context': 'https://schema.org', '@type': 'WebPage', url: `${siteUrl(site)}/by-area/`, name: p.heading, description: p.intro,
     dateModified: l.checked_on, lastReviewed: l.checked_on, isPartOf: { '@type': 'WebSite', name: fullBrand(site), url: `${siteUrl(site)}/` },

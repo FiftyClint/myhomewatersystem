@@ -2,6 +2,14 @@
 
 Last updated: 2026-10-27
 
+## 2026-10-27 15:30 UTC: water-by-area pages (staging)
+
+- New `/by-area/` page on 8 city sites where the water differs across town: Kansas City (by utility), Scottsdale (3 road zones), Seattle (Cedar and Tolt), Los Angeles (5 LADWP zones), San Diego (3 plants plus purchased water), Philadelphia (3 plants plus the mixed area), Mesa (3 zones) and Madison (22 wells).
+- Each section says where it serves, shows that area's published figures and sources, and the USGS reading. Linked from the home page, sitemap.xml and llms.txt; WebPage JSON-LD with citations.
+- Data in `content/areas.ts`; evidence rows `*-A-*` and `MAD-W-*` in docs/research/evidence.csv. San Diego facts now carry the published grains per gallon.
+- No area page where the utility publishes no geography: Cincinnati, Houston, Baltimore, Indianapolis, Oklahoma City, Denver, Chicago, and the single-system cities.
+- Mesa's zone line in words is from the 2017 report; the 2025 report shows zones on a map only.
+
 ## 2026-10-27 15:00 UTC: local figures and local questions on every city site (staging)
 
 - New hardness figures: Chicago (2014, newest the city has published), Baltimore (2022 lab analyses), New Braunfels (NBU's own range, matches 2017 data). Fort Worth moved to 2024 data (Fort Worth Water's wholesale-customer table).

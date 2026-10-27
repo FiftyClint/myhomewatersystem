@@ -401,7 +401,7 @@ export const LOCATIONS: CityLocation[] = [
         source_title: 'Unit Well #14 water quality report', source_url: 'https://www.cityofmadison.com/water/documents/water-quality/Well14QualityReport.pdf', evidence_ids: ['MAD-U-03'] },
     ],
     notes: [
-      'Hardness differs from well to well. Two of the well reports we read are harder than the citywide FAQ figure.',
+      'Hardness differs from well to well. The 22 well reports we read give 270 to 580 mg/L, and nine of them are harder than the citywide FAQ figure.',
     ],
   },
   {
@@ -519,14 +519,14 @@ export const LOCATIONS: CityLocation[] = [
     slug: 'san-diego', name: 'San Diego', state: 'CA', market_id: 'san-diego', scale_mgl: [54.4, 285], checked_on: '2026-10-27', status: 'draft', reviewer: null,
     intro: 'The City of San Diego treats water at its Alvarado, Miramar and Otay plants and also buys treated water.',
     facts: [
-      { utility: 'City of San Diego Public Utilities', label: 'Total hardness, Alvarado plant', value: 'Average 237 ppm, range 203-270 ppm', period: 'Calendar year 2025',
-        source_title: 'Annual Drinking Water Quality Report (2025 data)', source_url: 'https://www.sandiego.gov/sites/default/files/2026-06/pud-annual-drinking-water-quality-report-2025.pdf', evidence_ids: ['SD-U-01'] },
-      { utility: 'City of San Diego Public Utilities', label: 'Total hardness, Miramar plant', value: 'Average 242 ppm, range 200-285 ppm', period: 'Calendar year 2025',
-        source_title: 'Annual Drinking Water Quality Report (2025 data)', source_url: 'https://www.sandiego.gov/sites/default/files/2026-06/pud-annual-drinking-water-quality-report-2025.pdf', evidence_ids: ['SD-U-02'] },
-      { utility: 'City of San Diego Public Utilities', label: 'Total hardness, Otay plant', value: 'Average 243 ppm, range 201-271 ppm', period: 'Calendar year 2025',
-        source_title: 'Annual Drinking Water Quality Report (2025 data)', source_url: 'https://www.sandiego.gov/sites/default/files/2026-06/pud-annual-drinking-water-quality-report-2025.pdf', evidence_ids: ['SD-U-03'] },
-      { utility: 'City of San Diego Public Utilities', label: 'Total hardness, purchased treated water', value: 'Average 145 ppm, range 54.4-232 ppm', period: 'Calendar year 2025',
-        source_title: 'Annual Drinking Water Quality Report (2025 data)', source_url: 'https://www.sandiego.gov/sites/default/files/2026-06/pud-annual-drinking-water-quality-report-2025.pdf', evidence_ids: ['SD-U-04'] },
+      { utility: 'City of San Diego Public Utilities', label: 'Total hardness, Alvarado plant', value: 'Average 237 ppm (13.8 grains per gallon), range 203-270 ppm', period: 'Calendar year 2025',
+        source_title: 'Annual Drinking Water Quality Report (2025 data)', source_url: 'https://www.sandiego.gov/sites/default/files/2026-06/pud-annual-drinking-water-quality-report-2025.pdf', evidence_ids: ['SD-U-01', 'SD-A-06'] },
+      { utility: 'City of San Diego Public Utilities', label: 'Total hardness, Miramar plant', value: 'Average 242 ppm (14.1 grains per gallon), range 200-285 ppm', period: 'Calendar year 2025',
+        source_title: 'Annual Drinking Water Quality Report (2025 data)', source_url: 'https://www.sandiego.gov/sites/default/files/2026-06/pud-annual-drinking-water-quality-report-2025.pdf', evidence_ids: ['SD-U-02', 'SD-A-06'] },
+      { utility: 'City of San Diego Public Utilities', label: 'Total hardness, Otay plant', value: 'Average 243 ppm (14.2 grains per gallon), range 201-271 ppm', period: 'Calendar year 2025',
+        source_title: 'Annual Drinking Water Quality Report (2025 data)', source_url: 'https://www.sandiego.gov/sites/default/files/2026-06/pud-annual-drinking-water-quality-report-2025.pdf', evidence_ids: ['SD-U-03', 'SD-A-06'] },
+      { utility: 'City of San Diego Public Utilities', label: 'Total hardness, purchased treated water', value: 'Average 145 ppm (8.5 grains per gallon), range 54.4-232 ppm', period: 'Calendar year 2025',
+        source_title: 'Annual Drinking Water Quality Report (2025 data)', source_url: 'https://www.sandiego.gov/sites/default/files/2026-06/pud-annual-drinking-water-quality-report-2025.pdf', evidence_ids: ['SD-U-04', 'SD-A-06'] },
     ],
     notes: [
       'Most of the supply is imported from the Colorado River and the State Water Project.',
