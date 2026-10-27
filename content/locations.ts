@@ -585,6 +585,33 @@ export const LOCATIONS: CityLocation[] = [
       'Tucson Water shows hardness by address on an interactive map that we could not read.',
     ],
   },
+  {
+    slug: 'jersey-city', name: 'Jersey City', state: 'NJ', market_id: 'jersey-city', scale_mgl: [62, 103], checked_on: '2026-10-27', status: 'draft', reviewer: null,
+    intro: 'Veolia runs the Jersey City water system for the Jersey City Municipal Utilities Authority, drawing from the Boonton and Split Rock reservoirs.',
+    facts: [
+      { utility: 'Veolia Jersey City', label: 'Hardness (as calcium carbonate)', value: 'Range 62-103 ppm', period: 'Calendar year 2022',
+        source_title: '2022 Annual Drinking Water Quality Report (Veolia Jersey City, issued April 2023)', source_url: 'https://jcmua.com/wp-content/uploads/2024/04/Veolia_Jersey_City_CCR-2022_data_Locked.pdf', evidence_ids: ['JC-U-01'] },
+    ],
+    notes: [
+      'The 2022 report says chlorine is added to disinfect the water.',
+      'The same report lists sodium at 38 to 69 ppm, above New Jersey\'s recommended upper limit of 50 ppm.',
+      'This is the newest Jersey City report we could read. A 2023 report is posted on Veolia\'s site, which does not allow automated reading, so it is not used here.',
+    ],
+  },
+  {
+    slug: 'tampa', name: 'Tampa', state: 'FL', market_id: 'tampa-bay', scale_mgl: [140, 300], checked_on: '2026-10-27', status: 'draft', reviewer: null,
+    intro: 'The Tampa Water Department draws most of its water from the Hillsborough River.',
+    facts: [
+      { utility: 'Tampa Water Department', label: 'Total hardness', value: 'Average 185 mg/L (10.8 grains per gallon)', period: 'Calendar year 2024',
+        source_title: '2024 Water Quality Report (City of Tampa, published 2025)', source_url: 'https://www.tampa.gov/sites/default/files/document/2025/2024-water-quality-report-ada-compliant.pdf', evidence_ids: ['TPA-U-01'] },
+      { utility: 'Tampa Water Department', label: 'Hardness through the year', value: 'About 140-300 ppm (8-17 grains per gallon)', period: 'Undated document',
+        source_title: 'Understanding Water Hardness (City of Tampa)', source_url: 'https://www.tampa.gov/sites/default/files/document/2026/understanding-water-hardness.pdf', evidence_ids: ['TPA-U-02'] },
+    ],
+    notes: [
+      'The Tampa Water Department adds monochloramine (chlorine and ammonia) before water leaves the plant.',
+      'The city says hardness changes with the seasons. It also uses stored aquifer water and buys water from Tampa Bay Water when needed.',
+    ],
+  },
 ];
 
 export const locationBySlug = (slug: string): CityLocation | undefined => LOCATIONS.find((l) => l.slug === slug);

@@ -37,6 +37,8 @@ import sanFrancisco from './san-francisco.json';
 import seattle from './seattle.json';
 import stLouis from './st-louis.json';
 import tucson from './tucson.json';
+import jerseyCity from './jersey-city.json';
+import tampaBay from './tampa-bay.json';
 import washingtonDc from './washington-dc.json';
 
-export const MARKET_CONFIGS = [eastValley, lasVegasValley, sanAntonioArea, kansasCity, phoenix, allentown, atlanta, austin, baltimore, boston, charlotte, chicago, cincinnati, dallasFortWorth, denver, detroit, houston, indianapolis, jacksonville, losAngeles, madison, mcallen, miami, minneapolis, nashville, newYork, oklahomaCity, orlando, philadelphia, pittsburgh, riverside, sanDiego, sanFrancisco, seattle, stLouis, tucson, washingtonDc] as unknown as MarketConfig[];
+export const MARKET_CONFIGS = [eastValley, lasVegasValley, sanAntonioArea, kansasCity, phoenix, allentown, atlanta, austin, baltimore, boston, charlotte, chicago, cincinnati, dallasFortWorth, denver, detroit, houston, indianapolis, jacksonville, losAngeles, madison, mcallen, miami, minneapolis, nashville, newYork, oklahomaCity, orlando, philadelphia, pittsburgh, riverside, sanDiego, sanFrancisco, seattle, stLouis, tucson, washingtonDc, jerseyCity, tampaBay] as unknown as MarketConfig[];

@@ -57,6 +57,9 @@ export const CITY_SITES: CitySite[] = [
   { domain: 'seattlewatersystems.com', slug: 'seattle', brand: 'Seattle Water Systems' },
   { domain: 'stlouiswatersystems.com', slug: 'st-louis', brand: 'St. Louis Water Systems' },
   { domain: 'tucsonwatersystems.com', slug: 'tucson', brand: 'Tucson Water Systems' },
+  // Added 2026-10-27 on Clint's word. "Jersey" is read as Jersey City and "Tampa Bay" as the City of Tampa (defaults, his to change).
+  { domain: 'jerseywatersystems.com', slug: 'jersey-city', brand: 'Jersey Water Systems' },
+  { domain: 'tampabaywatersystems.com', slug: 'tampa', brand: 'Tampa Bay Water Systems' },
 ];
 
 // Second domains for a city that already has a site. They forward to it so the two never compete.
