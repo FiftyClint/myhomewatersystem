@@ -149,10 +149,12 @@ describe('city sites', () => {
     expect((await get(`${BASE}/`)).status).toBe(200);
   });
 
-  it('brands shared pages for the city and keeps guide canonicals on the hub', async () => {
+  it('brands shared pages for the city and serves the shared guides noindex off the hub', async () => {
     const body = await (await get('https://hendersonwatersystems.com/water-softeners/')).text();
     expect(body).toContain('<title>Water softeners | Henderson Water Systems</title>');
-    expect(body).toContain(`<link rel="canonical" href="${BASE}/water-softeners/">`);
+    expect(body).toContain('<link rel="canonical" href="https://hendersonwatersystems.com/water-softeners/">');
+    expect(body).toContain('<meta name="robots" content="noindex">');
+    expect(await (await get(`${BASE}/water-softeners/`)).text()).not.toContain('content="noindex"');
     expect(body).toContain('Henderson Water Systems is run by My Home Water System');
     expect(body).toContain('Henderson Water Systems <span class="by">by My Home Water System</span>');
     const privacy = await (await get('https://hendersonwatersystems.com/privacy/')).text();

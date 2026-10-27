@@ -36,6 +36,25 @@ const sourced = (q: string, d: LocalDetail, extra = ''): Faq =>
 
 const grains = (mgl: number) => (mgl / MGL_PER_GRAIN).toFixed(1);
 
+// The utility named in the city's facts, for sentences that would otherwise be the same on every site.
+const utilityName = (l: CityLocation) => { const u = utilitiesOf(l); return u.length === 1 ? u[0]! : u.length ? `${l.name}'s utilities` : `${l.name}'s utility`; };
+const fig = ([lo, hi]: [number, number]) => (lo === hi ? `${lo} mg/L` : `${lo} to ${hi} mg/L`);
+
+// Where a published figure sits against the USGS class lines (60, 120, 180 mg/L). Arithmetic only.
+function bandPosition(mgl: number): string {
+  if (mgl > 180) return `${Math.round(mgl - 180)} mg/L over the 180 mg/L line where the USGS very hard class starts`;
+  const top = mgl <= 60 ? 60 : mgl <= 120 ? 120 : 180;
+  const gap = Math.round(top - mgl);
+  return gap === 0 ? `right at the ${top} mg/L top of the USGS ${classOf(mgl)} class` : `${gap} mg/L under the ${top} mg/L top of the USGS ${classOf(mgl)} class`;
+}
+
+function positionSentence(l: CityLocation): string | null {
+  if (!l.scale_mgl) return null;
+  const [lo, hi] = l.scale_mgl;
+  return lo === hi ? `${l.name}'s published ${lo} mg/L is ${bandPosition(lo)}.`
+    : `The low end, ${lo} mg/L, is ${bandPosition(lo)}; ${l.name}'s high end, ${hi} mg/L, is ${bandPosition(hi)}.`;
+}
+
 // Grains per gallon: the utility's own grains figure where it publishes one, otherwise our stated conversion.
 function grainsAnswer(l: CityLocation): string | null {
   const published = hardnessFacts(l).flatMap((f) => {
@@ -56,19 +75,28 @@ function compareAnswer(l: CityLocation): string | null {
   const near = [...pool.filter((x) => x.market_id === l.market_id), ...pool.filter((x) => x.market_id !== l.market_id && x.state === l.state)].slice(0, 4);
   if (!l.scale_mgl || !near.length) return null;
   const span = (x: CityLocation) => { const [lo, hi] = x.scale_mgl!; return `${lo === hi ? lo : `${lo} to ${hi}`} mg/L${x.scale_converted ? ' (converted from grains)' : ''}`; };
-  return `Published hardness in ${l.name} spans ${span(l)}. Nearby cities we cover: ${near.map((x) => `${x.name} ${span(x)}`).join('; ')}. Each figure comes from that city's own utility, linked on its page.`;
+  return `Published hardness in ${l.name} spans ${span(l)}. Nearby: ${near.map((x) => `${x.name} ${span(x)}`).join('; ')}.`;
 }
 
 function softenerAnswer(l: CityLocation): string {
   const c = classLabel(l);
-  const lead = c ? `The published figures for ${l.name} read as ${c} on the USGS scale, but that describes the whole system.` : `${l.name}'s utility does not publish a hardness figure we could find, so a test at the house matters more.`;
-  return `${lead} Scale on fixtures, spotty glassware and buildup in a water heater point to hardness, which a softener addresses. Have your water tested at the house before buying anything.`;
+  if (!c || !l.scale_mgl) return `${utilityName(l)} does not publish a hardness figure we could find for ${l.name}, so a test at your house is the number to decide on.`;
+  return `${utilityName(l)} publishes ${fig(l.scale_mgl)} for ${l.name}, which reads as ${c}. A test at your house shows whether your tap matches it.`;
 }
 
-function disinfectantExtra(kind: DisinfectantKind): string {
+function disinfectantExtra(l: CityLocation, kind: DisinfectantKind): string {
   const g = GENERAL.chloramine_filters;
-  if ((kind === 'chloramine' || kind === 'both' || kind === 'varies') && g) return `${g.text} (${g.source_title}.) A water softener does not remove chlorine or chloramine.`;
-  return 'A water softener does not remove either one; whole-home filtration is the system usually compared for taste and odor.';
+  if ((kind === 'chloramine' || kind === 'both' || kind === 'varies') && g) return `That matters when choosing a filter for a ${l.name} home: catalytic carbon is the activated-carbon type designed to adsorb chloramine (${g.source_title}). A softener leaves ${utilityName(l)}'s disinfectant in the water.`;
+  return 'A softener does not remove it.';
+}
+
+// Built from what the city's own facts show: how many figures, from how many utilities, for which periods.
+function sameHomeAnswer(l: CityLocation): string {
+  const hf = hardnessFacts(l);
+  const area = areaPageOf(l.slug) ? ` The water-by-area page breaks ${l.name} down further.` : '';
+  if (!hf.length) return `No published figure covers ${l.name} homes yet, so a test at the house is the only reading.`;
+  if (hf.length === 1) return `${hf[0]!.utility} publishes one figure for its whole system (${hf[0]!.period}).${area}`;
+  return `${hf.length} published figures cover ${l.name}, from ${new Set(hf.map((f) => f.utility)).size} ${new Set(hf.map((f) => f.utility)).size === 1 ? 'utility' : 'utilities'}; which applies depends on where you live.${area}`;
 }
 
 export function cityFaq(l: CityLocation, m: MarketConfig, brand = `${l.name} Water Systems`): Faq[] {
@@ -77,7 +105,7 @@ export function cityFaq(l: CityLocation, m: MarketConfig, brand = `${l.name} Wat
   const out: Faq[] = [
     { q: `How hard is the water in ${l.name}?`, a: hardnessAnswer(l) },
   ];
-  if (cls) out.push({ q: `Is ${l.name} water hard or soft?`, a: `${cls} USGS treats water above 180 mg/L as calcium carbonate as very hard and 60 mg/L or less as soft.` });
+  if (cls) out.push({ q: `Is ${l.name} water hard or soft?`, a: `${classLabel(l)![0]!.toUpperCase()}${classLabel(l)!.slice(1)}. ${positionSentence(l)}` });
   const gpg = grainsAnswer(l);
   if (gpg) out.push({ q: `How many grains per gallon is ${l.name} water?`, a: gpg });
   if (d.service) out.push(sourced(`Which utility supplies water in ${l.name}?`, d.service));
@@ -85,19 +113,19 @@ export function cityFaq(l: CityLocation, m: MarketConfig, brand = `${l.name} Wat
   if (d.softening) out.push(sourced(`Does the utility soften ${l.name} water?`, d.softening));
   if (d.by_area) out.push(sourced(`Does water differ across ${l.name}?`, d.by_area));
   if (d.seasonal) out.push(sourced(`Does ${l.name} water change over time?`, d.seasonal));
-  if (d.disinfectant) out.push(sourced(`Is ${l.name} water treated with chlorine or chloramine?`, d.disinfectant, disinfectantExtra(d.disinfectant.kind)));
+  if (d.disinfectant) out.push(sourced(`Is ${l.name} water treated with chlorine or chloramine?`, d.disinfectant, disinfectantExtra(l, d.disinfectant.kind)));
   const cmp = compareAnswer(l);
   if (cmp) out.push({ q: `How does ${l.name} water compare with nearby cities?`, a: cmp });
   out.push(
     { q: `Do I need a water softener in ${l.name}?`, a: softenerAnswer(l) },
-    { q: `Is the water the same in every ${l.name} home?`, a: 'Utility reports describe the water system as a whole. Water at a single address can differ, especially in older plumbing, so the installing company should test your water before recommending equipment.' },
   );
-  if (!d.disinfectant) out.push({ q: 'Does a water softener remove chlorine?', a: 'A softener is not a general drinking-water filter. It is not designed to remove chlorine taste or most other contaminants. Whole-home filtration and reverse osmosis are the systems usually compared for taste and drinking water.' });
+  if (!d.by_area) out.push({ q: `Is the water the same in every ${l.name} home?`, a: sameHomeAnswer(l) });
+  if (!d.disinfectant) out.push({ q: 'Does a water softener remove chlorine?', a: `No. A softener targets hardness, not the disinfectant ${utilityName(l)} adds.` });
   out.push(
-    { q: `How much does a water softener cost in ${l.name}?`, a: 'We do not publish prices. You get a written quote after an assessment at your home, and it lists what is included and what is extra.' },
+    { q: `How much does a water softener cost in ${l.name}?`, a: `We publish no prices for ${l.name}. The installing company gives a written quote after an assessment at your home.` },
     { q: 'Who installs the system?', a: installerAnswer(m, l) },
-    { q: `Is ${brand} part of the city or the water utility?`, a: `No. We are not a water utility and are not affiliated with ${utilitiesOf(l).join(' or ') || 'the local utility'}. We copy the utility's published figures and link to its report.` },
-    { q: 'Is booking an assessment a purchase?', a: 'No. Booking an assessment is not a purchase, and sending a request does not commit you to anything.' },
+    { q: `Is ${brand} part of the city or the water utility?`, a: `No. ${brand} is not affiliated with ${utilitiesOf(l).join(' or ') || 'the local utility'}; it copies and links the published figures.` },
+    { q: 'Is booking an assessment a purchase?', a: 'No, and a request commits you to nothing.' },
   );
   return out;
 }
@@ -140,6 +168,8 @@ export function factsTable(l: CityLocation): string {
   return `<div class="tablewrap"><table><thead><tr>${multi ? '<th>Utility</th>' : ''}<th>Measure</th><th>As published</th><th>Period</th><th>Source</th></tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 
+// Who the homeowner deals with. A disclosure, so it reads the same on every site and is marked
+// data-boilerplate where it is shown, as Powered Land Co marks its legal disclaimer. Never mark prose that way.
 function relationship(m: MarketConfig): string {
   return m.business_mode === 'dealer_partner' && m.seller_display_name
     ? `We connect homeowners with ${e(m.seller_display_name)}, which provides your estimate, contract, installation and ongoing service.`
@@ -170,6 +200,35 @@ ${hardnessScale(l)}
 </section>`;
 }
 
+function meaningText(l: CityLocation): string {
+  if (!l.scale_mgl) return `${utilityName(l)} publishes no hardness figure for ${l.name} that we could find, so a test at the house is the only number to go on. Hardness is the calcium and magnesium that leaves scale on fixtures and inside water heaters.`;
+  const [lo, hi] = l.scale_mgl;
+  const g = lo === hi ? grains(lo) : `${grains(lo)} to ${grains(hi)}`;
+  return `${fig(l.scale_mgl)} is about ${g} grains per gallon. ${positionSentence(l)}`;
+}
+
+// System cards ordered and described from the city's own figures and disinfectant.
+function systemCards(l: CityLocation): string {
+  const d = localOf(l.slug).disinfectant;
+  const c = classLabel(l);
+  const soft = l.scale_mgl ? l.scale_mgl[1] <= 60 : false;
+  const softener = `<a class="card link" href="/water-softeners/"><strong>Water softener</strong><span>${e(c ? `For hardness; ${l.name} reads as ${c}.` : 'For hardness, once a test shows it.')}</span></a>`;
+  const kind = d?.kind === 'chloramine' ? 'chloramine' : d?.kind === 'chlorine' ? 'chlorine' : d ? 'chlorine or chloramine' : 'the disinfectant';
+  const filter = `<a class="card link" href="/whole-home-filtration/"><strong>Whole-home filter</strong><span>${e(`For taste and odor from ${kind}${d ? `, which ${utilityName(l)} uses` : ''}.`)}</span></a>`;
+  const ro = `<a class="card link" href="/reverse-osmosis/"><strong>Reverse osmosis</strong><span>${e(`Drinking water at one ${l.name} kitchen tap.`)}</span></a>`;
+  return `<div class="grid three">${soft ? filter + ro + softener : softener + filter + ro}</div>`;
+}
+
+function quoteSteps(l: CityLocation): string[] {
+  const zips = (CITY_ZIPS[l.slug] ?? []).length;
+  return [
+    zips ? `Send a request from one of the ${zips} ${l.name} ZIP codes listed below.` : `Send a request with your ${l.name} address.`,
+    l.scale_mgl ? `An assessment at your home, where your tap can be checked against ${utilityName(l)}'s published ${fig(l.scale_mgl)}.` : 'An assessment at your home.',
+    'You get a written quote listing what is included.',
+    'Installation and service by that company.',
+  ];
+}
+
 const toc = '<nav class="toc" aria-label="On this page"><a href="#water">Local water</a><a href="#meaning">What it means</a><a href="#systems">Systems</a><a href="#how">How it works</a><a href="#faq">Questions</a><a href="#request">Request</a></nav>';
 
 export function cityHomeBody(site: CitySite, l: CityLocation, m: MarketConfig, requestId: string, hubBase: string, form?: Form): string {
@@ -178,23 +237,22 @@ export function cityHomeBody(site: CitySite, l: CityLocation, m: MarketConfig, r
   const open = isOpen(m);
   const panel = open
     ? inquiryForm({ requestId, market: m, page: '/', brand: site.brand, ...form })
-    : `<div class="card" id="request"><h2>Not open yet</h2><p>We are not accepting requests in ${e(l.name)} yet. The water facts on this page were last checked ${e(longDate(l.checked_on))}.</p></div>`;
+    : `<div class="card" id="request"><h2>Not open yet</h2><p>${e(l.name)} requests are not open yet.</p></div>`;
   return `<div class="grid two"><div>
 <h1>Water softeners and filtration in ${e(l.name)}, ${e(l.state)}</h1>
 ${answerCard(l)}
-<div class="disclosure"><strong>Who you are working with.</strong> ${relationship(m)} We are not a water utility.</div>
+<div class="disclosure" data-boilerplate><strong>Who you are working with.</strong> ${relationship(m)} We are not a water utility.</div>
 ${toc}
-<h2 id="water">What is in ${e(l.name)} water, as published?</h2>
+<h2 id="water">What does ${e(utilityName(l))} publish about ${e(l.name)} water?</h2>
 <p>${e(l.intro)}</p>
 ${factsTable(l)}
 ${l.notes.length ? `<ul>${l.notes.map((n) => `<li>${e(n)}</li>`).join('')}</ul>` : ''}
 ${areaPageOf(l.slug) ? `<p><a href="/by-area/">${e(areaPageOf(l.slug)!.heading)}</a>: where each one serves, its own figures and how it is treated.</p>` : ''}
-<h2 id="meaning">What do the hardness numbers mean for my home?</h2>
-<p>Hardness is dissolved calcium and magnesium. It is what leaves scale on fixtures, glass and the inside of water heaters. The U.S. Geological Survey classifies water above 180 mg/L as calcium carbonate as very hard (<a href="${USGS_HARDNESS}" rel="noopener">USGS</a>). One grain per gallon equals about 17.1 mg/L.</p>
-${classLabel(l) ? `<p>${e(classSentence(l)!)} Utility figures describe the whole system, so a test at your address is the real answer.</p>` : ''}
-<h2 id="systems">Which systems do ${e(l.name)} homeowners compare?</h2>
-<div class="grid three"><a class="card link" href="/water-softeners/"><strong>Water softener</strong><span>For scale and hard water.</span></a><a class="card link" href="/whole-home-filtration/"><strong>Whole-home filter</strong><span>For chlorine taste and odor.</span></a><a class="card link" href="/reverse-osmosis/"><strong>Reverse osmosis</strong><span>For drinking water at one tap.</span></a></div>
-<h2 id="how">How does getting a quote work?</h2><ol class="steps"><li>Send a request.</li><li>Assessment at your home.</li><li>Written quote with what is included and what is extra.</li><li>Installation and service.</li></ol>
+<h2 id="meaning">What does ${e(l.scale_mgl ? fig(l.scale_mgl) : 'the published figure')} mean for a ${e(l.name)} home?</h2>
+<p>${e(meaningText(l))} (<a href="${USGS_HARDNESS}" rel="noopener">USGS hardness classes</a>)</p>
+<h2 id="systems">Which systems fit ${e(l.name)} water?</h2>
+${systemCards(l)}
+<h2 id="how">How does a ${e(l.name)} quote work?</h2><ol class="steps">${quoteSteps(l).map((x) => `<li>${e(x)}</li>`).join('')}</ol>
 <h2 id="faq">Common questions</h2>
 <dl class="faq">${faq.map((f) => `<dt>${e(f.q)}</dt><dd>${f.src ? e(f.a).replace(e(` Source: ${f.src.title}.`), ` Source: <a href="${e(f.src.url)}" rel="noopener">${e(f.src.title)}</a>.`) : e(f.a)}</dd>`).join('')}</dl>
 ${zips.length ? `<h2>Which ZIP codes does this page cover?</h2><p class="small">${zips.map(e).join(', ')}</p>` : ''}
@@ -204,12 +262,12 @@ ${nearby(l, m, hubBase)}
 ${open ? '<a class="sticky-cta" href="#request">Request a quote</a>' : ''}`;
 }
 
-export function cityContactBody(site: CitySite, m: MarketConfig): string {
+export function cityContactBody(site: CitySite, l: CityLocation, m: MarketConfig): string {
   // No number yet means no phone line at all (Clint, 2026-10-27). The request form is the way in.
   const phone = m.tracking_phone ? `Phone: <a href="tel:${e(m.tracking_phone)}">${e(displayPhone(m.tracking_phone))}</a><br>` : '';
   return `<h1>Contact ${e(fullBrand(site))}</h1>
 <p>${phone}Request a quote: <a href="/#request">use the request form</a><br>Email: ${company.public_email ? `<a href="mailto:${e(company.public_email)}">${e(company.public_email)}</a>` : '<em>Email not yet published</em>'}</p>
-<p>For a leak or loss of water at a home where a system was installed, call the installing company's service number on your paperwork first.</p>`;
+<p>For a leak or loss of water at a ${e(l.name)} home where a system was installed, call the installing company's service number on your paperwork first. A problem with the water supply itself, such as a main break, goes to ${e(utilityName(l))}.</p>`;
 }
 
 export function cityAboutBody(site: CitySite, l: CityLocation): string {
@@ -269,14 +327,28 @@ const areaFacts = (l: CityLocation, a: Area) => [...l.facts.filter(a.facts), ...
 
 function areaSection(l: CityLocation, a: Area, i: number): string {
   const facts = areaFacts(l, a);
-  const rows = facts.map((f) => `<tr><td>${e(f.label)}</td><td>${e(f.value)}</td><td>${e(f.period)}</td><td><a href="${e(f.source_url)}" rel="noopener">${e(f.source_title)}</a></td></tr>`).join('');
+  // Sentences rather than the home page's table: the home page owns the table, and the same rows on two
+  // pages of one site would compete with each other (same-site rule, scripts/check-duplicate-copy.ts).
+  const lower = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
+  const rows = facts.map((f) => `<li>${e(f.value)} for ${e(lower(f.label))}, ${e(lower(f.period))}. Source: <a href="${e(f.source_url)}" rel="noopener">${e(f.source_title)}</a>.</li>`).join('');
   return `<section aria-labelledby="area-${i}">
 <h2 id="area-${i}">${e(a.name)}</h2>
 <p>${e(a.where.text)} Source: ${link(a.where)}.</p>
-${facts.length ? `<div class="tablewrap"><table><thead><tr><th>Measure</th><th>As published</th><th>Period</th><th>Source</th></tr></thead><tbody>${rows}</tbody></table></div>` : ''}
+${facts.length ? `<ul>${rows}</ul>` : ''}
 <p>${e(areaReading(a, facts.some((f) => /grains|gpg/i.test(f.value))))}</p>
 ${a.points.length ? `<ul>${a.points.map((d) => `<li>${e(d.text)} Source: ${link(d)}.</li>`).join('')}</ul>` : ''}
 </section>`;
+}
+
+// What the areas on this page add up to, from their own figures.
+function areaSpan(l: CityLocation, p: AreaPage): string {
+  const ms = p.areas.flatMap((a) => a.mgl ?? []);
+  if (!ms.length) return `None of these ${l.name} areas has a published hardness figure, so a test at the house is the number to go on.`;
+  const lo = Math.min(...ms), hi = Math.max(...ms);
+  const span = lo === hi ? `${lo} mg/L` : `${lo} to ${hi} mg/L`;
+  const cls = classOf(lo) === classOf(hi) ? `sits in the USGS ${classOf(lo)} class` : `spans USGS classes from ${classOf(lo)} to ${classOf(hi)}`;
+  const conv = p.areas.some((a) => a.converted) ? ', with grains figures converted at our stated rate,' : '';
+  return `Across the ${p.areas.length} ${l.name} areas above, the figures${conv} run ${span}, which ${cls}. Each is a plant, well or area figure, not a reading at one address.`;
 }
 
 export function cityAreaBody(site: CitySite, l: CityLocation, p: AreaPage): string {
@@ -285,7 +357,7 @@ export function cityAreaBody(site: CitySite, l: CityLocation, p: AreaPage): stri
 <h2>Which one serves my home?</h2>
 <p>${e(p.how_to_tell)}</p>
 ${p.areas.map((a, i) => areaSection(l, a, i)).join('\n')}
-<p>Utility figures describe a whole system or area, so a test at your address is the real answer. The USGS classes hardness from 0 to 60 mg/L as soft, 61 to 120 as moderately hard, 121 to 180 as hard and over 180 as very hard (<a href="${USGS_HARDNESS}" rel="noopener">USGS</a>).</p>
+<p>${e(areaSpan(l, p))} (<a href="${USGS_HARDNESS}" rel="noopener">USGS hardness classes</a>)</p>
 <p>See <a href="/">${e(l.name)} water and quotes</a>, or <a href="/#request">request a quote</a>.</p>
 <p class="small">Sources last checked ${e(longDate(l.checked_on))}. ${e(site.brand)} is not a water utility.</p>`;
 }

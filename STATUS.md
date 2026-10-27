@@ -2,6 +2,13 @@
 
 Last updated: 2026-10-27
 
+## 2026-10-27 18:45 UTC: Powered Land Co duplicate copy rules on the water sites (staging)
+
+- Clint asked for the same de-duplication rules as Powered Land Co. Ported from poweredlandco scripts/check-duplicate-copy.mjs, src/lib/noindex.mjs and README "The guards" to `scripts/check-duplicate-copy.ts`, run by `tests/duplicate-copy.test.ts` on every test run.
+- Rule: no 40-word run of visible `<main>` text shared by two sites, or by two indexable pages on one site. Lowercase words, no name swapping. Skipped: `data-boilerplate` (the request and ZIP forms, and the who-you-are-working-with disclosure, as PLC skips its legal disclaimer) and `data-citations`. About, legal and the four guides are identical everywhere, so city and state sites serve them noindex with a self canonical (`src/site/noindex.ts`); the hub keeps them indexable. About left the city sitemaps. State sites send /contact/ to the hub's.
+- Rewritten so nothing collides: city home and FAQ sections around each city's own figures and utility, contact pages, by-area figure lines and closing note, the chloramine filter answer, state site city lists, hub market pages. Result: 0 shared passages across 109 indexable pages on 47 sites.
+- Old measure (8-word runs, names swapped): median 56% before, 34% after (24-42%). Table: /mnt/project-files/water-systems/duplicate-text-plc-2026-10-27.csv.
+
 ## 2026-10-27 15:30 UTC: water-by-area pages (staging)
 
 - New `/by-area/` page on 8 city sites where the water differs across town: Kansas City (by utility), Scottsdale (3 road zones), Seattle (Cedar and Tolt), Los Angeles (5 LADWP zones), San Diego (3 plants plus purchased water), Philadelphia (3 plants plus the mixed area), Mesa (3 zones) and Madison (22 wells).

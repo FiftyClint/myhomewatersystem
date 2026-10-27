@@ -39,7 +39,7 @@ export function cityTable(ls: CityLocation[]): string {
 <tbody>${ls.map(cityRow).join('')}</tbody></table></div>`;
 }
 
-const zipForm = `<form class="inquiry" method="get" action="/check" id="request"><h2 style="margin-top:0">Check your ZIP code</h2>
+const zipForm = `<form class="inquiry" method="get" action="/check" id="request" data-boilerplate><h2 style="margin-top:0">Check your ZIP code</h2>
 <div class="zipcheck"><div><label class="f" for="zip">ZIP code</label><input type="text" id="zip" name="zip" inputmode="numeric" autocomplete="postal-code" maxlength="5"></div>
 <button type="submit">Check</button></div><p class="small">We use your ZIP code only to find your city's page and whether a local company serves it.</p></form>`;
 
@@ -123,11 +123,21 @@ export function hubLlmsTxt(baseUrl: string, markets: MarketConfig[]): string {
 }
 
 // A state directory site, such as californiawatersystems.com: the state's cities and their figures.
+// A state site lists its cities in sentences, so its text is its own and not rows copied from the hub's table.
+function stateCityItem(l: CityLocation): string {
+  const f = hardnessFacts(l), c = classLabel(l);
+  const a = `<a href="${e(cityHref(l.slug))}">${e(l.name)}</a>`;
+  if (!f.length) return `<li>${a}: no published hardness figure found yet.</li>`;
+  const utils = [...new Set(f.map((x) => x.utility))].join(' and ');
+  const what = f.length === 1 ? `${e(f[0]!.value)}, ${e(f[0]!.period)}, from ${e(utils)}` : `${f.length} published figures from ${e(utils)}`;
+  return `<li>${a}: ${what}.${c ? ` That reads as ${e(c)}.` : ''}</li>`;
+}
+
 export function stateBody(st: StateSite, markets: MarketConfig[]): string {
   const ls = listedCities(markets).filter((l) => l.state === st.state);
   return `<h1>Water hardness and water treatment in ${e(st.stateName)}</h1>
 <p class="answer">Published drinking water hardness for ${ls.length} ${e(st.stateName)} cities, copied from each city's utility with its period and source. Pick your city for the full facts and to request a quote.</p>
-${cityTable(ls)}
+<ul>${ls.map(stateCityItem).join('')}</ul>
 <h2>What should I compare?</h2>
 <div class="grid three"><a class="card link" href="/water-softeners/"><strong>Water softener</strong><span>For scale and hard water.</span></a><a class="card link" href="/whole-home-filtration/"><strong>Whole-home filter</strong><span>For chlorine taste and odor.</span></a><a class="card link" href="/reverse-osmosis/"><strong>Reverse osmosis</strong><span>For drinking water at one tap.</span></a></div>
 <p class="small">The U.S. Geological Survey classes water above 180 mg/L as calcium carbonate as very hard (<a href="${USGS_HARDNESS}" rel="noopener">USGS</a>). We are not a water utility.</p>`;

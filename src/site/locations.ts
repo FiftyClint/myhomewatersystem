@@ -18,7 +18,7 @@ function relationship(m: MarketConfig): string {
 
 function requestPanel(m: MarketConfig, requestId: string, page: string, form?: { vals?: Record<string, string | undefined>; errors?: Record<string, string> }): string {
   return isOpen(m) ? inquiryForm({ requestId, market: m, page, ...form })
-    : '<div class="card"><h2>Not open yet</h2><p>We are not accepting requests in this area yet.</p></div>';
+    : `<div class="card"><h2>Not open yet</h2><p>Requests in the ${e(m.name)} are not open yet.</p></div>`;
 }
 
 function factsTable(l: CityLocation): string {
@@ -40,7 +40,7 @@ export function cityBody(l: CityLocation, m: MarketConfig, requestId: string, fo
   return `<div class="grid two"><div>
 <p class="small"><a href="/service-areas/">Service areas</a> / ${m.slug !== l.slug ? `<a href="/locations/${e(m.slug)}/">${e(m.name)}</a> / ` : ''}${e(l.name)}</p>
 <h1>Water treatment options for your ${e(l.name)} home</h1>
-<div class="disclosure"><strong>Who you are working with.</strong> ${relationship(m)}</div>
+<div class="disclosure" data-boilerplate><strong>Who you are working with.</strong> ${relationship(m)}</div>
 <h2>Your local water</h2>
 <p>${e(l.intro)}${utilityLine}</p>
 ${factsTable(l)}
@@ -71,10 +71,10 @@ export function clusterBody(m: MarketConfig, requestId: string, form?: { vals?: 
   return `<div class="grid two"><div>
 <p class="small"><a href="/service-areas/">Service areas</a> / ${e(m.name)}</p>
 <h1>Water treatment options in the ${e(m.name)}</h1>
-<div class="disclosure"><strong>Who you are working with.</strong> ${relationship(m)}</div>
+<div class="disclosure" data-boilerplate><strong>Who you are working with.</strong> ${relationship(m)}</div>
 <h2>Cities</h2>${cities.length ? `<ul>${list}</ul>` : '<p>No city pages yet.</p>'}
-<p class="small">Each city's site shows its own utility's published figures and links to the report.</p>
-<h2>How it works</h2><ol class="steps"><li>Send a request.</li><li>Assessment at your home.</li><li>Written quote with what is included and what is extra.</li><li>Installation and service.</li></ol>
+${cities.length ? `<p class="small">${cities.length === 1 ? 'The city page above shows' : `Each of the ${cities.length} city pages above shows`} its own utility's published figures and links to the report.</p>` : ''}
+<h2>How does a ${e(m.name)} request work?</h2><ol class="steps"><li>Send a request from a ${e(m.name)} ZIP code.</li><li>Assessment at your home.</li><li>Written quote with what is included and what is extra.</li><li>Installation and service by the company the form names.</li></ol>
 </div><div>${requestPanel(m, requestId, `/locations/${m.slug}/`, form)}</div></div>`;
 }
 

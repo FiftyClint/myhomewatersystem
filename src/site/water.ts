@@ -39,8 +39,10 @@ export function hardnessAnswer(l: CityLocation): string {
 export function classSentence(l: CityLocation): string | null {
   const c = classLabel(l);
   if (!c) return null;
-  const conv = l.scale_converted ? ', converting grains per gallon at 17.1 mg/L per grain' : '';
-  return `On the U.S. Geological Survey scale, the published figures for ${l.name} read as ${c}${conv}.`;
+  const conv = l.scale_converted ? ' (grains converted at 17.1 mg/L per grain)' : '';
+  const u = [...new Set(hardnessFacts(l).map((f) => f.utility))];
+  const who = u.length === 1 ? `${u[0]}'s figures for ${l.name}` : `The ${u.length} utilities' figures for ${l.name}`;
+  return `${who} read as ${c} on the USGS scale${conv}.`;
 }
 
 const SCALE_MAX = 400;
@@ -55,7 +57,7 @@ export function hardnessScale(l: CityLocation): string {
   return `<figure class="scale" aria-label="Published hardness ${e(label)} on the USGS scale">
 <div class="bands"><span class="b-soft" style="width:15%">Soft</span><span class="b-mod" style="width:15%">Mod.</span><span class="b-hard" style="width:15%">Hard</span><span class="b-very" style="width:55%">Very hard</span>
 <span class="mark" style="left:${left.toFixed(1)}%;width:${width.toFixed(1)}%"></span></div>
-<figcaption class="small">Published span: ${e(label)}${l.scale_converted ? ' (converted from grains per gallon)' : ''}. Bands: USGS, mg/L as calcium carbonate. Scale ends at ${SCALE_MAX} mg/L.</figcaption></figure>`;
+<figcaption class="small">${e(l.name)}: ${e(label)}${l.scale_converted ? ' (converted from grains per gallon)' : ''} on USGS bands, 0 to ${SCALE_MAX} mg/L.</figcaption></figure>`;
 }
 
 export const classBadge = (l: CityLocation): string => {

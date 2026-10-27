@@ -22,7 +22,7 @@ export function inquiryForm(o: { requestId: string; market: MarketConfig; vals?:
   const party = m.business_mode === 'direct' ? 'My Home Water System' : m.seller_display_name;
   const disclosure = serviceDisclosure(m);
   const sms = smsDisclosure(m);
-  return `<form class="inquiry" method="post" action="/api/inquiry" id="request" novalidate>
+  return `<form class="inquiry" method="post" action="/api/inquiry" id="request" novalidate data-boilerplate>
 <h2 style="margin-top:0">Request a quote</h2>
 ${party ? `<p class="small">Your request goes to <strong>${e(party)}</strong>.</p>` : '<p class="small">A local specialist will contact you about your request.</p>'}
 ${o.brand ? `<p class="small">${e(o.brand)} is run by My Home Water System.</p>` : ''}
@@ -62,7 +62,7 @@ ${LOCATIONS.length ? `<h2>Local water by city</h2><p>${LOCATIONS.filter((l) => m
 <div class="card"><h3>Scale and hard water</h3><p><a href="/water-softeners/">About softeners</a></p></div>
 <div class="card"><h3>Taste and odor</h3><p><a href="/whole-home-filtration/">About whole-home filters</a></p></div>
 <div class="card"><h3>Drinking water</h3><p><a href="/reverse-osmosis/">About reverse osmosis</a></p></div></div>
-</div><div><form class="inquiry" method="get" action="/check" id="request"><h2 style="margin-top:0">Check your address</h2>
+</div><div><form class="inquiry" method="get" action="/check" id="request" data-boilerplate><h2 style="margin-top:0">Check your address</h2>
 <label class="f" for="zip">ZIP code</label><input type="text" id="zip" name="zip" inputmode="numeric" autocomplete="postal-code" maxlength="5">
 <p><button type="submit">Check availability</button></p><p class="small">We use your ZIP code only to find your service area.</p></form></div></div>`;
 }
@@ -75,7 +75,7 @@ export function marketBody(m: MarketConfig, requestId: string, form?: { vals?: V
     : `My Home Water System connects homeowners with ${e(who ?? '[dealer to be named]')}. ${e(who ?? 'The dealer')} provides your estimate, contract, installation and ongoing service.`;
   return `<div class="grid two"><div>
 <h1>Water treatment options for your ${e(m.name)} home</h1>
-<div class="disclosure"><strong>Who you are working with.</strong> ${rel}</div>
+<div class="disclosure" data-boilerplate><strong>Who you are working with.</strong> ${rel}</div>
 <h2>How it works</h2><ol class="steps"><li>Send a request.</li><li>Assessment at your home.</li><li>Written quote with what is included and what is extra.</li><li>Installation and service.</li></ol>
 <p>Booking an assessment is not a purchase.</p>
 <h2>Local water</h2><p>Local utility water information for this area has not been reviewed yet. Conditions in an individual home can differ from a utility report.</p>

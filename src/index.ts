@@ -6,6 +6,7 @@ import { cityAboutBody, cityAreaBody, cityAreaJsonLd, cityContactBody, cityDescr
 import { areaPageOf } from '../content/areas.ts';
 import { citiesJson, hardWaterByCityBody, hubHomeBody, hubJsonLd, hubLlmsTxt, stateBody, stateLlmsTxt } from './site/hub.ts';
 import { robotsTxt } from './site/bots.ts';
+import { isSyndicated } from './site/noindex.ts';
 import { locationBySlug, locationsInMarket, type CityLocation } from '../content/locations.ts';
 import { CITY_ZIPS } from '../content/zips.ts';
 import { aliasTarget, ALIAS_DOMAINS, CITY_SITES, HUB_DOMAIN, normalizeHost, siteForHost, siteForSlug, siteUrl, STATE_SITES, stateSiteForHost, type CitySite } from '../content/sites.ts';
@@ -64,7 +65,7 @@ async function citySite(req: Request, url: URL, env: Env, site: CitySite, city: 
   if (req.method !== 'GET' && req.method !== 'HEAD') return null;
   if (path === '/robots.txt') return asset(robotsTxt(base, staging), TEXT);
   const areas = areaPageOf(city.slug);
-  if (path === '/sitemap.xml') return asset(urlset([`${base}/`, ...(areas ? [`${base}/by-area/`] : []), `${base}/about/`, `${base}/contact/`, `${base}/llms.txt`, `${base}/water.json`], city.checked_on), XML);
+  if (path === '/sitemap.xml') return asset(urlset([`${base}/`, ...(areas ? [`${base}/by-area/`] : []), `${base}/contact/`, `${base}/llms.txt`, `${base}/water.json`], city.checked_on), XML);
   if (path === '/llms.txt') return asset(cityLlmsTxt(site, city, m, env.BASE_URL), TEXT);
   if (path === '/water.json') return asset(cityWaterJson(site, city, m), JSONT);
   if (path === '/') {
@@ -86,13 +87,15 @@ async function citySite(req: Request, url: URL, env: Env, site: CitySite, city: 
   }
   if (path === '/by-area/' && areas) return html(200, page(`${areas.heading} | ${site.brand}`, areas.intro, cityAreaBody(site, city, areas), false,
     { canonical: `${base}/by-area/`, jsonLd: cityAreaJsonLd(site, city, areas) }));
-  if (path === '/about/') return html(200, page(`About | ${site.brand}`, `About ${site.brand}`, cityAboutBody(site, city)));
-  if (path === '/contact/') return html(200, page(`Contact | ${site.brand}`, `How to reach ${site.brand}`, cityContactBody(site, m)));
+  // About, the guides and the legal pages are the same text on every domain, so city sites serve them noindex
+  // (src/site/noindex.ts). The hub keeps them indexable.
+  if (path === '/about/') return html(200, page(`About | ${site.brand}`, `About ${site.brand}`, cityAboutBody(site, city), isSyndicated(path)));
+  if (path === '/contact/') return html(200, page(`Contact | ${site.brand}`, `How to reach ${site.brand}`, cityContactBody(site, city, m)));
   // Hub-only sections forward to the hub.
   if (path === '/service-areas/' || path === '/for-dealers/' || path.startsWith('/locations/')) return Response.redirect(`${env.BASE_URL}${path}${url.search}`, 301);
-  // Shared guides: served on the city site for visitors, canonical on the hub so the copies do not compete.
+  // Shared guides: served on the city site for visitors, noindex so the copies do not compete with the hub's.
   const st = STATIC_PAGES.find((p) => p.path === path);
-  if (st) return html(200, page(st.title, st.description, st.html, st.noindex, { canonical: `${env.BASE_URL}${st.path}` }));
+  if (st) return html(200, page(st.title, st.description, st.html, st.noindex || isSyndicated(path)));
   return null;
 }
 
@@ -152,9 +155,10 @@ export default {
       if (path === '/llms.txt') return asset(stateLlmsTxt(state, ctx.markets, env.BASE_URL), TEXT);
       if (path === '/') return html(200, page(`${state.stateName} Water Hardness by City | ${state.brand}`,
         `Published drinking water hardness for ${state.stateName} cities, with sources, and how to request a water treatment quote.`, stateBody(state, ctx.markets), false, { canonical: `${sb}/` }));
-      if (path === '/check' || path === '/service-areas/' || path === '/for-dealers/' || path === '/hard-water-by-city/' || path.startsWith('/locations/')) return Response.redirect(`${env.BASE_URL}${path}${url.search}`, 301);
+      // The hub's contact page lists every city site, so a state site sends visitors there rather than serving a copy.
+      if (path === '/check' || path === '/contact/' || path === '/service-areas/' || path === '/for-dealers/' || path === '/hard-water-by-city/' || path.startsWith('/locations/')) return Response.redirect(`${env.BASE_URL}${path}${url.search}`, 301);
       const st = STATIC_PAGES.find((p) => p.path === path);
-      if (st) return html(200, page(st.title, st.description, st.html, st.noindex, { canonical: `${env.BASE_URL}${st.path}` }));
+      if (st) return html(200, page(st.title, st.description, st.html, st.noindex || isSyndicated(path)));
     }
 
     if (path === '/healthz') return new Response(JSON.stringify({ ok: true, env: env.ENVIRONMENT, crm: ctx.crm.name, crm_reason: ctx.crmReason }), { headers: { 'content-type': 'application/json' } });
@@ -202,7 +206,7 @@ export default {
     if (path === '/service-areas/') return html(200, page('Service areas | My Home Water System', 'Where we take requests.', serviceAreasBody(ctx.markets)));
     const st = STATIC_PAGES.find((p) => p.path === path);
     if (st) return html(200, page(st.title, st.description, st.html, st.noindex));
-    if (path === '/about/' || path === '/contact/') return html(200, page(path === '/about/' ? 'About' : 'Contact', 'Company information', companyBody(path === '/about/' ? 'about' : 'contact')));
+    if (path === '/about/' || path === '/contact/') return html(200, page(path === '/about/' ? 'About' : 'Contact', 'Company information', companyBody(path === '/about/' ? 'about' : 'contact'), !!state && isSyndicated(path)));
     if (['/privacy/', '/terms/', '/communication-preferences/'].includes(path)) {
       const k = path.slice(1, -1) as 'privacy' | 'terms' | 'communication-preferences';
       return html(200, page(k, k, legalBody(k), true));

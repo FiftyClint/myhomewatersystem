@@ -75,7 +75,7 @@ export function layout(o: PageOpts): string {
     : '<a href="/water-softeners/">Systems</a><a href="/how-it-works/">How it works</a><a href="/service-areas/">Service areas</a><a href="/contact/">Contact</a>';
   const foot = city
     ? `<p><a href="/about/">About</a><a href="/contact/">Contact</a><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a><a href="/communication-preferences/">Communication preferences</a></p>
-<p>${e(brand)} is run by My Home Water System, which is operated by Aidren LLC. We help homeowners request water treatment quotes. The company that performs your installation is named on the request form before you submit. We are not a water utility.</p>`
+<p>${e(brand)} is run by My Home Water System, operated by Aidren LLC. Not a water utility.</p>`
     : `<p><a href="/about/">About</a><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a><a href="/communication-preferences/">Communication preferences</a><a href="/for-dealers/">For dealers</a></p>
 <p>My Home Water System helps homeowners request water treatment quotes. The company that performs your installation is named on each service-area page and on the request form before you submit. We are not a water utility; water figures are copied from utility reports with their sources.</p>`;
   return `<!doctype html><html lang="en"><head><meta charset="utf-8">
