@@ -14,8 +14,8 @@ import { providerPage } from './dealer/page.ts';
 import { internalApi } from './internal/api.ts';
 import { crmHook } from './hooks/crm.ts';
 import { syncConfig } from './domain/repo.ts';
-import { runChecks } from './worker/checks.ts';
 import { runJobs } from './worker/jobs.ts';
+import { credentialStmts, hasLiveWork, runChecks } from './worker/checks.ts';
 import { handlers } from './worker/handlers.ts';
 import { timingSafeEqual } from './util.ts';
 
@@ -93,7 +93,7 @@ async function citySite(req: Request, url: URL, env: Env, site: CitySite, city: 
 }
 
 export default {
-  async fetch(req: Request, env: Env): Promise<Response> {
+  async fetch(req: Request, env: Env, exec?: ExecutionContext): Promise<Response> {
     const ctx = buildContext(env);
     const url = new URL(req.url);
     const path = url.pathname;
@@ -219,6 +219,8 @@ export default {
       if (wantsJson) return new Response(JSON.stringify(r.status === 'invalid' ? { status: r.status, errors: r.errors } : r), {
         status: r.status === 'accepted' ? 200 : r.status === 'invalid' ? 422 : r.status === 'unavailable' ? 503 : 200,
         headers: { 'content-type': 'application/json' } });
+      // Route the lead now instead of waiting for the next cron tick.
+      if (r.status === 'accepted') exec?.waitUntil(drain(ctx));
       switch (r.status) {
         case 'accepted':
           return html(200, page('Request received', 'Request received', thankYouBody(r.recipient, r.mode, r.duplicate), true));
@@ -244,6 +246,7 @@ export default {
     if (p) {
       const form = req.method === 'POST' ? await readForm(req) ?? {} : {};
       const r = await providerPage(ctx, p[1]!, req.method, form);
+      if (req.method === 'POST') exec?.waitUntil(drain(ctx));
       return html(r.status, page(r.title, r.title, r.body, true), { 'referrer-policy': 'no-referrer' });
     }
 
@@ -253,16 +256,34 @@ export default {
       return internalApi(ctx, req, path, 'coordinator');
     }
 
-    if (path === '/hooks/crm' && req.method === 'POST') return crmHook(ctx, req, env.CRM_WEBHOOK_SECRET);
+    if (path === '/hooks/crm' && req.method === 'POST') {
+      const res = await crmHook(ctx, req, env.CRM_WEBHOOK_SECRET);
+      exec?.waitUntil(drain(ctx));
+      return res;
+    }
 
     return html(404, page('Not found', 'Not found', '<h1>Page not found</h1><p><a href="/">Home</a></p>', true));
   },
 
-  // Cron: mirror config, run checks, then drain due jobs. The cron wakes the worker; the jobs table holds state.
-  async scheduled(_event: ScheduledEvent, env: Env): Promise<void> {
+  // Cron, every 5 minutes in production, none on staging. An idle site touches the database once per tick
+  // with one index lookup that finds nothing, and once a day checks dealer credentials from the deployed
+  // config. Everything else runs only while a lead is in flight. Daily row math: docs/d1-budget.md.
+  async scheduled(event: ScheduledEvent, env: Env): Promise<void> {
     const ctx = buildContext(env);
+    const now = new Date(event.scheduledTime);
+    if (!(await hasLiveWork(ctx.db))) {
+      if (now.getUTCHours() === 14 && now.getUTCMinutes() < 5) {
+        const stmts = credentialStmts(ctx, now);
+        if (stmts.length) await ctx.db.batch(stmts);
+      }
+      return;
+    }
     await syncConfig(ctx.db, ctx.markets);
     await runChecks(ctx);
-    await runJobs(ctx.db, handlers(ctx), { max: 50 });
+    await drain(ctx);
   },
 };
+
+function drain(ctx: ReturnType<typeof buildContext>): Promise<number> {
+  return runJobs(ctx.db, handlers(ctx), { max: 50 });
+}

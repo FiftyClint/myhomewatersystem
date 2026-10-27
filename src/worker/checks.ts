@@ -24,18 +24,7 @@ export async function runChecks(ctx: AppContext): Promise<number> {
   ).bind(new Date(now.getTime() - 7 * 86400000).toISOString()).all<{ id: string }>();
   for (const r of stale.results) stmts.push(exceptionStmt(db, 'medium', 'opportunity', r.id, 'status update overdue', at));
 
-  // W13 credentials: expired evidence already blocks routing in eligibleProviders(); this tells a person.
-  const soon = new Date(now.getTime() + 30 * 86400000).toISOString().slice(0, 10);
-  const today = at.slice(0, 10);
-  const creds = await db.prepare(
-    `SELECT id, license_expires_on AS lic, insurance_expires_on AS ins FROM providers WHERE status = 'active'`,
-  ).all<{ id: string; lic: string | null; ins: string | null }>();
-  for (const p of creds.results) {
-    for (const [label, d] of [['license', p.lic], ['insurance', p.ins]] as const) {
-      if (!d || d < today) stmts.push(exceptionStmt(db, 'high', 'provider', p.id, `${label} missing or expired: routing blocked`, at));
-      else if (d <= soon) stmts.push(exceptionStmt(db, 'medium', 'provider', p.id, `${label} expires ${d}`, at));
-    }
-  }
+  stmts.push(...credentialStmts(ctx, now));
 
   // Retry routing for capacity holds once an hour.
   const holds = await db.prepare(`SELECT id FROM opportunities WHERE state = 'capacity_hold'`).all<{ id: string }>();
@@ -44,4 +33,34 @@ export async function runChecks(ctx: AppContext): Promise<number> {
 
   if (stmts.length) await db.batch(stmts);
   return stmts.length;
+}
+
+// True when a lead is in flight: a job to run, an offer or accepted job to watch, or a lead held for capacity.
+// Each part is an index lookup, so with nothing in flight it finds no rows.
+export async function hasLiveWork(db: AppContext['db']): Promise<boolean> {
+  const r = await db.prepare(
+    `SELECT EXISTS (SELECT 1 FROM jobs WHERE status IN ('queued','running'))
+         OR EXISTS (SELECT 1 FROM assignments WHERE status IN ('offered','accepted'))
+         OR EXISTS (SELECT 1 FROM opportunities WHERE state = 'capacity_hold') AS live`,
+  ).first<{ live: number }>();
+  return !!r?.live;
+}
+
+// W13 credentials: expired evidence already blocks routing in eligibleProviders(); this tells a person.
+// Read from the deployed config, not the database, so the daily run reads no rows and writes only on an issue.
+export function credentialStmts(ctx: AppContext, now: Date): Stmt[] {
+  const at = now.toISOString();
+  const today = at.slice(0, 10);
+  const soon = new Date(now.getTime() + 30 * 86400000).toISOString().slice(0, 10);
+  const out: Stmt[] = [];
+  for (const m of ctx.markets) {
+    for (const p of m.providers) {
+      if (p.status !== 'active') continue;
+      for (const [label, d] of [['license', p.license_expires_on], ['insurance', p.insurance_expires_on]] as const) {
+        if (!d || d < today) out.push(exceptionStmt(ctx.db, 'high', 'provider', p.id, `${label} missing or expired: routing blocked`, at));
+        else if (d <= soon) out.push(exceptionStmt(ctx.db, 'medium', 'provider', p.id, `${label} expires ${d}`, at));
+      }
+    }
+  }
+  return out;
 }
