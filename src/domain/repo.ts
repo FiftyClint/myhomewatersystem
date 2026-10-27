@@ -72,7 +72,13 @@ export function syncConfigStmts(db: Sql, markets: MarketConfig[]): Stmt[] {
   return out;
 }
 
+// Runs on every cron tick, so it writes only markets whose stored config differs. Rewriting every
+// market's ZIP rows each minute used up the D1 free daily row limits on 2026-10-27 (about 3,000 rows
+// written and 55,000 read per tick across 37 markets).
 export async function syncConfig(db: Sql, markets: MarketConfig[]): Promise<void> {
-  const stmts = syncConfigStmts(db, markets);
+  const have = await db.prepare('SELECT id, config_json FROM markets').all<{ id: string; config_json: string }>();
+  const stored = new Map(have.results.map((r) => [r.id, r.config_json]));
+  const changed = markets.filter((m) => m.business_mode && stored.get(m.id) !== JSON.stringify(m));
+  const stmts = syncConfigStmts(db, changed);
   if (stmts.length) await db.batch(stmts);
 }

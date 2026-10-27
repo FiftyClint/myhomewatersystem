@@ -8,6 +8,8 @@ crons = ["* * * * *"]
 
 [env.staging]
 name = "mhws-staging"
+# No cron on staging: nothing is open there, and a cron every minute spends D1 rows all day.
+triggers = { crons = [] }
 vars = { ENVIRONMENT = "staging", BASE_URL = "http://localhost:8787", CRM_PROVIDER = "mock" }
 [[env.staging.d1_databases]]
 binding = "DB"
