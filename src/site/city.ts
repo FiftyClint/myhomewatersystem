@@ -4,7 +4,7 @@
 // Pages lead with the answer, use question headings, and carry the same facts as JSON-LD, /water.json
 // and /llms.txt, so an AI assistant can quote a figure with its source and date. People get the same
 // answer first, a scale they can read at a glance, and the request panel beside it.
-import type { MarketConfig } from '../domain/config.ts';
+import { takesRequests, type MarketConfig } from '../domain/config.ts';
 import { escapeHtml as e } from '../util.ts';
 import { locationsInMarket, type CityLocation } from '../../content/locations.ts';
 import { CITY_ZIPS } from '../../content/zips.ts';
@@ -16,7 +16,7 @@ import company from '../../config/company.json';
 
 type Form = { vals?: Record<string, string | undefined>; errors?: Record<string, string> };
 
-export const isOpen = (m: MarketConfig) => m.status === 'active' && !!m.business_mode;
+export const isOpen = takesRequests;
 
 export interface Faq { q: string; a: string }
 
@@ -142,9 +142,10 @@ ${open ? '<a class="sticky-cta" href="#request">Request a quote</a>' : ''}`;
 }
 
 export function cityContactBody(site: CitySite, m: MarketConfig): string {
-  const phone = m.tracking_phone ? `<a href="tel:${e(m.tracking_phone)}">${e(displayPhone(m.tracking_phone))}</a>` : '<em>Phone not yet published</em>';
+  // No number yet means no phone line at all (Clint, 2026-10-27). The request form is the way in.
+  const phone = m.tracking_phone ? `Phone: <a href="tel:${e(m.tracking_phone)}">${e(displayPhone(m.tracking_phone))}</a><br>` : '';
   return `<h1>Contact ${e(fullBrand(site))}</h1>
-<p>Phone: ${phone}<br>Email: ${company.public_email ? `<a href="mailto:${e(company.public_email)}">${e(company.public_email)}</a>` : '<em>Email not yet published</em>'}</p>
+<p>${phone}Request a quote: <a href="/#request">use the request form</a><br>Email: ${company.public_email ? `<a href="mailto:${e(company.public_email)}">${e(company.public_email)}</a>` : '<em>Email not yet published</em>'}</p>
 <p>For a leak or loss of water at a home where a system was installed, call the installing company's service number on your paperwork first.</p>`;
 }
 

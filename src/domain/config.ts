@@ -40,6 +40,9 @@ export interface MarketConfig {
   // Clint's call (2026-10-26): take requests before a dealer signs. Each one waits in consent_hold,
   // and the homeowner is asked before it goes to the dealer once one signs.
   accept_before_dealer?: boolean;
+  // Set at runtime only, never in a config file: production closes a market that has launch blockers,
+  // so its pages never show a form that intake would refuse. See buildContext in src/env.ts.
+  requests_closed?: boolean;
   dealer_partner?: {
     commercial_model: DealerCommercialModel | null; // null until agreed with the dealer
     // Pipeline state that earns a per-event fee. null for dealer_funded (monthly fee billed outside).
@@ -85,6 +88,15 @@ export function duplicateWindowDays(m: MarketConfig): number {
     : m.dealer_partner?.duplicate_window_days ?? 90;
 }
 
+// Clint's call (2026-10-27): every water site shows a live request form, with or without a phone number.
+// A market takes requests unless paused, retired or closed at runtime, once it has a business mode and
+// either a named seller or the hold for requests that arrive before a dealer signs.
+export function takesRequests(m: MarketConfig): boolean {
+  if (m.requests_closed || !m.business_mode) return false;
+  if (m.status !== 'draft' && m.status !== 'active') return false;
+  return m.business_mode === 'direct' || !!m.seller_display_name || !!m.accept_before_dealer;
+}
+
 // Problems that block a market from taking real requests. Empty list = launchable config.
 export function marketLaunchBlockers(m: MarketConfig): string[] {
   const out: string[] = [];
@@ -93,8 +105,8 @@ export function marketLaunchBlockers(m: MarketConfig): string[] {
   const holding = m.business_mode === 'dealer_partner' && m.accept_before_dealer && !m.seller_display_name;
   if (!m.seller_display_name && !holding) out.push('no named seller/installer for disclosures');
   if (!m.launch_approval_id) out.push('no launch approval recorded');
-  if (!m.tracking_phone) out.push('no tracking phone number');
-  else if (!/^\+1\d{10}$/.test(m.tracking_phone)) out.push('tracking phone number is not in +1XXXXXXXXXX form');
+  // A phone number is optional (Clint, 2026-10-27: "We can add numbers later"). Pages show none until set.
+  if (m.tracking_phone && !/^\+1\d{10}$/.test(m.tracking_phone)) out.push('tracking phone number is not in +1XXXXXXXXXX form');
   if (m.business_mode === 'dealer_partner' && !m.dealer_partner?.commercial_model) out.push('dealer fee model not agreed');
   if (m.business_mode === 'dealer_partner' && m.dealer_partner?.fee_trigger_state && !(m.dealer_partner.fee_cents > 0)) out.push('dealer fee amount not set');
   if (m.business_mode === 'direct' && !m.direct) out.push('direct-mode terms missing');

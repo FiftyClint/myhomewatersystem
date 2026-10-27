@@ -1,5 +1,5 @@
 import type { Sql } from './db/sql.ts';
-import type { MarketConfig, Policy } from './domain/config.ts';
+import { marketLaunchBlockers, type MarketConfig, type Policy } from './domain/config.ts';
 import type { CrmAdapter } from './adapters/crm.ts';
 import { MockCrm } from './adapters/crm-mock.ts';
 import { HighLevelCrm } from './adapters/crm-highlevel.ts';
@@ -60,5 +60,5 @@ export function buildContext(env: Env, db: Sql = env.DB as unknown as Sql): AppC
   const triageModel = policy.agents.triage_enabled && env.ANTHROPIC_API_KEY
     ? new AnthropicTriageModel(env.ANTHROPIC_API_KEY, policy.agents.triage_model, policy.agents.triage_effort) : undefined;
   return { db, crm, crmReason: reason, env, policy, linkSecret, baseUrl: env.BASE_URL, triageModel,
-    markets: staging ? STAGING_MARKETS : PRODUCTION_MARKETS };
+    markets: staging ? STAGING_MARKETS : PRODUCTION_MARKETS.map((m) => (marketLaunchBlockers(m).length ? { ...m, requests_closed: true } : m)) };
 }

@@ -223,7 +223,7 @@ export default {
       if (r.status === 'accepted') exec?.waitUntil(drain(ctx));
       switch (r.status) {
         case 'accepted':
-          return html(200, page('Request received', 'Request received', thankYouBody(r.recipient, r.mode, r.duplicate), true));
+          return html(200, page('Request received', 'Request received', thankYouBody(r.recipient, r.mode, r.duplicate, !!r.noDealer), true));
         case 'discarded': return html(200, page('Request received', 'Request received', '<h1>Thanks.</h1>', true));
         case 'out_of_area': return html(200, page('Not in our service area', 'Service availability', outOfAreaBody(r.zip), true));
         case 'unavailable': return html(503, page('Please try again', 'Error', unavailableBody(siteMarket?.tracking_phone), true));

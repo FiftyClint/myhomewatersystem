@@ -1,5 +1,5 @@
 import type { Sql, Stmt } from '../db/sql.ts';
-import { duplicateWindowDays, marketLaunchBlockers, type Concern, type MarketConfig, type Policy } from '../domain/config.ts';
+import { duplicateWindowDays, marketLaunchBlockers, takesRequests, type Concern, type MarketConfig, type Policy } from '../domain/config.ts';
 import { HOLD_STATES, type State } from '../domain/states.ts';
 import { auditStmt, enqueueStmt, exceptionStmt, syncConfigStmts } from '../domain/repo.ts';
 import { needsRouting } from '../domain/pipeline.ts';
@@ -13,7 +13,7 @@ const MAX_FIELD = 200;
 export interface IntakeInput { [k: string]: string | undefined }
 
 export type IntakeResult =
-  | { status: 'accepted'; opportunityId: string; state: State; recipient: string; mode: 'dealer_partner' | 'direct'; duplicate: boolean; replay: boolean }
+  | { status: 'accepted'; opportunityId: string; state: State; recipient: string; mode: 'dealer_partner' | 'direct'; duplicate: boolean; replay: boolean; noDealer?: boolean }
   | { status: 'invalid'; errors: Record<string, string>; market?: MarketConfig }
   | { status: 'out_of_area'; zip: string }
   | { status: 'unavailable'; reason: string }
@@ -73,7 +73,7 @@ export function validate(i: IntakeInput): { ok: true; value: Clean } | { ok: fal
 }
 
 export function findMarket(markets: MarketConfig[], zip: string, requireLaunchable: boolean): MarketConfig | null {
-  return markets.find((m) => m.status === 'active' && m.business_mode && m.zips.includes(zip)
+  return markets.find((m) => takesRequests(m) && m.zips.includes(zip)
     && (!requireLaunchable || marketLaunchBlockers(m).length === 0)) ?? null;
 }
 
@@ -108,7 +108,7 @@ export async function handleIntake(input: IntakeInput, deps: IntakeDeps): Promis
   const replay = await db.prepare(
     'SELECT o.id, o.state FROM lead_receipts r JOIN opportunities o ON o.receipt_id = r.id WHERE r.request_id = ?',
   ).bind(c.requestId).first<{ id: string; state: State }>();
-  if (replay) return { status: 'accepted', opportunityId: replay.id, state: replay.state, recipient, mode: market.business_mode!, duplicate: false, replay: true };
+  if (replay) return { status: 'accepted', opportunityId: replay.id, state: replay.state, recipient, mode: market.business_mode!, duplicate: false, replay: true, noDealer };
 
   const now = deps.now ?? new Date();
   const at = nowIso(now);
@@ -190,10 +190,10 @@ export async function handleIntake(input: IntakeInput, deps: IntakeDeps): Promis
       const again = await db.prepare(
         'SELECT o.id, o.state FROM lead_receipts r JOIN opportunities o ON o.receipt_id = r.id WHERE r.request_id = ?',
       ).bind(c.requestId).first<{ id: string; state: State }>();
-      if (again) return { status: 'accepted', opportunityId: again.id, state: again.state, recipient, mode: market.business_mode!, duplicate: false, replay: true };
+      if (again) return { status: 'accepted', opportunityId: again.id, state: again.state, recipient, mode: market.business_mode!, duplicate: false, replay: true, noDealer };
     }
     // Never show success if the record was not stored.
     return { status: 'unavailable', reason: 'storage_error' };
   }
-  return { status: 'accepted', opportunityId: oppId, state, recipient, mode: market.business_mode!, duplicate, replay: false };
+  return { status: 'accepted', opportunityId: oppId, state, recipient, mode: market.business_mode!, duplicate, replay: false, noDealer };
 }

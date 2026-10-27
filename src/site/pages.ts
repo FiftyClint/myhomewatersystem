@@ -1,4 +1,4 @@
-import type { MarketConfig } from '../domain/config.ts';
+import { takesRequests, type MarketConfig } from '../domain/config.ts';
 import { serviceDisclosure, smsDisclosure } from '../intake/disclosure.ts';
 import { escapeHtml as e } from '../util.ts';
 import { STATIC_PAGES } from '../../content/pages.ts';
@@ -24,7 +24,7 @@ export function inquiryForm(o: { requestId: string; market: MarketConfig; vals?:
   const sms = smsDisclosure(m);
   return `<form class="inquiry" method="post" action="/api/inquiry" id="request" novalidate>
 <h2 style="margin-top:0">Request a quote</h2>
-${party ? `<p class="small">Your request goes to <strong>${e(party)}</strong>.</p>` : ''}
+${party ? `<p class="small">Your request goes to <strong>${e(party)}</strong>.</p>` : '<p class="small">A local specialist will contact you about your request.</p>'}
 ${o.brand ? `<p class="small">${e(o.brand)} is run by My Home Water System.</p>` : ''}
 ${Object.keys(er).length ? '<p class="err" role="alert">Please fix the items marked below.</p>' : ''}
 <input type="hidden" name="request_id" value="${e(o.requestId)}"><input type="hidden" name="page" value="${e(o.page)}"><input type="hidden" name="market" value="${e(m.id)}">
@@ -52,7 +52,7 @@ ${[['soon', 'As soon as possible'], ['months', 'In the next few months'], ['rese
 }
 
 export function homeBody(markets: MarketConfig[]): string {
-  const live = markets.filter((m) => m.status === 'active' && m.business_mode);
+  const live = markets.filter(takesRequests);
   return `<div class="grid two"><div>
 <h1>Water treatment options for your home</h1>
 <p>Compare water softening, whole-home filtration and drinking-water systems. Tell us about your home, and we will connect you with the installing company that serves your area for a written recommendation and quote.</p>
@@ -68,7 +68,7 @@ ${LOCATIONS.length ? `<h2>Local water by city</h2><p>${LOCATIONS.filter((l) => m
 }
 
 export function marketBody(m: MarketConfig, requestId: string, form?: { vals?: Vals; errors?: Record<string, string> }): string {
-  const open = m.status === 'active' && !!m.business_mode;
+  const open = takesRequests(m);
   const who = m.seller_display_name;
   const rel = m.business_mode === 'direct'
     ? 'My Home Water System is the seller. Installation is performed by a licensed local installation partner. Your quote names who will do the work.'
@@ -90,9 +90,10 @@ export function serviceAreasBody(markets: MarketConfig[]): string {
 <p>We list an area only when a qualified local company has agreed to serve it.</p>`;
 }
 
-export function thankYouBody(recipient: string, mode: string | null, duplicate: boolean): string {
+// noDealer: the request is held with My Home Water System and no time is promised (Clint's direction, 2026-10-27).
+export function thankYouBody(recipient: string, mode: string | null, duplicate: boolean, noDealer = false): string {
   return `<h1>Thanks. We received your request.</h1>
-<p>${mode === 'direct' ? 'My Home Water System' : e(recipient)} will contact you by the method you chose during business hours.${duplicate ? ' It looks like you already have an open request with us, so a coordinator will check and avoid contacting you twice.' : ''}</p>
+<p>${noDealer ? 'A local specialist will contact you by the method you chose.' : `${mode === 'direct' ? 'My Home Water System' : e(recipient)} will contact you by the method you chose during business hours.`}${duplicate ? ' It looks like you already have an open request with us, so a coordinator will check and avoid contacting you twice.' : ''}</p>
 <p>Nothing is booked yet, and sending a request is not a purchase.</p>
 <p>To change how we contact you, see <a href="/communication-preferences/">communication preferences</a>.</p>`;
 }

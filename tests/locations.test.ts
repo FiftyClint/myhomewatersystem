@@ -30,7 +30,7 @@ describe('city pages', () => {
     }
   });
 
-  it('serves each city site home page with its published facts and the not-open panel', async () => {
+  it('in production, a city site without a launch approval shows the not-open panel', async () => {
     for (const site of CITY_SITES) {
       const l = LOCATIONS.find((x) => x.slug === site.slug)!;
       const res = await get(`https://${site.domain}/`);
@@ -144,6 +144,24 @@ describe('market config', () => {
     }
   });
 
+  it('on staging, every city site shows a live request form, with a phone only where one is set', async () => {
+    const staging = { ...env, ENVIRONMENT: 'staging', BASE_URL: 'https://mhws-staging.clint-bfa.workers.dev' };
+    for (const site of CITY_SITES) {
+      const l = LOCATIONS.find((x) => x.slug === site.slug)!;
+      const m = PRODUCTION_MARKETS.find((x) => x.id === l.market_id)!;
+      for (const path of ['/', '/contact/']) {
+        const body = await (await worker.fetch(new Request(`https://${site.domain}${path}`), staging)).text();
+        expect(body, site.domain + path).not.toContain('Not open yet');
+        expect(body, site.domain + path).not.toContain('Phone not yet published');
+        if (!m.tracking_phone) expect(body, site.domain + path).not.toContain('href="tel:');
+        if (path === '/') {
+          expect(body, site.domain).toContain('action="/api/inquiry"');
+          if (!m.seller_display_name) expect(body, site.domain).toContain('A local specialist will contact you about your request.');
+        }
+      }
+    }
+  });
+
   it('85256 stays out of the East Valley', () => {
     expect(PRODUCTION_MARKETS.find((m) => m.id === 'east-valley')!.zips).not.toContain('85256');
   });
@@ -158,12 +176,11 @@ describe('market config', () => {
     }
   });
 
-  it('a market cannot launch without a tracking number in +1 form', () => {
-    for (const m of PRODUCTION_MARKETS.filter((x) => x.tracking_phone)) expect(marketLaunchBlockers(m).join(), m.id).not.toMatch(/tracking phone/);
-    // Phoenix (2026-10-26) and the 2026-10-27 cities have no number; each number needs Clint's yes to buy.
-    for (const m of PRODUCTION_MARKETS.filter((x) => !x.tracking_phone)) expect(marketLaunchBlockers(m), m.id).toContain('no tracking phone number');
+  it('a phone number is optional, but one that is set must be in +1 form', () => {
+    // Clint, 2026-10-27: "We can add numbers later." A market with no number shows no phone and still takes requests.
+    for (const m of PRODUCTION_MARKETS) expect(marketLaunchBlockers(m).join(), m.id).not.toMatch(/tracking phone/);
     expect(PRODUCTION_MARKETS.filter((x) => x.tracking_phone).map((x) => x.id).sort()).toEqual(['east-valley', 'kansas-city', 'las-vegas-valley', 'san-antonio-area']);
-    expect(marketLaunchBlockers({ ...PRODUCTION_MARKETS[0]!, tracking_phone: null })).toContain('no tracking phone number');
+    expect(marketLaunchBlockers({ ...PRODUCTION_MARKETS[0]!, tracking_phone: null }).join()).not.toMatch(/tracking phone/);
     const m = { ...PRODUCTION_MARKETS[0]!, tracking_phone: '602-555-0100' };
     expect(marketLaunchBlockers(m)).toContain('tracking phone number is not in +1XXXXXXXXXX form');
     expect(marketLaunchBlockers({ ...m, tracking_phone: '+16025550100' }).join()).not.toMatch(/tracking phone/);

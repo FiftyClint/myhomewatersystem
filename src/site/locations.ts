@@ -1,4 +1,4 @@
-import type { MarketConfig } from '../domain/config.ts';
+import { takesRequests, type MarketConfig } from '../domain/config.ts';
 import { escapeHtml as e } from '../util.ts';
 import { LOCATIONS, locationsInMarket, type CityLocation } from '../../content/locations.ts';
 import { inquiryForm } from './pages.ts';
@@ -7,7 +7,7 @@ import { cityHref, siteForSlug } from '../../content/sites.ts';
 
 const USGS_HARDNESS = 'https://www.usgs.gov/water-science-school/science/hardness-water';
 
-const isOpen = (m: MarketConfig) => m.status === 'active' && !!m.business_mode;
+const isOpen = takesRequests;
 
 function relationship(m: MarketConfig): string {
   const who = m.seller_display_name;
