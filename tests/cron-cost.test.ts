@@ -73,3 +73,25 @@ describe('cron cost', () => {
     expect(staging).toContain('triggers = { crons = [] }');
   });
 });
+
+describe('page views cost one Worker request', () => {
+  // Free plan: 100,000 Worker requests a day per account. A page that pulls a stylesheet,
+  // a script or the default favicon costs more than one, so every page carries its CSS
+  // inline and an empty icon, and a page view never touches D1.
+  it('home and city pages load no same-origin files and read nothing from D1', async () => {
+    const { default: worker } = await import('../src/index.ts');
+    const { CITY_SITES } = await import('../content/sites.ts');
+    const db = new Proxy({}, { get() { throw new Error('page view touched D1'); } });
+    const env = { ENVIRONMENT: 'production', BASE_URL: 'https://www.myhomewatersystem.com', LINK_SECRET: 'test', DB: db } as any;
+    const site = CITY_SITES[0]!;
+    for (const url of ['https://www.myhomewatersystem.com/', `https://${site.domain}/`]) {
+      const res = await worker.fetch(new Request(url), env);
+      expect(res.status).toBe(200);
+      const html = await res.text();
+      expect(html).toContain('<link rel="icon" href="data:,">');
+      const local = [...html.matchAll(/<(?:link|script|img)\b[^>]*(?:href|src)="(\/[^"]*)"/g)]
+        .filter((m) => !/rel="(canonical|alternate)"/.test(m[0]));
+      expect(local.map((m) => m[1])).toEqual([]);
+    }
+  });
+});

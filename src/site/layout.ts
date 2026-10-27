@@ -84,6 +84,7 @@ export function layout(o: PageOpts): string {
 <link rel="canonical" href="${e(canonical)}">${o.noindex ? '<meta name="robots" content="noindex">' : '<meta name="robots" content="max-snippet:-1, max-image-preview:large">'}
 <meta property="og:type" content="website"><meta property="og:site_name" content="${e(brand)}"><meta property="og:title" content="${e(o.title)}">
 <meta property="og:description" content="${e(o.description)}"><meta property="og:url" content="${e(canonical)}"><meta name="theme-color" content="#0f7c86">
+<link rel="icon" href="data:,">
 ${o.alternates ?? ''}
 ${(o.jsonLd ?? []).map(ld).join('')}<style>${CSS}</style></head><body>
 ${o.banner ? `<div class="banner" role="note"><div class="wrap">${o.banner}</div></div>` : ''}

@@ -108,3 +108,5 @@ Incurred: $0. Two empty D1 databases were created 2026-10-26; I have no verified
 - RDAP: all 46 water domains at the registry show carlos/kristina.ns.cloudflare.com.
 - Created Cloudflare Free zones (no records) for 35 domains that had none. Cloudflare assigned priscilla/sonny.ns.cloudflare.com to all 35 and to phoenixhomewatersystems.com.
 - Owner step: switch those 36 at GoDaddy to priscilla/sonny. The original ten are correct on carlos/kristina.
+
+- 2026-10-27 11:10 UTC: account-wide free plan check written to docs/account-budget.md. Water pages now cost one Worker request each (empty inline icon, tested). Powered Land and party boat cost 4 to 5 requests per page view through `run_worker_first: true`; fixes listed there, not applied. Crons 2 of 5. Analytics not read (Cloudflare connection key rejected).
