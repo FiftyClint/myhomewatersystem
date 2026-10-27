@@ -8,11 +8,12 @@ import { takesRequests, type MarketConfig } from '../domain/config.ts';
 import { escapeHtml as e } from '../util.ts';
 import { LOCATIONS, locationsInMarket, type CityLocation } from '../../content/locations.ts';
 import { GENERAL, localOf, type DisinfectantKind, type LocalDetail } from '../../content/local-details.ts';
+import { areaPageOf, type Area, type AreaPage } from '../../content/areas.ts';
 import { CITY_ZIPS } from '../../content/zips.ts';
 import { fullBrand, HUB_BRAND, siteForSlug, siteUrl, type CitySite } from '../../content/sites.ts';
 import { inquiryForm } from './pages.ts';
 import { displayPhone } from './layout.ts';
-import { classBadge, classLabel, classSentence, cityData, hardnessAnswer, hardnessFacts, hardnessScale, longDate, MGL_PER_GRAIN, USGS_HARDNESS } from './water.ts';
+import { classBadge, classLabel, classOf, classSentence, cityData, hardnessAnswer, hardnessFacts, hardnessScale, longDate, MGL_PER_GRAIN, USGS_HARDNESS } from './water.ts';
 import company from '../../config/company.json';
 
 type Form = { vals?: Record<string, string | undefined>; errors?: Record<string, string> };
@@ -187,6 +188,7 @@ ${toc}
 <p>${e(l.intro)}</p>
 ${factsTable(l)}
 ${l.notes.length ? `<ul>${l.notes.map((n) => `<li>${e(n)}</li>`).join('')}</ul>` : ''}
+${areaPageOf(l.slug) ? `<p><a href="/by-area/">${e(areaPageOf(l.slug)!.heading)}</a>: where each one serves, its own figures and how it is treated.</p>` : ''}
 <h2 id="meaning">What do the hardness numbers mean for my home?</h2>
 <p>Hardness is dissolved calcium and magnesium. It is what leaves scale on fixtures, glass and the inside of water heaters. The U.S. Geological Survey classifies water above 180 mg/L as calcium carbonate as very hard (<a href="${USGS_HARDNESS}" rel="noopener">USGS</a>). One grain per gallon equals about 17.1 mg/L.</p>
 ${classLabel(l) ? `<p>${e(classSentence(l)!)} Utility figures describe the whole system, so a test at your address is the real answer.</p>` : ''}
@@ -234,6 +236,7 @@ export function cityLlmsTxt(site: CitySite, l: CityLocation, m: MarketConfig, hu
     '## Pages',
     `- [${l.name} water and quotes](${base}/): the answer, the sources, common questions`,
     `- [Water data as JSON](${base}/water.json)`,
+    ...(areaPageOf(l.slug) ? [`- [${areaPageOf(l.slug)!.heading}](${base}/by-area/): where each area or utility serves, its own figures and treatment`] : []),
     `- [Water softeners](${hubBase}/water-softeners/), [whole-home filtration](${hubBase}/whole-home-filtration/), [reverse osmosis](${hubBase}/reverse-osmosis/)`,
     `- [Hard water by city](${hubBase}/hard-water-by-city/): published hardness for every city we cover`, '',
     '## Status',
@@ -245,3 +248,53 @@ export function cityLlmsTxt(site: CitySite, l: CityLocation, m: MarketConfig, hu
 
 export const cityWaterJson = (site: CitySite, l: CityLocation, m: MarketConfig): string =>
   JSON.stringify(cityData(l, { url: `${siteUrl(site)}/`, brand: fullBrand(site) }, isOpen(m)), null, 2);
+
+// /by-area/: one section per utility, zone or source, for cities where the water differs across town.
+const link = (d: LocalDetail) => `<a href="${e(d.source_url)}" rel="noopener">${e(d.source_title)}</a>`;
+const span = ([lo, hi]: [number, number]) => (lo === hi ? `${lo}` : `${lo} to ${hi}`);
+
+function areaReading(a: Area, publishedGrains: boolean): string {
+  if (!a.mgl) return 'No published hardness figure found for this area.';
+  const [lo, hi] = a.mgl;
+  const cls = classOf(lo) === classOf(hi) ? classOf(lo) : `${classOf(lo)} to ${classOf(hi)}`;
+  const g = lo === hi ? grains(lo) : `${grains(lo)} to ${grains(hi)}`;
+  return a.converted
+    ? `About ${span(a.mgl)} mg/L, which is our conversion of the published grains at ${MGL_PER_GRAIN} mg/L per grain. That reads as ${cls} on the USGS scale.`
+    : publishedGrains ? `${span(a.mgl)} mg/L as published reads as ${cls} on the USGS scale.`
+    : `${span(a.mgl)} mg/L as published, about ${g} grains per gallon by our conversion. That reads as ${cls} on the USGS scale.`;
+}
+
+function areaSection(l: CityLocation, a: Area, i: number): string {
+  const facts = l.facts.filter(a.facts);
+  const rows = facts.map((f) => `<tr><td>${e(f.label)}</td><td>${e(f.value)}</td><td>${e(f.period)}</td><td><a href="${e(f.source_url)}" rel="noopener">${e(f.source_title)}</a></td></tr>`).join('');
+  return `<section aria-labelledby="area-${i}">
+<h2 id="area-${i}">${e(a.name)}</h2>
+<p>${e(a.where.text)} Source: ${link(a.where)}.</p>
+${facts.length ? `<div class="tablewrap"><table><thead><tr><th>Measure</th><th>As published</th><th>Period</th><th>Source</th></tr></thead><tbody>${rows}</tbody></table></div>` : ''}
+<p>${e(areaReading(a, facts.some((f) => /grains|gpg/i.test(f.value))))}</p>
+${a.points.length ? `<ul>${a.points.map((d) => `<li>${e(d.text)} Source: ${link(d)}.</li>`).join('')}</ul>` : ''}
+</section>`;
+}
+
+export function cityAreaBody(site: CitySite, l: CityLocation, p: AreaPage): string {
+  return `<h1>${e(p.heading)}</h1>
+<p class="answer">${e(p.intro)}</p>
+<h2>Which one serves my home?</h2>
+<p>${e(p.how_to_tell)}</p>
+${p.areas.map((a, i) => areaSection(l, a, i)).join('\n')}
+<p>Utility figures describe a whole system or area, so a test at your address is the real answer. The USGS classes hardness from 0 to 60 mg/L as soft, 61 to 120 as moderately hard, 121 to 180 as hard and over 180 as very hard (<a href="${USGS_HARDNESS}" rel="noopener">USGS</a>).</p>
+<p>See <a href="/">${e(l.name)} water and quotes</a>, or <a href="/#request">request a quote</a>.</p>
+<p class="small">Sources last checked ${e(longDate(l.checked_on))}. ${e(site.brand)} is not a water utility.</p>`;
+}
+
+export function cityAreaJsonLd(site: CitySite, l: CityLocation, p: AreaPage): object[] {
+  const seen = new Map<string, string>();
+  for (const a of p.areas) {
+    for (const d of [a.where, ...a.points]) if (!seen.has(d.source_url)) seen.set(d.source_url, d.source_title);
+    for (const f of l.facts.filter(a.facts)) if (!seen.has(f.source_url)) seen.set(f.source_url, f.source_title);
+  }
+  return [{ '@context': 'https://schema.org', '@type': 'WebPage', url: `${siteUrl(site)}/by-area/`, name: p.heading, description: p.intro,
+    dateModified: l.checked_on, lastReviewed: l.checked_on, isPartOf: { '@type': 'WebSite', name: fullBrand(site), url: `${siteUrl(site)}/` },
+    about: { '@type': 'City', name: l.name, containedInPlace: { '@type': 'State', name: l.state } },
+    citation: [...seen].map(([url, name]) => ({ '@type': 'CreativeWork', name, url })) }];
+}

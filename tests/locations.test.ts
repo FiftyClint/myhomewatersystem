@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import worker from '../src/index.ts';
 import { LOCATIONS } from '../content/locations.ts';
 import { GENERAL, LOCAL_DETAILS } from '../content/local-details.ts';
+import { AREA_PAGES } from '../content/areas.ts';
 import { cityFaq } from '../src/site/city.ts';
 import { CITY_SITES, siteForHost, siteForSlug } from '../content/sites.ts';
 import { CITY_ZIPS } from '../content/zips.ts';
@@ -48,6 +49,38 @@ describe('city pages', () => {
       const faq = cityFaq(l, m);
       expect(new Set(faq.map((f) => f.q)).size, l.slug).toBe(faq.length);
       for (const f of faq) if (f.src) expect(f.a, `${l.slug} ${f.q}`).toContain(` Source: ${f.src.title}.`);
+    }
+  });
+
+  it('every area page names a city site, cites real evidence, and picks out at least one published figure', () => {
+    for (const [slug, p] of Object.entries(AREA_PAGES)) {
+      const l = LOCATIONS.find((x) => x.slug === slug);
+      expect(l, slug).toBeDefined();
+      expect(siteForSlug(slug), slug).toBeDefined();
+      for (const a of p.areas) {
+        if (a.mgl) expect(l!.facts.filter(a.facts).length, `${slug} ${a.name}`).toBeGreaterThan(0);
+        for (const d of [a.where, ...a.points]) {
+          expect(d.source_url, `${slug} ${a.name}`).toMatch(/^https:\/\//);
+          for (const id of d.evidence_ids) expect(evidenceIds.has(id), `${slug}: ${id} missing from evidence.csv`).toBe(true);
+        }
+      }
+    }
+  });
+
+  it('serves /by-area/ only where an area page exists, and links it from home, sitemap and llms.txt', async () => {
+    for (const s of CITY_SITES) {
+      const host = `https://${s.domain}`;
+      const has = !!AREA_PAGES[s.slug];
+      const res = await get(`${host}/by-area/`);
+      expect(res.status, s.domain).toBe(has ? 200 : 404);
+      const home = await (await get(`${host}/`)).text();
+      expect(home.includes('href="/by-area/"'), s.domain).toBe(has);
+      expect((await (await get(`${host}/sitemap.xml`)).text()).includes(`${host}/by-area/`), s.domain).toBe(has);
+      expect((await (await get(`${host}/llms.txt`)).text()).includes(`${host}/by-area/`), s.domain).toBe(has);
+      if (has) {
+        const body = await res.text();
+        for (const a of AREA_PAGES[s.slug]!.areas) expect(body, `${s.domain} ${a.name}`).toContain(a.where.source_url.replace(/&/g, '&amp;'));
+      }
     }
   });
 

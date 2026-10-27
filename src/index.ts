@@ -2,7 +2,8 @@ import { buildContext, type Env } from './env.ts';
 import { layout } from './site/layout.ts';
 import { companyBody, legalBody, marketBody, outOfAreaBody, serviceAreasBody, STATIC_PAGES, thankYouBody, unavailableBody } from './site/pages.ts';
 import { cityBody, clusterBody, sitemapXml, urlset } from './site/locations.ts';
-import { cityAboutBody, cityContactBody, cityDescription, cityHomeBody, cityJsonLd, cityLlmsTxt, cityTitle, cityWaterJson } from './site/city.ts';
+import { cityAboutBody, cityAreaBody, cityAreaJsonLd, cityContactBody, cityDescription, cityHomeBody, cityJsonLd, cityLlmsTxt, cityTitle, cityWaterJson } from './site/city.ts';
+import { areaPageOf } from '../content/areas.ts';
 import { citiesJson, hardWaterByCityBody, hubHomeBody, hubJsonLd, hubLlmsTxt, stateBody, stateLlmsTxt } from './site/hub.ts';
 import { robotsTxt } from './site/bots.ts';
 import { locationBySlug, locationsInMarket, type CityLocation } from '../content/locations.ts';
@@ -62,7 +63,8 @@ async function citySite(req: Request, url: URL, env: Env, site: CitySite, city: 
   const base = siteUrl(site);
   if (req.method !== 'GET' && req.method !== 'HEAD') return null;
   if (path === '/robots.txt') return asset(robotsTxt(base, staging), TEXT);
-  if (path === '/sitemap.xml') return asset(urlset([`${base}/`, `${base}/about/`, `${base}/contact/`, `${base}/llms.txt`, `${base}/water.json`], city.checked_on), XML);
+  const areas = areaPageOf(city.slug);
+  if (path === '/sitemap.xml') return asset(urlset([`${base}/`, ...(areas ? [`${base}/by-area/`] : []), `${base}/about/`, `${base}/contact/`, `${base}/llms.txt`, `${base}/water.json`], city.checked_on), XML);
   if (path === '/llms.txt') return asset(cityLlmsTxt(site, city, m, env.BASE_URL), TEXT);
   if (path === '/water.json') return asset(cityWaterJson(site, city, m), JSONT);
   if (path === '/') {
@@ -82,6 +84,8 @@ async function citySite(req: Request, url: URL, env: Env, site: CitySite, city: 
     // Another market, or not served: the hub works out where to send it.
     return Response.redirect(`${env.BASE_URL}/check?zip=${encodeURIComponent(zip)}`, 303);
   }
+  if (path === '/by-area/' && areas) return html(200, page(`${areas.heading} | ${site.brand}`, areas.intro, cityAreaBody(site, city, areas), false,
+    { canonical: `${base}/by-area/`, jsonLd: cityAreaJsonLd(site, city, areas) }));
   if (path === '/about/') return html(200, page(`About | ${site.brand}`, `About ${site.brand}`, cityAboutBody(site, city)));
   if (path === '/contact/') return html(200, page(`Contact | ${site.brand}`, `How to reach ${site.brand}`, cityContactBody(site, m)));
   // Hub-only sections forward to the hub.
