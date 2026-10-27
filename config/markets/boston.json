@@ -1,0 +1,73 @@
+{
+  "id": "boston",
+  "slug": "boston",
+  "name": "Boston",
+  "status": "draft",
+  "config_version": "2026-10-27.1",
+  "launch_approval_id": null,
+  "business_mode": "dealer_partner",
+  "timezone": "America/New_York",
+  "zips": [
+    "02108",
+    "02109",
+    "02110",
+    "02111",
+    "02113",
+    "02114",
+    "02115",
+    "02116",
+    "02118",
+    "02119",
+    "02120",
+    "02121",
+    "02122",
+    "02124",
+    "02125",
+    "02126",
+    "02127",
+    "02128",
+    "02129",
+    "02130",
+    "02131",
+    "02132",
+    "02133",
+    "02134",
+    "02135",
+    "02136",
+    "02163",
+    "02199",
+    "02203",
+    "02205",
+    "02210",
+    "02215"
+  ],
+  "supported_concerns": [
+    "hardness",
+    "taste_odor",
+    "drinking_water",
+    "not_sure"
+  ],
+  "accept_well_water": false,
+  "business_hours": {
+    "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "start": "08:00",
+    "end": "17:00"
+  },
+  "seller_display_name": null,
+  "tracking_phone": null,
+  "accept_before_dealer": true,
+  "providers": [],
+  "dealer_partner": {
+    "commercial_model": null,
+    "fee_trigger_state": null,
+    "fee_cents": 0,
+    "accept_sla_business_minutes": 30,
+    "duplicate_window_days": 90
+  }
+}

@@ -5,11 +5,7 @@ import { MockCrm } from './adapters/crm-mock.ts';
 import { HighLevelCrm } from './adapters/crm-highlevel.ts';
 import type { AppContext } from './worker/context.ts';
 import { AnthropicTriageModel } from './agents/anthropic-model.ts';
-import kc from '../config/markets/kansas-city.json';
-import eastValley from '../config/markets/east-valley.json';
-import lasVegasValley from '../config/markets/las-vegas-valley.json';
-import sanAntonioArea from '../config/markets/san-antonio-area.json';
-import phoenix from '../config/markets/phoenix.json';
+import { MARKET_CONFIGS } from '../config/markets/index.ts';
 import fixtures from '../fixtures/markets.staging.json';
 import prodPolicy from '../config/policies/production.json';
 import stagingPolicy from '../config/policies/staging.json';
@@ -33,7 +29,7 @@ export interface Env {
   FORM_LIMITER?: RateLimit;
 }
 
-export const PRODUCTION_MARKETS = [eastValley, lasVegasValley, sanAntonioArea, kc, phoenix] as unknown as MarketConfig[];
+export const PRODUCTION_MARKETS: MarketConfig[] = MARKET_CONFIGS;
 export const STAGING_MARKETS = [...PRODUCTION_MARKETS, ...(fixtures as unknown as MarketConfig[])];
 
 // Live CRM writes need every switch on. Staging can never write to the production HighLevel location.

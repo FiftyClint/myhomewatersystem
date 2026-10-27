@@ -95,5 +95,5 @@ export function sitemapXml(baseUrl: string, markets: MarketConfig[], staticPaths
   return urlset([...new Set(paths)].map((p) => baseUrl + p));
 }
 
-export const urlset = (urls: string[]): string =>
-  `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map((u) => `<url><loc>${e(u)}</loc></url>`).join('\n')}\n</urlset>\n`;
+export const urlset = (urls: string[], lastmod?: string): string =>
+  `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map((u) => `<url><loc>${e(u)}</loc>${lastmod ? `<lastmod>${e(lastmod)}</lastmod>` : ''}</url>`).join('\n')}\n</urlset>\n`;

@@ -1,0 +1,61 @@
+{
+  "id": "minneapolis",
+  "slug": "minneapolis",
+  "name": "Minneapolis",
+  "status": "draft",
+  "config_version": "2026-10-27.1",
+  "launch_approval_id": null,
+  "business_mode": "dealer_partner",
+  "timezone": "America/Chicago",
+  "zips": [
+    "55401",
+    "55402",
+    "55403",
+    "55404",
+    "55405",
+    "55406",
+    "55407",
+    "55408",
+    "55409",
+    "55410",
+    "55411",
+    "55412",
+    "55413",
+    "55414",
+    "55415",
+    "55417",
+    "55418",
+    "55419",
+    "55454",
+    "55455"
+  ],
+  "supported_concerns": [
+    "hardness",
+    "taste_odor",
+    "drinking_water",
+    "not_sure"
+  ],
+  "accept_well_water": false,
+  "business_hours": {
+    "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "start": "08:00",
+    "end": "17:00"
+  },
+  "seller_display_name": null,
+  "tracking_phone": null,
+  "accept_before_dealer": true,
+  "providers": [],
+  "dealer_partner": {
+    "commercial_model": null,
+    "fee_trigger_state": null,
+    "fee_cents": 0,
+    "accept_sla_business_minutes": 30,
+    "duplicate_window_days": 90
+  }
+}

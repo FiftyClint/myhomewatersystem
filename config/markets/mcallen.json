@@ -1,0 +1,44 @@
+{
+  "id": "mcallen",
+  "slug": "mcallen",
+  "name": "McAllen",
+  "status": "draft",
+  "config_version": "2026-10-27.1",
+  "launch_approval_id": null,
+  "business_mode": "dealer_partner",
+  "timezone": "America/Chicago",
+  "zips": [
+    "78501",
+    "78503",
+    "78504"
+  ],
+  "supported_concerns": [
+    "hardness",
+    "taste_odor",
+    "drinking_water",
+    "not_sure"
+  ],
+  "accept_well_water": false,
+  "business_hours": {
+    "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "start": "08:00",
+    "end": "17:00"
+  },
+  "seller_display_name": null,
+  "tracking_phone": null,
+  "accept_before_dealer": true,
+  "providers": [],
+  "dealer_partner": {
+    "commercial_model": null,
+    "fee_trigger_state": null,
+    "fee_cents": 0,
+    "accept_sla_business_minutes": 30,
+    "duplicate_window_days": 90
+  }
+}

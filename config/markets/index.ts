@@ -1,0 +1,42 @@
+// Every market config, in launch order: the first five were set up before 2026-10-27; the rest were
+// added as drafts on 2026-10-27 with no number, no dealer and no fee. Regenerate when a market is added.
+import type { MarketConfig } from '../../src/domain/config.ts';
+import eastValley from './east-valley.json';
+import lasVegasValley from './las-vegas-valley.json';
+import sanAntonioArea from './san-antonio-area.json';
+import kansasCity from './kansas-city.json';
+import phoenix from './phoenix.json';
+import allentown from './allentown.json';
+import atlanta from './atlanta.json';
+import austin from './austin.json';
+import baltimore from './baltimore.json';
+import boston from './boston.json';
+import charlotte from './charlotte.json';
+import chicago from './chicago.json';
+import cincinnati from './cincinnati.json';
+import dallasFortWorth from './dallas-fort-worth.json';
+import denver from './denver.json';
+import detroit from './detroit.json';
+import houston from './houston.json';
+import indianapolis from './indianapolis.json';
+import jacksonville from './jacksonville.json';
+import losAngeles from './los-angeles.json';
+import madison from './madison.json';
+import mcallen from './mcallen.json';
+import miami from './miami.json';
+import minneapolis from './minneapolis.json';
+import nashville from './nashville.json';
+import newYork from './new-york.json';
+import oklahomaCity from './oklahoma-city.json';
+import orlando from './orlando.json';
+import philadelphia from './philadelphia.json';
+import pittsburgh from './pittsburgh.json';
+import riverside from './riverside.json';
+import sanDiego from './san-diego.json';
+import sanFrancisco from './san-francisco.json';
+import seattle from './seattle.json';
+import stLouis from './st-louis.json';
+import tucson from './tucson.json';
+import washingtonDc from './washington-dc.json';
+
+export const MARKET_CONFIGS = [eastValley, lasVegasValley, sanAntonioArea, kansasCity, phoenix, allentown, atlanta, austin, baltimore, boston, charlotte, chicago, cincinnati, dallasFortWorth, denver, detroit, houston, indianapolis, jacksonville, losAngeles, madison, mcallen, miami, minneapolis, nashville, newYork, oklahomaCity, orlando, philadelphia, pittsburgh, riverside, sanDiego, sanFrancisco, seattle, stLouis, tucson, washingtonDc] as unknown as MarketConfig[];

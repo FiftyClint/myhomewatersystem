@@ -121,7 +121,7 @@ describe('city sites', () => {
   it('city home pages carry FAQ and website JSON-LD with no address, price or rating', async () => {
     const body = await (await get('https://gilbertwatersystems.com/')).text();
     const blocks = [...body.matchAll(/<script type="application\/ld\+json">(.*?)<\/script>/g)].map((m) => JSON.parse(m[1]!));
-    expect(blocks.map((b) => b['@type'])).toEqual(['WebSite', 'FAQPage']);
+    expect(blocks.map((b) => b['@type'])).toEqual(['WebSite', 'FAQPage', 'WebPage']);
     expect(blocks[1].mainEntity[0].name).toBe('How hard is the water in Gilbert?');
     const all = JSON.stringify(blocks);
     expect(all).not.toMatch(/"address"|PostalAddress|aggregateRating|priceRange|\$\s?\d/i);
@@ -153,15 +153,16 @@ describe('market config', () => {
     for (const site of CITY_SITES) {
       const market = LOCATIONS.find((l) => l.slug === site.slug)!.market_id;
       const body = await (await get(`https://${site.domain}/`)).text();
-      if (market === 'phoenix') { expect(body, site.domain).not.toContain('href="tel:'); continue; } // no number bought yet
+      if (!want[market]) { expect(body, site.domain).not.toContain('href="tel:'); continue; } // no number bought yet
       expect(body, site.domain).toContain(`href="tel:${want[market]}"`);
     }
   });
 
   it('a market cannot launch without a tracking number in +1 form', () => {
-    for (const m of PRODUCTION_MARKETS.filter((x) => x.id !== 'phoenix')) expect(marketLaunchBlockers(m).join(), m.id).not.toMatch(/tracking phone/);
-    // Phoenix was added 2026-10-26 with no number; its number needs Clint's yes to buy.
-    expect(marketLaunchBlockers(PRODUCTION_MARKETS.find((x) => x.id === 'phoenix')!)).toContain('no tracking phone number');
+    for (const m of PRODUCTION_MARKETS.filter((x) => x.tracking_phone)) expect(marketLaunchBlockers(m).join(), m.id).not.toMatch(/tracking phone/);
+    // Phoenix (2026-10-26) and the 2026-10-27 cities have no number; each number needs Clint's yes to buy.
+    for (const m of PRODUCTION_MARKETS.filter((x) => !x.tracking_phone)) expect(marketLaunchBlockers(m), m.id).toContain('no tracking phone number');
+    expect(PRODUCTION_MARKETS.filter((x) => x.tracking_phone).map((x) => x.id).sort()).toEqual(['east-valley', 'kansas-city', 'las-vegas-valley', 'san-antonio-area']);
     expect(marketLaunchBlockers({ ...PRODUCTION_MARKETS[0]!, tracking_phone: null })).toContain('no tracking phone number');
     const m = { ...PRODUCTION_MARKETS[0]!, tracking_phone: '602-555-0100' };
     expect(marketLaunchBlockers(m)).toContain('tracking phone number is not in +1XXXXXXXXXX form');

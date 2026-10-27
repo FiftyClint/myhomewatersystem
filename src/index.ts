@@ -1,11 +1,13 @@
 import { buildContext, type Env } from './env.ts';
 import { layout } from './site/layout.ts';
-import { companyBody, homeBody, legalBody, marketBody, outOfAreaBody, serviceAreasBody, STATIC_PAGES, thankYouBody, unavailableBody } from './site/pages.ts';
+import { companyBody, legalBody, marketBody, outOfAreaBody, serviceAreasBody, STATIC_PAGES, thankYouBody, unavailableBody } from './site/pages.ts';
 import { cityBody, clusterBody, sitemapXml, urlset } from './site/locations.ts';
-import { cityAboutBody, cityContactBody, cityDescription, cityHomeBody, cityJsonLd, cityTitle } from './site/city.ts';
+import { cityAboutBody, cityContactBody, cityDescription, cityHomeBody, cityJsonLd, cityLlmsTxt, cityTitle, cityWaterJson } from './site/city.ts';
+import { citiesJson, hardWaterByCityBody, hubHomeBody, hubJsonLd, hubLlmsTxt, stateBody, stateLlmsTxt } from './site/hub.ts';
+import { robotsTxt } from './site/bots.ts';
 import { locationBySlug, locationsInMarket, type CityLocation } from '../content/locations.ts';
 import { CITY_ZIPS } from '../content/zips.ts';
-import { CITY_SITES, HUB_DOMAIN, normalizeHost, siteForHost, siteForSlug, siteUrl, type CitySite } from '../content/sites.ts';
+import { aliasTarget, ALIAS_DOMAINS, CITY_SITES, HUB_DOMAIN, normalizeHost, siteForHost, siteForSlug, siteUrl, STATE_SITES, stateSiteForHost, type CitySite } from '../content/sites.ts';
 import type { MarketConfig } from './domain/config.ts';
 import { handleIntake, findMarket } from './intake/intake.ts';
 import { providerPage } from './dealer/page.ts';
@@ -28,6 +30,12 @@ function html(status: number, page: string, extra: Record<string, string> = {}):
   return new Response(page, { status, headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', ...SECURITY_HEADERS, ...extra } });
 }
 
+// Plain text, JSON and XML for crawlers and assistants. Cacheable for an hour; the facts change rarely.
+function asset(body: string, type: string): Response {
+  return new Response(body, { headers: { 'content-type': `${type}; charset=utf-8`, 'cache-control': 'public, max-age=3600', 'x-content-type-options': 'nosniff' } });
+}
+const XML = 'application/xml', TEXT = 'text/plain', JSONT = 'application/json';
+
 // The city a ZIP belongs to, within the market that serves it.
 function cityForZip(zip: string, m: MarketConfig): CityLocation | undefined {
   return locationsInMarket(m.id).find((l) => (CITY_ZIPS[l.slug] ?? []).includes(zip));
@@ -45,7 +53,7 @@ async function readForm(req: Request): Promise<Record<string, string> | null> {
   return Object.fromEntries(new URLSearchParams(text));
 }
 
-type PageFn = (title: string, description: string, body: string, noindex?: boolean, more?: { canonical?: string; jsonLd?: object[] }) => string;
+type PageFn = (title: string, description: string, body: string, noindex?: boolean, more?: { canonical?: string; jsonLd?: object[]; alternates?: string }) => string;
 
 // Routes that differ on a city site. Returns null for routes every host shares (intake, legal pages,
 // dealer links, internal API, hooks), which the main handler serves with the city's branding.
@@ -53,12 +61,15 @@ async function citySite(req: Request, url: URL, env: Env, site: CitySite, city: 
   const path = url.pathname;
   const base = siteUrl(site);
   if (req.method !== 'GET' && req.method !== 'HEAD') return null;
-  if (path === '/robots.txt') return new Response(staging ? 'User-agent: *\nDisallow: /\n' : `User-agent: *\nDisallow: /p/\nDisallow: /internal/\nDisallow: /api/\nSitemap: ${base}/sitemap.xml\n`);
-  if (path === '/sitemap.xml') return new Response(urlset([`${base}/`, `${base}/about/`, `${base}/contact/`]), { headers: { 'content-type': 'application/xml; charset=utf-8' } });
+  if (path === '/robots.txt') return asset(robotsTxt(base, staging), TEXT);
+  if (path === '/sitemap.xml') return asset(urlset([`${base}/`, `${base}/about/`, `${base}/contact/`, `${base}/llms.txt`, `${base}/water.json`], city.checked_on), XML);
+  if (path === '/llms.txt') return asset(cityLlmsTxt(site, city, m, env.BASE_URL), TEXT);
+  if (path === '/water.json') return asset(cityWaterJson(site, city, m), JSONT);
   if (path === '/') {
     const zip = url.searchParams.get('zip') ?? undefined;
     return html(200, page(cityTitle(site, city), cityDescription(city), cityHomeBody(site, city, m, crypto.randomUUID(), env.BASE_URL, { vals: { zip } }),
-      false, { canonical: `${base}/`, jsonLd: cityJsonLd(site, city, m) }));
+      false, { canonical: `${base}/`, jsonLd: cityJsonLd(site, city, m),
+        alternates: `<link rel="alternate" type="application/json" href="${base}/water.json"><link rel="alternate" type="text/plain" title="llms.txt" href="${base}/llms.txt">` }));
   }
   if (path === '/check') {
     const zip = (url.searchParams.get('zip') ?? '').trim();
@@ -93,7 +104,8 @@ export default {
     const pick = staging ? path.match(/^\/__site\/([a-z0-9.-]+)$/) : null;
     if (pick) {
       const d = pick[1]!;
-      if (d !== 'hub' && !CITY_SITES.some((s) => s.domain === d)) return new Response('unknown site', { status: 404 });
+      const known = [...CITY_SITES.map((s) => s.domain), ...STATE_SITES.map((s) => s.domain), ...Object.keys(ALIAS_DOMAINS)];
+      if (d !== 'hub' && !known.includes(d)) return new Response('unknown site', { status: 404 });
       return new Response(null, { status: 303, headers: { location: '/',
         'set-cookie': d === 'hub' ? 'mhws_site=; Path=/; Max-Age=0; Secure; HttpOnly; SameSite=Lax' : `mhws_site=${d}; Path=/; Max-Age=86400; Secure; HttpOnly; SameSite=Lax` } });
     }
@@ -104,28 +116,55 @@ export default {
       return Response.redirect(`${env.BASE_URL}${path}${url.search}`, 301);
     }
 
+    // A second domain for a city forwards to that city's site, path and all.
+    const alias = aliasTarget(host);
+    if (alias) return Response.redirect(`https://${alias}${path}${url.search}`, 301);
+
+    // State directory sites: one page of the state's cities, sharing the hub's guides and legal pages.
+    const state = stateSiteForHost(host);
+    if (state && normalizeHost(host) !== state.domain) return Response.redirect(`https://${state.domain}${path}${url.search}`, 301);
+
     // City sites: each city domain is its own site. www goes to the bare domain.
     const site = siteForHost(host);
     if (site && normalizeHost(host) !== site.domain) return Response.redirect(`${siteUrl(site)}${path}${url.search}`, 301);
     const siteCity = site && locationBySlug(site.slug);
     const siteMarket = siteCity && ctx.markets.find((x) => x.id === siteCity.market_id);
-    const base = site ? siteUrl(site) : env.BASE_URL;
+    const base = site ? siteUrl(site) : state ? `https://${state.domain}` : env.BASE_URL;
 
-    const page = (title: string, description: string, body: string, noindex = false, more: { canonical?: string; jsonLd?: object[] } = {}) =>
-      layout({ title: site ? title.replace(/ \| My Home Water System$/, ` | ${site.brand}`) : title, description, path, body,
-        noindex: noindex || staging, banner, baseUrl: base, brand: site?.brand, phone: siteMarket?.tracking_phone ?? null, ...more });
+    const brandName = site?.brand ?? state?.brand;
+    const page = (title: string, description: string, body: string, noindex = false, more: { canonical?: string; jsonLd?: object[]; alternates?: string } = {}) =>
+      layout({ title: brandName ? title.replace(/ \| My Home Water System$/, ` | ${brandName}`) : title, description, path, body,
+        noindex: noindex || staging, banner, baseUrl: base, brand: brandName, phone: siteMarket?.tracking_phone ?? null, ...more });
 
     if (site && siteCity && siteMarket) {
       const r = await citySite(req, url, env, site, siteCity, siteMarket, page, staging);
       if (r) return r;
     }
 
-    if (path === '/healthz') return new Response(JSON.stringify({ ok: true, env: env.ENVIRONMENT, crm: ctx.crm.name, crm_reason: ctx.crmReason }), { headers: { 'content-type': 'application/json' } });
-    if (path === '/robots.txt') return new Response(staging ? 'User-agent: *\nDisallow: /\n' : `User-agent: *\nDisallow: /p/\nDisallow: /internal/\nDisallow: /api/\nSitemap: ${base}/sitemap.xml\n`);
-    if (path === '/sitemap.xml') return new Response(sitemapXml(env.BASE_URL, ctx.markets, STATIC_PAGES.filter((p) => !p.noindex).map((p) => p.path)),
-      { headers: { 'content-type': 'application/xml; charset=utf-8' } });
+    if (state && (req.method === 'GET' || req.method === 'HEAD')) {
+      const sb = `https://${state.domain}`;
+      if (path === '/robots.txt') return asset(robotsTxt(sb, staging), TEXT);
+      if (path === '/sitemap.xml') return asset(urlset([`${sb}/`, `${sb}/llms.txt`]), XML);
+      if (path === '/llms.txt') return asset(stateLlmsTxt(state, ctx.markets, env.BASE_URL), TEXT);
+      if (path === '/') return html(200, page(`${state.stateName} Water Hardness by City | ${state.brand}`,
+        `Published drinking water hardness for ${state.stateName} cities, with sources, and how to request a water treatment quote.`, stateBody(state, ctx.markets), false, { canonical: `${sb}/` }));
+      if (path === '/check' || path === '/service-areas/' || path === '/for-dealers/' || path === '/hard-water-by-city/' || path.startsWith('/locations/')) return Response.redirect(`${env.BASE_URL}${path}${url.search}`, 301);
+      const st = STATIC_PAGES.find((p) => p.path === path);
+      if (st) return html(200, page(st.title, st.description, st.html, st.noindex, { canonical: `${env.BASE_URL}${st.path}` }));
+    }
 
-    if (path === '/' && req.method === 'GET') return html(200, page('Home water treatment options | My Home Water System', 'Compare water softening, filtration and drinking-water systems and request a quote from the local company that serves your area.', homeBody(ctx.markets)));
+    if (path === '/healthz') return new Response(JSON.stringify({ ok: true, env: env.ENVIRONMENT, crm: ctx.crm.name, crm_reason: ctx.crmReason }), { headers: { 'content-type': 'application/json' } });
+    if (path === '/robots.txt') return asset(robotsTxt(base, staging), TEXT);
+    if (path === '/sitemap.xml') return asset(sitemapXml(env.BASE_URL, ctx.markets, ['/hard-water-by-city/', '/data/cities.json', '/llms.txt', ...STATIC_PAGES.filter((p) => !p.noindex).map((p) => p.path)]), XML);
+    if (path === '/llms.txt') return asset(hubLlmsTxt(env.BASE_URL, ctx.markets), TEXT);
+    if (path === '/data/cities.json') return asset(citiesJson(ctx.markets), JSONT);
+
+    if (path === '/' && req.method === 'GET') return html(200, page('How Hard Is Your Water? Hardness by City | My Home Water System',
+      'Drinking water hardness for U.S. cities, copied from each utility with its source and date, and how to get a written quote for a softener or filter.', hubHomeBody(ctx.markets),
+      false, { jsonLd: hubJsonLd(env.BASE_URL, ctx.markets), alternates: `<link rel="alternate" type="application/json" href="${env.BASE_URL}/data/cities.json"><link rel="alternate" type="text/plain" title="llms.txt" href="${env.BASE_URL}/llms.txt">` }));
+    if (path === '/hard-water-by-city/' && req.method === 'GET') return html(200, page('Hard Water by City: Published Hardness and Sources | My Home Water System',
+      'Water hardness for U.S. cities exactly as each utility publishes it, with the period, the source document and the USGS class.', hardWaterByCityBody(ctx.markets),
+      false, { jsonLd: hubJsonLd(env.BASE_URL, ctx.markets).slice(1) }));
 
     if (path === '/check' && req.method === 'GET') {
       const zip = (url.searchParams.get('zip') ?? '').trim();
