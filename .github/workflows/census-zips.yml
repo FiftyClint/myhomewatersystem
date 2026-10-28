@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       places:
-        description: 'Pipe-separated exact place names as in NAMELSAD_PLACE_20, with state FIPS prefix, e.g. 21:Louisville/Jefferson County metro government (balance)'
+        description: 'Pipe-separated: STATEFIPS:exact place name, county:COUNTYGEOID, or zcta:ZIP. Exact place names as in NAMELSAD_PLACE_20, with state FIPS prefix, e.g. 21:Louisville/Jefferson County metro government (balance)'
         required: true
 
 jobs:
@@ -18,12 +18,25 @@ jobs:
           PLACES: ${{ inputs.places }}
         run: |
           curl -sSfL -o rel.txt https://www2.census.gov/geo/docs/maps-data/data/rel2020/zcta520/tab20_zcta520_place20_natl.txt
-          head -1 rel.txt
+          curl -sSfL -o cty.txt https://www2.census.gov/geo/docs/maps-data/data/rel2020/zcta520/tab20_zcta520_county20_natl.txt
+          head -1 cty.txt
           python3 - <<'PY'
           import csv, os
           want = [p.split(':', 1) for p in os.environ['PLACES'].split('|')]
           rows = list(csv.DictReader(open('rel.txt', encoding='utf-8-sig'), delimiter='|'))
+          crows = list(csv.DictReader(open('cty.txt', encoding='utf-8-sig'), delimiter='|'))
           for st, name in want:
+              if st == 'county':
+                  hits = [r for r in crows if r['GEOID_COUNTY_20'] == name and r['GEOID_ZCTA5_20']]
+                  print(f'== county {name} rows={len(hits)}')
+                  for r in sorted(hits, key=lambda r: r['GEOID_ZCTA5_20']):
+                      z = float(r['AREALAND_ZCTA5_20'] or 0); part = float(r['AREALAND_PART'] or 0)
+                      print(f"ZIPROW|county|{name}|{r['GEOID_ZCTA5_20']}|{part / z if z else 0:.3f}")
+                  continue
+              if st == 'zcta':
+                  for r in rows:
+                      if r['GEOID_ZCTA5_20'] == name: print(f"ZCTAPLACE|{name}|{r['GEOID_PLACE_20']}|{r['NAMELSAD_PLACE_20']}")
+                  continue
               hits = [r for r in rows if r['GEOID_PLACE_20'][:2] == st and r['NAMELSAD_PLACE_20'] == name and r['GEOID_ZCTA5_20']]
               print(f'== {st}:{name} rows={len(hits)}')
               for r in sorted(hits, key=lambda r: r['GEOID_ZCTA5_20']):
