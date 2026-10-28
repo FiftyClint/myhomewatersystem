@@ -10,28 +10,6 @@ jobs:
   pull:
     runs-on: ubuntu-latest
     steps:
-      - name: ACS tenure by year built, all places
-        continue-on-error: true
-        run: |
-          curl -sSfL -o labels.json 'https://api.census.gov/data/2024/acs/acs1/groups/B25036.json'
-          curl -sSL -o acs.json 'https://api.census.gov/data/2024/acs/acs1?get=NAME,B25036_002E,B25036_010E,B25036_011E,B25036_012E&for=place:*'
-          head -c 400 acs.json; echo
-          python3 - <<'PY'
-          import json
-          labels = {k: v['label'] for k, v in json.load(open('labels.json'))['variables'].items() if k.endswith('E')}
-          rows = json.load(open('acs.json')); head = rows[0]
-          owner = [k for k in labels if labels[k].startswith('Estimate!!Total:!!Owner occupied:!!') and k in head]
-          old = [k for k in owner if any(s in labels[k] for s in ('1950 to 1959', '1940 to 1949', '1939 or earlier'))]
-          tot = [k for k in labels if labels[k] == 'Estimate!!Total:!!Owner occupied:'][0]
-          print('OLDVARS', old, 'TOTVAR', tot)
-          out = []
-          for r in rows[1:]:
-              d = dict(zip(head, r))
-              t = int(d[tot] or 0); o = sum(int(d[k] or 0) for k in old)
-              out.append((o, t, d['NAME'], d['state'] + d['place']))
-          for o, t, n, g in sorted(out, reverse=True)[:150]:
-              print(f'ACSROW|{g}|{n}|{t}|{o}|{o / t if t else 0:.3f}')
-          PY
       - name: EPA UCMR 5 PFOA and PFOS by system
         run: |
           curl -sSfL -A 'Mozilla/5.0' -o page.html 'https://www.epa.gov/dwucmr/occurrence-data-unregulated-contaminant-monitoring-rule'
@@ -63,3 +41,26 @@ jobs:
               name, st, size = meta[k]
               if size == 'L': print(f"UCMRROW|{k}|{st}|{name}|{b['PFOA']:.2f}|{b['PFOS']:.2f}|{b['n']}")
           PY
+      - name: ACS tenure by year built, all places
+        continue-on-error: true
+        run: |
+          # api.census.gov now asks for a key, so this uses the data.census.gov table API.
+          curl -sSL -o acs.json 'https://data.census.gov/api/access/data/table?id=ACSDT1Y2024.B25036&g=010XX00US$1600000'
+          head -c 600 acs.json; echo
+          python3 - <<'PY2'
+          import json
+          j = json.load(open('acs.json'))
+          rows = j['response']['data'] if 'response' in j else j['data']
+          head = rows[0]
+          print('HEAD', head[:30])
+          col = {h: i for i, h in enumerate(head)}
+          old = ['B25036_010E', 'B25036_011E', 'B25036_012E']
+          out = []
+          for r in rows[1:]:
+              try:
+                  t = int(r[col['B25036_002E']] or 0); o = sum(int(r[col[k]] or 0) for k in old)
+              except (ValueError, KeyError): continue
+              out.append((o, t, r[col['NAME']], r[col['GEO_ID']]))
+          for o, t, n, g in sorted(out, reverse=True)[:150]:
+              print(f'ACSROW|{g}|{n}|{t}|{o}|{o / t if t else 0:.3f}')
+          PY2
