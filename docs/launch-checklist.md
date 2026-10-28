@@ -10,7 +10,9 @@
 - [x] Domain ownership confirmed by Clint on 2026-10-26 for myhomewatersystem.com and the nine city domains in content/sites.ts
 
 ## Partner and legal
-- [ ] First live lead offered to a dealer per market by hand, after the homeowner agrees to that named dealer (no outreach notes, Clint 2026-10-26)
+- [ ] First live lead offered to a dealer per market by hand, after the homeowner agrees to that named dealer (no outreach notes, Clint 2026-10-26). Free during the proof period (Clint 2026-10-28)
+- [ ] Preferred dealer picked per city (method is Clint's call)
+- [ ] When the free proof period ends (Clint's call), then set ends_on per market
 - [ ] Dealer (or installers) who want more: credentials and insurance verified, dates entered in market config
 - [ ] Signed agreement; `agreement_version` entered
 - [ ] Approved ZIP list entered

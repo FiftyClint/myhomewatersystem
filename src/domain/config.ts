@@ -52,6 +52,10 @@ export interface MarketConfig {
     // exclusive_lead uses dealer_accepted: the fee is earned when the one dealer accepts the lead.
     fee_trigger_state: 'dealer_accepted' | 'appointment_held' | 'installed' | 'collected' | null;
     fee_cents: number;
+    // Clint's call (2026-10-28): leads go free to preferred dealers first, as proof before they buy.
+    // While on, no dealer fee is earned and a market needs no price to launch. ends_on null means
+    // until Clint ends it. The fee settings above are what applies afterward.
+    free_proof?: { ends_on: string | null };
     accept_sla_business_minutes: number;
     duplicate_window_days: number;
   };
@@ -91,6 +95,12 @@ export function duplicateWindowDays(m: MarketConfig): number {
     : m.dealer_partner?.duplicate_window_days ?? 90;
 }
 
+// at is an ISO date or timestamp. The proof period runs through ends_on inclusive.
+export function freeProofActive(m: MarketConfig, at: string): boolean {
+  const fp = m.business_mode === 'dealer_partner' ? m.dealer_partner?.free_proof : undefined;
+  return !!fp && (!fp.ends_on || at.slice(0, 10) <= fp.ends_on);
+}
+
 export const textsAllowed = (m: MarketConfig): boolean => m.texts_allowed !== false;
 
 // Clint's call (2026-10-27): every water site shows a live request form, with or without a phone number.
@@ -103,7 +113,7 @@ export function takesRequests(m: MarketConfig): boolean {
 }
 
 // Problems that block a market from taking real requests. Empty list = launchable config.
-export function marketLaunchBlockers(m: MarketConfig): string[] {
+export function marketLaunchBlockers(m: MarketConfig, today = new Date().toISOString()): string[] {
   const out: string[] = [];
   if (!m.business_mode) out.push('business_mode not chosen');
   if (m.zips.length === 0) out.push('no approved ZIP codes');
@@ -112,8 +122,9 @@ export function marketLaunchBlockers(m: MarketConfig): string[] {
   if (!m.launch_approval_id) out.push('no launch approval recorded');
   // A phone number is optional (Clint, 2026-10-27: "We can add numbers later"). Pages show none until set.
   if (m.tracking_phone && !/^\+1\d{10}$/.test(m.tracking_phone)) out.push('tracking phone number is not in +1XXXXXXXXXX form');
-  if (m.business_mode === 'dealer_partner' && !m.dealer_partner?.commercial_model) out.push('dealer fee model not agreed');
-  if (m.business_mode === 'dealer_partner' && m.dealer_partner?.fee_trigger_state && !(m.dealer_partner.fee_cents > 0)) out.push('dealer fee amount not set');
+  const free = freeProofActive(m, today);
+  if (m.business_mode === 'dealer_partner' && !free && !m.dealer_partner?.commercial_model) out.push('dealer fee model not agreed');
+  if (m.business_mode === 'dealer_partner' && !free && m.dealer_partner?.fee_trigger_state && !(m.dealer_partner.fee_cents > 0)) out.push('dealer fee amount not set');
   if (m.business_mode === 'direct' && !m.direct) out.push('direct-mode terms missing');
   const kind = m.business_mode === 'direct' ? 'installer' : 'dealer';
   const active = m.providers.filter((p) => p.kind === kind && p.status === 'active' && !p.synthetic);

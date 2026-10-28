@@ -1,5 +1,5 @@
 import type { Sql, Stmt } from '../db/sql.ts';
-import type { MarketConfig } from './config.ts';
+import { freeProofActive, type MarketConfig } from './config.ts';
 import { canTransition, EVIDENCE_REQUIRED, type Actor, type State } from './states.ts';
 import { enqueueStmt, getOpportunity, type OpportunityRow } from './repo.ts';
 import { nowIso, uuid } from '../util.ts';
@@ -23,6 +23,7 @@ export type TransitionResult =
 // For exclusive_lead the evidence is the dealer's own acceptance through their signed link.
 function feeStmts(db: Sql, market: MarketConfig, opp: OpportunityRow, to: State, transitionId: string, at: string): Stmt[] {
   if (market.business_mode !== 'dealer_partner' || !market.dealer_partner) return [];
+  if (freeProofActive(market, at)) return []; // proof period: the dealer gets the lead free
   const { fee_trigger_state, fee_cents } = market.dealer_partner;
   if (!fee_trigger_state || fee_trigger_state !== to || fee_cents <= 0) return [];
   // Agreement version comes from the dealer that holds the accepted assignment.

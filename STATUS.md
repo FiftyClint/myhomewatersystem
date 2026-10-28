@@ -2,6 +2,13 @@
 
 Last updated: 2026-10-28
 
+## 2026-10-28 15:15 UTC: free proof period (code only, not deployed)
+
+- Clint: leads go free to preferred dealers first, as proof, then dealers buy. All eleven launch markets carry dealer_partner.free_proof with ends_on null. No fee is earned on acceptance while it is on, and the six new cities no longer wait on a price. The pilot markets and Phoenix keep $95 per exclusive lead for afterward.
+- D1: no new scheduled work. The proof check is a date comparison in code, with no reads. A free acceptance writes one row fewer than a paid one (no ledger entry).
+- Open for Clint: how preferred dealers are picked per city, and when the free period ends.
+- Tests: 111 pass.
+
 ## 2026-10-28 15:00 UTC: Clint's four answers (code only, not deployed)
 
 - First launch: the four pilot markets plus Chicago, Los Angeles, Houston, Philadelphia, Phoenix, San Diego and Indianapolis. Each opens on its own go. Six of the seven added cities have no fee set, and none has a number or dealer.
@@ -9,7 +16,7 @@ Last updated: 2026-10-28
 - Privacy and terms approved as written; pages drop the draft banner.
 - Texas markets (San Antonio area, Houston, Dallas-Fort Worth, Austin, McAllen): calls and email only, no text consent box, until SB 140 registration is settled. disclosure_version owner-approved-2026-10-28.
 - Nameservers: 36 of 38 newer domains switched on 2026-10-27 and are active; jerseywatersystems.com and tampabaywatersystems.com still point at the old pair.
-- Tests: 108 pass. D1: no change to scheduled work (docs/d1-budget.md, now 39 markets).
+- Tests: 107 pass. D1: no change to scheduled work (docs/d1-budget.md, now 39 markets).
 
 ## 2026-10-27 18:45 UTC: Powered Land Co duplicate copy rules on the water sites (staging)
 

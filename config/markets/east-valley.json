@@ -3,7 +3,7 @@
   "slug": "east-valley",
   "name": "Phoenix East Valley",
   "status": "draft",
-  "config_version": "2026-10-26.3",
+  "config_version": "2026-10-28.2",
   "launch_approval_id": null,
   "business_mode": "dealer_partner",
   "timezone": "America/Phoenix",
@@ -71,6 +71,9 @@
     "commercial_model": "exclusive_lead",
     "fee_trigger_state": "dealer_accepted",
     "fee_cents": 9500,
+    "free_proof": {
+      "ends_on": null
+    },
     "accept_sla_business_minutes": 30,
     "duplicate_window_days": 90
   }
