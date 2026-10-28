@@ -13,6 +13,7 @@ import { marketLaunchBlockers, type MarketConfig } from '../src/domain/config.ts
 import { runChecks } from '../src/worker/checks.ts';
 import { STATIC_PAGES } from '../content/pages.ts';
 import kc from '../config/markets/kansas-city.json';
+import { MARKET_CONFIGS } from '../config/markets/index.ts';
 
 const assignmentFor = (a: Awaited<ReturnType<typeof app>>, opp: string) =>
   a.db.prepare('SELECT * FROM assignments WHERE opportunity_id = ?').bind(opp).first<{ id: string; provider_id: string; status: string }>();
@@ -296,10 +297,10 @@ describe('T15 content and launch guards', () => {
       expect(p.html).not.toMatch(/\$\s?\d/);
       expect(p.html.toLowerCase()).not.toMatch(/removes all|guarantee|cheapest|best in/);
     }
-    const blockers = marketLaunchBlockers(kc as unknown as MarketConfig);
-    expect(blockers).not.toContain('dealer fee amount not set');
-    expect(blockers).not.toContain('no approved ZIP codes');
-    expect(blockers).toContain('no launch approval recorded');
+    // Kansas City has Clint's go (2026-10-28) and no blockers; a market without a go stays closed.
+    expect(marketLaunchBlockers(kc as unknown as MarketConfig)).toEqual([]);
+    const denver = MARKET_CONFIGS.find((m) => m.slug === 'denver')!;
+    expect(marketLaunchBlockers(denver)).toContain('no launch approval recorded');
   });
 });
 

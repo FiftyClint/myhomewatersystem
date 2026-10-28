@@ -85,7 +85,7 @@ describe('city pages', () => {
     }
   });
 
-  it('in production, a city site without a launch approval shows the not-open panel', async () => {
+  it('in production, a city site shows the not-open panel only when its market has no launch approval', async () => {
     for (const site of CITY_SITES) {
       const l = LOCATIONS.find((x) => x.slug === site.slug)!;
       const res = await get(`https://${site.domain}/`);
@@ -95,7 +95,9 @@ describe('city pages', () => {
       expect(body).toContain(`<title>${l.name} Water Softeners and Filtration | ${site.brand}</title>`);
       expect(body).toContain(`<link rel="canonical" href="https://${site.domain}/">`);
       for (const f of l.facts) expect(body).toContain(f.source_url.replace(/&/g, '&amp;'));
-      expect(body).toContain('Not open yet');
+      const approved = !!PRODUCTION_MARKETS.find((m) => m.id === l.market_id)!.launch_approval_id;
+      if (approved) expect(body, site.domain).not.toContain('Not open yet');
+      else expect(body, site.domain).toContain('Not open yet');
     }
   });
 
@@ -187,8 +189,8 @@ describe('city sites', () => {
   it('a ZIP checked on one city site goes to the site for that ZIP', async () => {
     const res = await get('https://mesawatersystems.com/check?zip=85224');
     expect(res.status).toBe(303);
-    // Markets are not open yet, so even a served ZIP goes to the hub's out-of-area answer.
-    expect(res.headers.get('location')).toBe(`${BASE}/check?zip=85224`);
+    // 85224 is Chandler, in the East Valley market, which is open (Clint's go, 2026-10-28).
+    expect(res.headers.get('location')).toBe('https://chandlerwatersystems.com/?zip=85224#request');
   });
 });
 

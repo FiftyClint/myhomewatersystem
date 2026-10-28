@@ -3,8 +3,8 @@
   "slug": "san-antonio-area",
   "name": "San Antonio area",
   "status": "draft",
-  "config_version": "2026-10-28.3",
-  "launch_approval_id": null,
+  "config_version": "2026-10-28.4",
+  "launch_approval_id": "clint-go-2026-10-28T16:58Z",
   "business_mode": "dealer_partner",
   "timezone": "America/Chicago",
   "zips": [

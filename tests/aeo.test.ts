@@ -3,6 +3,7 @@ import worker from '../src/index.ts';
 import { LOCATIONS } from '../content/locations.ts';
 import { CITY_SITES } from '../content/sites.ts';
 import { classOf } from '../src/site/water.ts';
+import { PRODUCTION_MARKETS } from '../src/env.ts';
 
 // Pages built for AI assistants and search engines as well as people: answers first, sources linked,
 // machine-readable copies of the same published facts, and crawler rules that welcome AI assistants.
@@ -38,7 +39,8 @@ describe('city sites for AI assistants', () => {
       expect(data.city).toBe(l.name);
       expect(data.hardness_facts.length).toBe(l.facts.length);
       expect(data.published_span_mg_per_l).toEqual(l.scale_mgl);
-      expect(data.taking_requests).toBe(false);
+      // Only markets with Clint's launch go take requests in production.
+      expect(data.taking_requests, site.domain).toBe(!!PRODUCTION_MARKETS.find((m) => m.id === l.market_id)!.launch_approval_id);
       expect(JSON.stringify(data) + txt).not.toMatch(/\$\s?\d/);
     }
   });
@@ -48,9 +50,11 @@ describe('city sites for AI assistants', () => {
     expect(body).toContain('class="answer-card"');
     expect(body).toContain('read as moderately hard to very hard');
     expect(body).toContain('We are not a water utility');
-    expect(body).not.toContain('class="sticky-cta"');
+    // Philadelphia is open (Clint's go, 2026-10-28), so it carries the request button; Atlanta is not.
+    expect(body).toContain('class="sticky-cta"');
     const none = await (await get('https://atlantawatersystems.com/')).text();
     expect(none).toContain('We have not found a published hardness figure for Atlanta');
+    expect(none).not.toContain('class="sticky-cta"');
   });
 
   it('lists llms.txt and water.json in the sitemap with a lastmod date', async () => {

@@ -56,7 +56,7 @@ describe('exclusive lead fee', () => {
       const blockers = marketLaunchBlockers(m);
       expect(blockers).not.toContain('dealer fee amount not set');
       expect(blockers).not.toContain('dealer fee model not agreed');
-      expect(blockers).toContain('no launch approval recorded');
+      expect(blockers).toEqual([]);
     }
   });
 });
