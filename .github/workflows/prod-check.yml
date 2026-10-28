@@ -39,6 +39,6 @@ jobs:
             --data-urlencode concern=hardness --data-urlencode water_source=municipal \
             --data-urlencode first_name=TEST --data-urlencode "last_name=LEAD delete me" \
             --data-urlencode contact_method=email --data-urlencode email=test-lead@example.com \
-            --data-urlencode consent_service=yes --data-urlencode page=/ \
+            --data-urlencode consent_service=yes --data-urlencode page=/ --data-urlencode market=kansas-city \
             --data-urlencode "note=Production test by Claude 2026-10-28. Not a real request."
           echo
