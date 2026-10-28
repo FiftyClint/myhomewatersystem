@@ -1,0 +1,64 @@
+# Manual, read-only. Pulls public data for the filtration screen (Clint, 2026-10-28: "Add a filtration screen"):
+# ACS 2024 1-year tenure by year built (B25036) and owner households (B25003) for every place, and EPA UCMR 5
+# PFOA/PFOS results by water system. Prints rows to the log; writes nothing anywhere.
+name: Filtration screen data (manual)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  pull:
+    runs-on: ubuntu-latest
+    steps:
+      - name: ACS tenure by year built, all places
+        run: |
+          curl -sSfL -o labels.json 'https://api.census.gov/data/2024/acs/acs1/groups/B25036.json'
+          curl -sSfL -o acs.json 'https://api.census.gov/data/2024/acs/acs1?get=NAME,group(B25036)&for=place:*'
+          python3 - <<'PY'
+          import json
+          labels = {k: v['label'] for k, v in json.load(open('labels.json'))['variables'].items() if k.endswith('E')}
+          for k in sorted(labels): print('LABEL', k, labels[k])
+          rows = json.load(open('acs.json')); head = rows[0]
+          owner = [k for k in labels if labels[k].startswith('Estimate!!Total:!!Owner occupied:!!')]
+          old = [k for k in owner if any(s in labels[k] for s in ('1950 to 1959', '1940 to 1949', '1939 or earlier'))]
+          tot = [k for k in labels if labels[k] == 'Estimate!!Total:!!Owner occupied:'][0]
+          print('OLDVARS', old, 'TOTVAR', tot)
+          out = []
+          for r in rows[1:]:
+              d = dict(zip(head, r))
+              t = int(d[tot] or 0); o = sum(int(d[k] or 0) for k in old)
+              out.append((o, t, d['NAME'], d['state'] + d['place']))
+          for o, t, n, g in sorted(out, reverse=True)[:150]:
+              print(f'ACSROW|{g}|{n}|{t}|{o}|{o / t if t else 0:.3f}')
+          PY
+      - name: EPA UCMR 5 PFOA and PFOS by system
+        run: |
+          curl -sSfL -A 'Mozilla/5.0' -o page.html 'https://www.epa.gov/dwucmr/occurrence-data-unregulated-contaminant-monitoring-rule'
+          url=$(grep -oE 'https://www\.epa\.gov/system/files/[^"]*ucmr[-_]?5[^"]*\.zip' page.html | head -1)
+          [ -z "$url" ] && url=$(grep -oE '/system/files/[^"]*ucmr[-_]?5[^"]*\.zip' page.html | head -1 | sed 's#^#https://www.epa.gov#')
+          echo "UCMR5 URL $url"
+          curl -sSfL -A 'Mozilla/5.0' -o u5.zip "$url" && unzip -o -q u5.zip -d u5 && ls -la u5
+          python3 - <<'PY'
+          import csv, glob, collections
+          f = [p for p in glob.glob('u5/**/*', recursive=True) if 'All' in p and p.endswith('.txt')] or [p for p in glob.glob('u5/**/*.txt', recursive=True)]
+          print('FILES', f)
+          best = collections.defaultdict(lambda: {'PFOA': 0.0, 'PFOS': 0.0, 'n': 0})
+          meta = {}
+          for p in f:
+              with open(p, encoding='latin-1') as fh:
+                  rd = csv.DictReader(fh, delimiter='\t')
+                  print('COLS', rd.fieldnames)
+                  for r in rd:
+                      c = r.get('Contaminant', '')
+                      if c not in ('PFOA', 'PFOS'): continue
+                      k = r['PWSID']; meta[k] = (r.get('PWSName', ''), r.get('State', ''), r.get('Size', ''))
+                      best[k]['n'] += 1
+                      if r.get('AnalyticalResultsSign') == '=':
+                          try: v = float(r.get('AnalyticalResultValue') or 0) * (1000 if float(r.get('AnalyticalResultValue') or 0) < 1 else 1)
+                          except ValueError: continue
+                          best[k][c] = max(best[k][c], v)
+              break
+          for k, b in sorted(best.items()):
+              name, st, size = meta[k]
+              if size == 'L': print(f"UCMRROW|{k}|{st}|{name}|{b['PFOA']:.2f}|{b['PFOS']:.2f}|{b['n']}")
+          PY
