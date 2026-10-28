@@ -57,3 +57,7 @@ only, not D1.
 ## Staging
 
 No cron. Writes happen only on test form posts and deploy migrations.
+
+## One free lead per dealer (2026-10-28)
+
+No scheduled work. Each dealer acceptance adds one COUNT over that dealer's own assignments, using the assignments_provider index, so it reads about as many rows as the dealer has leads. Idle use is unchanged: at most 864 reads a day and 0 writes. A free acceptance writes one row fewer than a paid one, because no ledger entry is made.

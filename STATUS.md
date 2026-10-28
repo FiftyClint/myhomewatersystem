@@ -2,6 +2,13 @@
 
 Last updated: 2026-10-28
 
+## 2026-10-28 16:05 UTC: one free lead per dealer, then $95 exclusive (code only, not deployed)
+
+- Clint: research dealers in every launch market; each dealer gets one free lead, reports back, then is offered exclusivity at $95 per lead. All eleven launch markets now carry exclusive_lead at $95 with free_proof.free_leads_per_dealer 1. The ends_on version below is replaced.
+- Dealer shortlists for the ten markets beyond Kansas City are being researched into docs/research/dealer-prospects-<market>.csv and .md.
+- D1: one indexed count per dealer acceptance; idle unchanged (docs/d1-budget.md).
+- Tests: 110 pass.
+
 ## 2026-10-28 15:15 UTC: free proof period (code only, not deployed)
 
 - Clint: leads go free to preferred dealers first, as proof, then dealers buy. All eleven launch markets carry dealer_partner.free_proof with ends_on null. No fee is earned on acceptance while it is on, and the six new cities no longer wait on a price. The pilot markets and Phoenix keep $95 per exclusive lead for afterward.

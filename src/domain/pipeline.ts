@@ -1,5 +1,5 @@
 import type { Sql, Stmt } from '../db/sql.ts';
-import { freeProofActive, type MarketConfig } from './config.ts';
+import { freeLeadsPerDealer, type MarketConfig } from './config.ts';
 import { canTransition, EVIDENCE_REQUIRED, type Actor, type State } from './states.ts';
 import { enqueueStmt, getOpportunity, type OpportunityRow } from './repo.ts';
 import { nowIso, uuid } from '../util.ts';
@@ -23,10 +23,11 @@ export type TransitionResult =
 // For exclusive_lead the evidence is the dealer's own acceptance through their signed link.
 function feeStmts(db: Sql, market: MarketConfig, opp: OpportunityRow, to: State, transitionId: string, at: string): Stmt[] {
   if (market.business_mode !== 'dealer_partner' || !market.dealer_partner) return [];
-  if (freeProofActive(market, at)) return []; // proof period: the dealer gets the lead free
   const { fee_trigger_state, fee_cents } = market.dealer_partner;
   if (!fee_trigger_state || fee_trigger_state !== to || fee_cents <= 0) return [];
   // Agreement version comes from the dealer that holds the accepted assignment.
+  // Proof period: the dealer's first free_leads_per_dealer accepted leads are free (one indexed count).
+  const free = freeLeadsPerDealer(market);
   return [db.prepare(
     `INSERT INTO ledger_entries (id, billing_key, opportunity_id, market_id, kind, amount_cents, direction,
        agreement_version, triggering_transition_id, earned_at, evidence)
@@ -36,8 +37,10 @@ function feeStmts(db: Sql, market: MarketConfig, opp: OpportunityRow, to: State,
      JOIN state_transitions t ON t.id = ?
      WHERE a.opportunity_id = ? AND a.role = 'dealer' AND a.status IN ('accepted','completed')
        AND p.agreement_version IS NOT NULL
+       AND (SELECT COUNT(*) FROM assignments a2 WHERE a2.provider_id = a.provider_id AND a2.role = 'dealer'
+            AND a2.status IN ('accepted','completed') AND a2.opportunity_id <> a.opportunity_id) >= ?
      ON CONFLICT(billing_key) DO NOTHING`,
-  ).bind(uuid(), opp.id, opp.id, market.id, fee_cents, transitionId, at, transitionId, opp.id)];
+  ).bind(uuid(), opp.id, opp.id, market.id, fee_cents, transitionId, at, transitionId, opp.id, free)];
 }
 
 // Dealer mode routes once qualified. Direct mode assigns an installer once the customer accepts.
