@@ -2,6 +2,15 @@
 
 Last updated: 2026-10-28
 
+## 2026-10-28 16:35 UTC: leads go to Notion (code only, not deployed)
+
+- Clint: "why don't we just hook this up to notion?" New Notion database "Water Leads (myhomewatersystem.com)" under Business Operations Hub. The site writes one row per request with name, email, phone, ZIP, market, concern, stage and the dealer next step, through the jobs that already exist (src/adapters/crm-notion.ts).
+- Production wrangler vars: CRM_PROVIDER notion and the database ID. Production policy allows CRM writes. Staging is blocked from the production database (config/protected.json).
+- HighLevel token is no longer a launch blocker. NOTION_TOKEN (GitHub secret) is the one thing the site needs from Clint to fill the database; without it leads stay in D1.
+- Privacy page names Notion instead of HighLevel.
+- D1: no new scheduled work; idle stays at most 864 reads and 0 writes a day; worst case during a Notion outage about 200 rows written per lead (docs/d1-budget.md).
+- Tests: 116 pass.
+
 ## 2026-10-28 16:05 UTC: one free lead per dealer, then $95 exclusive (code only, not deployed)
 
 - Clint: research dealers in every launch market; each dealer gets one free lead, reports back, then is offered exclusivity at $95 per lead. All eleven launch markets now carry exclusive_lead at $95 with free_proof.free_leads_per_dealer 1. The ends_on version below is replaced.

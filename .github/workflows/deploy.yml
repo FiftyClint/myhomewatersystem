@@ -92,6 +92,17 @@ jobs:
           put HIGHLEVEL_TOKEN "$HIGHLEVEL_TOKEN"
           put HIGHLEVEL_PIPELINE_ID "$(jq -r .pipelineId "$RUNNER_TEMP/hl.json")"
           put HIGHLEVEL_STAGE_MAP "$(jq -c .stageMap "$RUNNER_TEMP/hl.json")"
+      - name: Connect Notion (production only, once the NOTION_TOKEN secret is saved)
+        # The token is the Internal Integration Secret of a Notion integration that has been added to the
+        # "Water Leads (myhomewatersystem.com)" database under Connections. Staging never receives it.
+        if: ${{ inputs.environment == 'production' }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+        run: |
+          if [ -z "$NOTION_TOKEN" ]; then echo "No NOTION_TOKEN secret yet; leads stay in D1 only."; exit 0; fi
+          printf '%s' "$NOTION_TOKEN" | npx wrangler secret put NOTION_TOKEN --env production > /dev/null; echo "set NOTION_TOKEN"
       - name: Check the Worker answers
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

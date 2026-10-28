@@ -3,6 +3,7 @@ import { marketLaunchBlockers, type MarketConfig, type Policy } from './domain/c
 import type { CrmAdapter } from './adapters/crm.ts';
 import { MockCrm } from './adapters/crm-mock.ts';
 import { HighLevelCrm } from './adapters/crm-highlevel.ts';
+import { NotionCrm } from './adapters/crm-notion.ts';
 import type { AppContext } from './worker/context.ts';
 import { AnthropicTriageModel } from './agents/anthropic-model.ts';
 import { MARKET_CONFIGS } from '../config/markets/index.ts';
@@ -19,12 +20,14 @@ export interface Env {
   HASH_PEPPER?: string;
   ADMIN_TOKEN?: string;
   CRM_WEBHOOK_SECRET?: string;
-  CRM_PROVIDER?: 'mock' | 'highlevel';
+  CRM_PROVIDER?: 'mock' | 'highlevel' | 'notion';
   ALLOW_LIVE_CRM_IN_STAGING?: string;
   HIGHLEVEL_TOKEN?: string;
   HIGHLEVEL_LOCATION_ID?: string;
   HIGHLEVEL_PIPELINE_ID?: string;
   HIGHLEVEL_STAGE_MAP?: string;
+  NOTION_TOKEN?: string;
+  NOTION_DATABASE_ID?: string;
   ANTHROPIC_API_KEY?: string;
   FORM_LIMITER?: RateLimit;
 }
@@ -32,9 +35,11 @@ export interface Env {
 export const PRODUCTION_MARKETS: MarketConfig[] = MARKET_CONFIGS;
 export const STAGING_MARKETS = [...PRODUCTION_MARKETS, ...(fixtures as unknown as MarketConfig[])];
 
-// Live CRM writes need every switch on. Staging can never write to the production HighLevel location.
+// Live CRM writes need every switch on. Staging can never write to the production HighLevel location
+// or the production Notion database.
 export function chooseCrm(env: Partial<Env>, policy: Policy): { crm: CrmAdapter; reason: string } {
-  if (env.CRM_PROVIDER !== 'highlevel') return { crm: new MockCrm(), reason: 'CRM_PROVIDER is not highlevel' };
+  if (env.CRM_PROVIDER === 'notion') return chooseNotion(env, policy);
+  if (env.CRM_PROVIDER !== 'highlevel') return { crm: new MockCrm(), reason: 'CRM_PROVIDER is not highlevel or notion' };
   if (!env.HIGHLEVEL_TOKEN || !env.HIGHLEVEL_LOCATION_ID || !env.HIGHLEVEL_PIPELINE_ID) return { crm: new MockCrm(), reason: 'HighLevel credentials incomplete' };
   if (env.ENVIRONMENT === 'production') {
     if (!policy.external_actions_enabled || policy.dry_run) return { crm: new MockCrm(), reason: 'policy has external actions disabled or dry_run on' };
@@ -49,6 +54,20 @@ export function chooseCrm(env: Partial<Env>, policy: Policy): { crm: CrmAdapter;
       stageMap: JSON.parse(env.HIGHLEVEL_STAGE_MAP ?? '{}') }),
     reason: 'live',
   };
+}
+
+function chooseNotion(env: Partial<Env>, policy: Policy): { crm: CrmAdapter; reason: string } {
+  if (!env.NOTION_TOKEN || !env.NOTION_DATABASE_ID) return { crm: new MockCrm(), reason: 'Notion credentials incomplete' };
+  if (env.ENVIRONMENT === 'production') {
+    if (!policy.external_actions_enabled || policy.dry_run) return { crm: new MockCrm(), reason: 'policy has external actions disabled or dry_run on' };
+  } else {
+    if (env.ALLOW_LIVE_CRM_IN_STAGING !== 'yes') return { crm: new MockCrm(), reason: 'staging live CRM not allowed' };
+    const id = env.NOTION_DATABASE_ID.replace(/-/g, '').toLowerCase();
+    if (protectedIds.production_notion_database_ids.includes(id)) {
+      return { crm: new MockCrm(), reason: 'staging may not use the production Notion database' };
+    }
+  }
+  return { crm: new NotionCrm({ token: env.NOTION_TOKEN, databaseId: env.NOTION_DATABASE_ID }), reason: 'live' };
 }
 
 export function buildContext(env: Env, db: Sql = env.DB as unknown as Sql): AppContext & { crmReason: string; env: Env } {

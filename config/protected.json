@@ -1,3 +1,9 @@
 {
-  "production_highlevel_location_ids": ["a37aG6lUGKJdWMPY0fom", "1NdIhzTx9ZJlqnXshDkQ"]
+  "production_highlevel_location_ids": [
+    "a37aG6lUGKJdWMPY0fom",
+    "1NdIhzTx9ZJlqnXshDkQ"
+  ],
+  "production_notion_database_ids": [
+    "eacec3dbd9a84c02b50df41271adb04a"
+  ]
 }

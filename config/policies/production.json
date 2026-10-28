@@ -3,8 +3,8 @@
   "excluded_orchestrators": [
     "n8n"
   ],
-  "external_actions_enabled": false,
-  "dry_run": true,
+  "external_actions_enabled": true,
+  "dry_run": false,
   "autonomous_spend_increase": false,
   "outbound_cold_sms": false,
   "autonomous_outbound_voice": false,

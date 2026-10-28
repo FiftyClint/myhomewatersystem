@@ -61,3 +61,15 @@ No cron. Writes happen only on test form posts and deploy migrations.
 ## One free lead per dealer (2026-10-28)
 
 No scheduled work. Each dealer acceptance adds one COUNT over that dealer's own assignments, using the assignments_provider index, so it reads about as many rows as the dealer has leads. Idle use is unchanged: at most 864 reads a day and 0 writes. A free acceptance writes one row fewer than a paid one, because no ledger entry is made.
+
+## Notion lead database (2026-10-28)
+
+Leads go to the Notion database "Water Leads (myhomewatersystem.com)" through the same three jobs the
+mock CRM already ran (crm_sync, crm_stage, notify_provider). Notion calls go over the network, not to D1,
+so a lead that reaches Notion on the first try writes the same 24 rows (about 150 with index touches) as
+before. No scheduled work is added: idle use stays at most 864 rows read a day and 0 written.
+
+If Notion is down, each failed attempt claims and requeues its job: 2 job-row updates, 4 rows counting
+the jobs_due index. At most 5 attempts per job (policy max_job_attempts), so the worst case adds
+4 retries x 4 rows x 3 jobs = 48 rows per lead, about 200 in all, which still holds about 500 leads a
+day under the 100,000 write limit. Retries are picked up by the existing 5-minute cron.
