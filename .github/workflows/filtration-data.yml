@@ -11,15 +11,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: ACS tenure by year built, all places
+        continue-on-error: true
         run: |
           curl -sSfL -o labels.json 'https://api.census.gov/data/2024/acs/acs1/groups/B25036.json'
-          curl -sSfL -o acs.json 'https://api.census.gov/data/2024/acs/acs1?get=NAME,group(B25036)&for=place:*'
+          curl -sSL -o acs.json 'https://api.census.gov/data/2024/acs/acs1?get=NAME,B25036_002E,B25036_010E,B25036_011E,B25036_012E&for=place:*'
+          head -c 400 acs.json; echo
           python3 - <<'PY'
           import json
           labels = {k: v['label'] for k, v in json.load(open('labels.json'))['variables'].items() if k.endswith('E')}
-          for k in sorted(labels): print('LABEL', k, labels[k])
           rows = json.load(open('acs.json')); head = rows[0]
-          owner = [k for k in labels if labels[k].startswith('Estimate!!Total:!!Owner occupied:!!')]
+          owner = [k for k in labels if labels[k].startswith('Estimate!!Total:!!Owner occupied:!!') and k in head]
           old = [k for k in owner if any(s in labels[k] for s in ('1950 to 1959', '1940 to 1949', '1939 or earlier'))]
           tot = [k for k in labels if labels[k] == 'Estimate!!Total:!!Owner occupied:'][0]
           print('OLDVARS', old, 'TOTVAR', tot)
