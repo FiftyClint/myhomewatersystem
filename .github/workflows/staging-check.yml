@@ -1,6 +1,7 @@
-# Manual, read-only staging check. Reads each owned filtration city's staging preview and prints whether the
-# lead line and PFAS sections are there, whether the page is noindex, and the first lead sentence. Writes nothing.
-name: Staging filtration check (manual)
+# Manual, read-only staging check. Reads every city site's staging preview and the hub-only city pages, and prints
+# whether each has the key facts block and FAQ schema, plus the lead and PFAS sections where the city has them,
+# and whether the page is noindex. Writes nothing.
+name: Staging city page check (manual)
 
 on:
   workflow_dispatch:
@@ -9,18 +10,39 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - name: Filtration sections on staging
+      - name: City pages on staging
         run: |
-          base=https://mhws-staging.clint-bfa.workers.dev/__site  # sets a preview cookie and redirects to /
+          base=https://mhws-staging.clint-bfa.workers.dev
+          filt=" nycwatersystems.com detroitwatersystems.com baltimorewatersystems.com denverwatersystems.com dallaswatersystems.com fortworthwatersystems.com bostonwatersystems.com minneapoliswatersystems.com stlouiswatersystems.com pittsburghwatersystems.com cincinnatiwatersystems.com "
           fail=0
-          for d in nycwatersystems.com detroitwatersystems.com baltimorewatersystems.com denverwatersystems.com \
-                   dallaswatersystems.com fortworthwatersystems.com bostonwatersystems.com minneapoliswatersystems.com \
-                   stlouiswatersystems.com pittsburghwatersystems.com cincinnatiwatersystems.com; do
-            code=$(curl -sS -L -c /tmp/j -b /tmp/j -o /tmp/p.html -w '%{http_code}' "$base/$d" || echo 000)
+          probe() {  # $1 label, $2 expect lead/pfas (1 or 0)
+            facts=$(grep -c 'id="facts-h"' /tmp/p.html || true); faq=$(grep -c '"FAQPage"' /tmp/p.html || true)
+            ent=$(grep -c '"additionalProperty"' /tmp/p.html || true); noidx=$(grep -c 'noindex' /tmp/p.html || true)
             lead=$(grep -c 'id="lead"' /tmp/p.html || true); pfas=$(grep -c 'id="pfas"' /tmp/p.html || true)
-            noidx=$(grep -c 'noindex' /tmp/p.html || true)
-            first=$(grep -o 'id="lead">[^<]*</h2>[[:space:]]*<p>[^<]*' /tmp/p.html | sed 's/.*<p>//' | cut -c1-140)
-            echo "$d HTTP $code lead=$lead pfas=$pfas noindex=$noidx | $first"
-            if [ "$code" != "200" ] || [ "$lead" = "0" ] || [ "$pfas" = "0" ]; then fail=1; fi
+            echo "$1 HTTP $code facts=$facts faqpage=$faq entity=$ent lead=$lead pfas=$pfas noindex=$noidx"
+            if [ "$code" != "200" ] || [ "$facts" = "0" ] || [ "$faq" = "0" ] || [ "$ent" = "0" ]; then fail=1; fi
+            if [ "$2" = "1" ] && { [ "$lead" = "0" ] || [ "$pfas" = "0" ]; }; then fail=1; fi
+          }
+          for d in mesawatersystems.com chandlerwatersystems.com gilbertwatersystems.com scottsdalewatersystems.com \
+                   vegaswatersystems.com hendersonwatersystems.com sanantoniohomewatersystems.com newbraunfelswatersystems.com \
+                   kcwatersystems.com phoenixhomewatersystems.com allentownwatersystems.com atlantawatersystems.com \
+                   austinwatersystems.com baltimorewatersystems.com bostonwatersystems.com charlottewatersystems.com \
+                   chicagowatersystems.com cincinnatiwatersystems.com dallaswatersystems.com dcwatersystems.com \
+                   denverwatersystems.com detroitwatersystems.com fortworthwatersystems.com houstonhomewatersystems.com \
+                   indianapoliswatersystems.com jacksonvillewatersystems.com losangeleswatersystems.com madisonwatersystems.com \
+                   mcallenwatersystems.com miamihomewatersystems.com minneapoliswatersystems.com nashvillewatersystems.com \
+                   nycwatersystems.com okcwatersystems.com orlandowatersystems.com philadelphiawatersystems.com \
+                   pittsburghwatersystems.com riversidehomewatersystems.com sandiegowatersystems.com sanfranciscowatersystems.com \
+                   seattlewatersystems.com stlouiswatersystems.com tucsonwatersystems.com jerseywatersystems.com tampabaywatersystems.com; do
+            rm -f /tmp/j
+            code=$(curl -sS -L -c /tmp/j -b /tmp/j -o /tmp/p.html -w '%{http_code}' "$base/__site/$d" || echo 000)
+            case "$filt" in *" $d "*) want=1 ;; *) want=0 ;; esac
+            probe "$d" "$want"
+          done
+          rm -f /tmp/j
+          curl -sS -c /tmp/j -b /tmp/j -o /dev/null "$base/__site/hub" || true
+          for s in louisville lexington el-paso omaha milwaukee wichita aurora st-petersburg; do
+            code=$(curl -sS -c /tmp/j -b /tmp/j -o /tmp/p.html -w '%{http_code}' "$base/locations/$s/" || echo 000)
+            probe "hub /locations/$s/" 0
           done
           exit $fail
