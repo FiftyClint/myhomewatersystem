@@ -15,6 +15,7 @@ import { inquiryForm } from './pages.ts';
 import { displayPhone } from './layout.ts';
 import { classBadge, classLabel, classOf, classSentence, cityData, hardnessAnswer, hardnessFacts, hardnessScale, longDate, MGL_PER_GRAIN, USGS_HARDNESS } from './water.ts';
 import company from '../../config/company.json';
+import { filtrationOf, FILTRATION_GENERAL as FG, UCMR5, UCMR5_MRL_PPT, type CityFiltration, type PfasFact } from '../../content/filtration.ts';
 
 type Form = { vals?: Record<string, string | undefined>; errors?: Record<string, string> };
 
@@ -39,6 +40,55 @@ const grains = (mgl: number) => (mgl / MGL_PER_GRAIN).toFixed(1);
 // The utility named in the city's facts, for sentences that would otherwise be the same on every site.
 const utilityName = (l: CityLocation) => { const u = utilitiesOf(l); return u.length === 1 ? u[0]! : u.length ? `${l.name}'s utilities` : `${l.name}'s utility`; };
 const fig = ([lo, hi]: [number, number]) => (lo === hi ? `${lo} mg/L` : `${lo} to ${hi} mg/L`);
+
+// Filtration cities (content/filtration.ts): lead service lines and PFOA/PFOS, said from the city's own figures.
+const num = (x: number) => x.toLocaleString('en-US');
+const andList = (xs: string[]) => (xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`);
+
+export function leadAnswer(l: CityLocation, f: CityFiltration): string {
+  return f.lead_lines.map((r) => {
+    const parts = [
+      r.lead === 0 ? 'no lead lines' : r.lead ? `${num(r.lead)} lead lines` : '',
+      r.grr ? `${num(r.grr)} galvanized lines that need replacing` : '',
+      r.unknown ? `${num(r.unknown)} lines of unknown material` : r.unknown === 0 ? 'no unknown lines' : '',
+    ].filter(Boolean);
+    const share = r.total && (r.lead ?? 0) + (r.grr ?? 0) > 0 ? ` Lead and galvanized lines together are ${(((r.lead ?? 0) + (r.grr ?? 0)) / r.total * 100).toFixed(1)}% of the ${num(r.total)} lines listed.` : r.total ? ` The inventory lists ${num(r.total)} lines in all.` : '';
+    return `The ${r.utility} service line inventory shows ${andList(parts)} (${r.period[0]!.toLowerCase()}${r.period.slice(1)}).${share}`;
+  }).join(' ');
+}
+
+const pfasPart = (c: 'PFOA' | 'PFOS', v: number | null, where?: string) =>
+  v === null ? `no ${c} result at or above ${UCMR5_MRL_PPT} ppt` : `a highest ${c} result of ${v} ppt${where ? ` (${where})` : ''}`;
+
+export function pfasAnswer(l: CityLocation, p: PfasFact): string {
+  const found = p.pfoa_max_ppt === null && p.pfos_max_ppt === null
+    ? `EPA's UCMR 5 data for ${p.utility} shows no PFOA or PFOS result at or above the ${UCMR5_MRL_PPT} ppt reporting level in ${p.samples} samples of each, collected ${p.years}.`
+    : `EPA's UCMR 5 data for ${p.utility} shows ${pfasPart('PFOA', p.pfoa_max_ppt, p.pfoa_where)} and ${pfasPart('PFOS', p.pfos_max_ppt, p.pfos_where)}, from ${p.samples} samples of each collected ${p.years}.`;
+  return `${found} EPA's limit for each in ${l.name} drinking water is 4.0 ppt, which ${p.utility} has until 2029 to meet; a May 18, 2026 proposal would allow until 2031.`;
+}
+
+const filterAdvice = (l: CityLocation, f: CityFiltration) =>
+  `For lead in a ${l.name} home, EPA points to filters certified to both NSF/ANSI 53 and 42 for reduction to 5 ppb or less. For PFAS from ${l.name} taps, it points to NSF/ANSI 53 or 58.`;
+
+const srcLink = (title: string, url: string) => `<a href="${e(url)}" rel="noopener">${e(title)}</a>`;
+
+function leadTable(f: CityFiltration): string {
+  const c = (x: number | null) => (x === null ? 'Not given' : num(x));
+  const rows = f.lead_lines.map((r) => `<tr><td>${e(r.utility)}</td><td>${c(r.lead)}</td><td>${c(r.grr)}</td><td>${c(r.unknown)}</td><td>${c(r.total)}</td><td>${e(r.period)}</td><td>${srcLink(r.source_title, r.source_url)}</td></tr>`).join('');
+  return `<div class="tablewrap"><table><thead><tr><th>Utility</th><th>Lead</th><th>Galvanized, needs replacing</th><th>Unknown</th><th>All lines</th><th>Period</th><th>Source</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+
+export function filtrationSection(l: CityLocation): string {
+  const f = filtrationOf(l.slug);
+  if (!f) return '';
+  return `<h2 id="lead">Does ${e(l.name)} have lead service lines?</h2>
+<p>${e(leadAnswer(l, f))}</p>
+${leadTable(f)}
+<h2 id="pfas">Has PFAS been found in ${e(l.name)} water?</h2>
+<p>${e(pfasAnswer(l, f.pfas))} <span data-citations>Sources: ${srcLink(UCMR5.title, UCMR5.url)}; ${srcLink(FG.pfas_mcl.source_title, FG.pfas_mcl.source_url)}.</span></p>
+<p>${e(filterAdvice(l, f))} <span data-citations>Sources: ${srcLink(FG.lead_filters.source_title, FG.lead_filters.source_url)}; ${srcLink(FG.pfas_filters.source_title, FG.pfas_filters.source_url)}.</span></p>
+${f.notes.length ? `<ul>${f.notes.map((n) => `<li>${e(n)}</li>`).join('')}</ul>` : ''}`;
+}
 
 // Where a published figure sits against the USGS class lines (60, 120, 180 mg/L). Arithmetic only.
 function bandPosition(mgl: number): string {
@@ -105,6 +155,11 @@ export function cityFaq(l: CityLocation, m: MarketConfig, brand = `${l.name} Wat
   const out: Faq[] = [
     { q: `How hard is the water in ${l.name}?`, a: hardnessAnswer(l) },
   ];
+  const fl = filtrationOf(l.slug);
+  if (fl) out.push(
+    { q: `Does ${l.name} have lead service lines?`, a: `${leadAnswer(l, fl)} Source: ${fl.lead_lines[0]!.source_title}.`, src: { title: fl.lead_lines[0]!.source_title, url: fl.lead_lines[0]!.source_url } },
+    { q: `Has PFAS been found in ${l.name} tap water?`, a: `${pfasAnswer(l, fl.pfas)} Source: ${UCMR5.title}.`, src: { title: UCMR5.title, url: UCMR5.url } },
+  );
   if (cls) out.push({ q: `Is ${l.name} water hard or soft?`, a: `${classLabel(l)![0]!.toUpperCase()}${classLabel(l)!.slice(1)}. ${positionSentence(l)}` });
   const gpg = grainsAnswer(l);
   if (gpg) out.push({ q: `How many grains per gallon is ${l.name} water?`, a: gpg });
@@ -158,6 +213,7 @@ export const cityTitle = (site: CitySite, l: CityLocation) => `${l.name} Water S
 export function cityDescription(l: CityLocation): string {
   const utilities = [...new Set(hardnessFacts(l).map((f) => f.utility))];
   const src = utilities.length === 1 ? utilities[0]! : utilities.length ? 'local utilities' : 'your utility';
+  if (filtrationOf(l.slug)) return `${l.name} lead service line counts, PFAS test results and water hardness as published by ${src} and EPA, and how to get a written quote for a water filter or softener from a local company.`;
   return `${l.name} water hardness as published by ${src}, and how to get a written quote for a water softener or filter from a local company.`;
 }
 
@@ -215,8 +271,9 @@ function systemCards(l: CityLocation): string {
   const softener = `<a class="card link" href="/water-softeners/"><strong>Water softener</strong><span>${e(c ? `For hardness; ${l.name} reads as ${c}.` : 'For hardness, once a test shows it.')}</span></a>`;
   const kind = d?.kind === 'chloramine' ? 'chloramine' : d?.kind === 'chlorine' ? 'chlorine' : d ? 'chlorine or chloramine' : 'the disinfectant';
   const filter = `<a class="card link" href="/whole-home-filtration/"><strong>Whole-home filter</strong><span>${e(`For taste and odor from ${kind}${d ? `, which ${utilityName(l)} uses` : ''}.`)}</span></a>`;
-  const ro = `<a class="card link" href="/reverse-osmosis/"><strong>Reverse osmosis</strong><span>${e(`Drinking water at one ${l.name} kitchen tap.`)}</span></a>`;
-  return `<div class="grid three">${soft ? filter + ro + softener : softener + filter + ro}</div>`;
+  const fl = filtrationOf(l.slug);
+  const ro = `<a class="card link" href="/reverse-osmosis/"><strong>Reverse osmosis</strong><span>${e(fl ? `Drinking water at one ${l.name} kitchen tap. Check its certification for lead or PFAS.` : `Drinking water at one ${l.name} kitchen tap.`)}</span></a>`;
+  return `<div class="grid three">${soft || fl ? filter + ro + softener : softener + filter + ro}</div>`;
 }
 
 function quoteSteps(l: CityLocation): string[] {
@@ -229,7 +286,7 @@ function quoteSteps(l: CityLocation): string[] {
   ];
 }
 
-const toc = '<nav class="toc" aria-label="On this page"><a href="#water">Local water</a><a href="#meaning">What it means</a><a href="#systems">Systems</a><a href="#how">How it works</a><a href="#faq">Questions</a><a href="#request">Request</a></nav>';
+const toc = (l: CityLocation) => `<nav class="toc" aria-label="On this page"><a href="#water">Local water</a>${filtrationOf(l.slug) ? '<a href="#lead">Lead lines</a><a href="#pfas">PFAS</a>' : ''}<a href="#meaning">What it means</a><a href="#systems">Systems</a><a href="#how">How it works</a><a href="#faq">Questions</a><a href="#request">Request</a></nav>`;
 
 export function cityHomeBody(site: CitySite, l: CityLocation, m: MarketConfig, requestId: string, hubBase: string, form?: Form): string {
   const zips = CITY_ZIPS[l.slug] ?? [];
@@ -242,12 +299,13 @@ export function cityHomeBody(site: CitySite, l: CityLocation, m: MarketConfig, r
 <h1>Water softeners and filtration in ${e(l.name)}, ${e(l.state)}</h1>
 ${answerCard(l)}
 <div class="disclosure" data-boilerplate><strong>Who you are working with.</strong> ${relationship(m)} We are not a water utility.</div>
-${toc}
+${toc(l)}
 <h2 id="water">What does ${e(utilityName(l))} publish about ${e(l.name)} water?</h2>
 <p>${e(l.intro)}</p>
 ${factsTable(l)}
 ${l.notes.length ? `<ul>${l.notes.map((n) => `<li>${e(n)}</li>`).join('')}</ul>` : ''}
 ${areaPageOf(l.slug) ? `<p><a href="/by-area/">${e(areaPageOf(l.slug)!.heading)}</a>: where each one serves, its own figures and how it is treated.</p>` : ''}
+${filtrationSection(l)}
 <h2 id="meaning">What does ${e(l.scale_mgl ? fig(l.scale_mgl) : 'the published figure')} mean for a ${e(l.name)} home?</h2>
 <p>${e(meaningText(l))} (<a href="${USGS_HARDNESS}" rel="noopener">USGS hardness classes</a>)</p>
 <h2 id="systems">Which systems fit ${e(l.name)} water?</h2>
@@ -290,6 +348,12 @@ export function cityLlmsTxt(site: CitySite, l: CityLocation, m: MarketConfig, hu
     ...(classLabel(l) ? [`- USGS class, our reading of the published figures: ${classLabel(l)}. Classes: ${USGS_HARDNESS}`] : []),
     ...l.notes.map((n) => `- ${n}`),
     ...Object.values(localOf(l.slug)).filter((d): d is LocalDetail => !!d).map((d) => `- ${d.text} Source: ${d.source_title}, ${d.source_url}`),
+    ...(filtrationOf(l.slug) ? [
+      `- Lead service lines: ${leadAnswer(l, filtrationOf(l.slug)!)} Source: ${filtrationOf(l.slug)!.lead_lines.map((r) => `${r.source_title}, ${r.source_url}`).join('; ')}`,
+      `- PFAS: ${pfasAnswer(l, filtrationOf(l.slug)!.pfas)} Sources: ${UCMR5.title}, ${UCMR5.url}; ${FG.pfas_mcl.source_title}, ${FG.pfas_mcl.source_url}`,
+      `- Filters: ${filterAdvice(l, filtrationOf(l.slug)!)} Sources: ${FG.lead_filters.source_url}; ${FG.pfas_filters.source_url}`,
+      ...filtrationOf(l.slug)!.notes.map((n) => `- ${n}`),
+    ] : []),
     `- Sources last checked: ${l.checked_on}`, '',
     '## Pages',
     `- [${l.name} water and quotes](${base}/): the answer, the sources, common questions`,
