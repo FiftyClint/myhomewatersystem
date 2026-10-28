@@ -1,0 +1,21 @@
+rank,city,owner_households,owner_households_pre1960,share_pre1960,lsl_lead_plus_grr,lsl_unknown,lsl_total,lead_grr_share,pfas_max_pfoa_ppt,pfas_max_pfos_ppt,on_hard_water_list,domain_owned,note
+1,New York NY,1104351,686796,0.622,124197,124917,820465,0.151,0,0,no,yes,customer-owned side only
+2,Detroit MI,136621,113997,0.834,80715,39073,251531,0.321,0,0,no,yes,
+3,Baltimore MD,128624,100741,0.783,9652,58508,,,0,0,no,yes,SDWIS row stale; counts from DPW Sept 2025 update; no total published
+4,Denver CO,168087,76808,0.457,16674,34057,311392,0.054,0,0,no,yes,Denver Water 2025 report splits differ from SDWIS
+5,Dallas TX,226859,75116,0.331,6,258104,320491,0.000,6.3,5.1,no (119 mg/L near miss),yes,qualifies on PFAS; 80% of lines unknown
+6,Boston MA,105927,73420,0.693,2449,4180,99945,0.025,0,0,no,yes,
+7,Minneapolis MN,90363,68677,0.760,38473,962,100414,0.383,0,0,no,yes,
+8,Cleveland OH,79062,65256,0.825,144721,56954,434395,0.333,0,0,no (117 mg/L near miss),no,system-wide count includes suburbs
+9,St. Louis MO,68310,57645,0.844,10515,64378,105873,0.099,0,0,no,yes,
+10,Pittsburgh PA,69067,56471,0.818,18415,2361,80528,0.229,0,0,no,yes,utility page says about a third of ~83000 lines unconfirmed; conflicts with SDWIS unknown
+11,Columbus OH,181936,53011,0.291,33248,65266,288462,0.115,5.3,0,no,no,system-wide count includes suburbs
+12,Buffalo NY,55745,48554,0.871,34318,35839,76593,0.448,0,0,no,no,
+13,Fort Worth TX,210450,47420,0.225,32590,0,300778,0.108,8.3,7.3,no (range 76.5-175 flagged),yes,all flagged lines reported as galvanized requiring replacement
+14,St. Paul MN,63986,46805,0.731,17776,6084,98729,0.180,0,0,no,no,regional system may include suburbs
+15,Cincinnati OH,58544,44503,0.760,34717,45,238335,0.146,0,6.1,no,yes,system-wide count includes suburbs
+out,San Francisco CA,136566,93752,0.686,653,407,182707,0.004,0,0,no,yes,below 1% lead+GRR and no PFAS detection
+out,Portland OR,149322,89082,0.597,0,0,189613,0.000,0,0,no,no,no lead lines and no PFAS detection
+out,Seattle WA,160860,86848,0.540,0,0,206340,0.000,0,0,no,yes,no lead lines and no PFAS detection
+out,Oakland CA (EBMUD),81383,57016,0.701,3935,0,408782,0.010,0,0,no,no,below 1% lead+GRR and no PFAS detection
+out,Long Beach CA,70126,48146,0.687,0,0,89524,0.000,0,0,flagged partial,no,no lead lines and no PFAS detection
