@@ -26,7 +26,8 @@ const tagValue = (tags: string[], prefix: string) => tags.find((t) => t.startsWi
 
 export class NotionCrm implements CrmAdapter {
   readonly name = 'notion';
-  constructor(private cfg: NotionConfig, private fetchImpl: typeof fetch = fetch) {}
+  // Workers throw "Illegal invocation" when fetch is called as a method of another object, so the default wraps it.
+  constructor(private cfg: NotionConfig, private fetchImpl: typeof fetch = (input, init) => fetch(input, init)) {}
 
   private async call<T>(method: string, path: string, body: unknown, idempotent: boolean,
     pick: (json: any) => T | undefined): Promise<CallResult<T>> {

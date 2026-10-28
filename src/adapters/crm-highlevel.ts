@@ -17,7 +17,8 @@ export interface HighLevelConfig {
 
 export class HighLevelCrm implements CrmAdapter {
   readonly name = 'highlevel';
-  constructor(private cfg: HighLevelConfig, private fetchImpl: typeof fetch = fetch) {}
+  // Workers throw "Illegal invocation" when fetch is called as a method of another object, so the default wraps it.
+  constructor(private cfg: HighLevelConfig, private fetchImpl: typeof fetch = (input, init) => fetch(input, init)) {}
 
   private async call<T>(method: string, path: string, body: unknown, idempotent: boolean,
     pick: (json: any) => T | undefined): Promise<CallResult<T>> {

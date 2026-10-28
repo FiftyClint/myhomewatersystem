@@ -133,3 +133,23 @@ describe('Notion lead database (Clint, 2026-10-28)', () => {
     expect(toml).toMatch(/\[env\.staging\][\s\S]*CRM_PROVIDER = "mock"/);
   });
 });
+
+describe('default fetch on Workers (production bug, 2026-10-28)', () => {
+  it('calls the global fetch unbound, as Workers require', async () => {
+    const real = globalThis.fetch;
+    // Workers reject fetch called with `this` set to another object ("Illegal invocation").
+    globalThis.fetch = (function (this: unknown) {
+      if (this !== undefined && this !== globalThis) throw new TypeError('Illegal invocation');
+      return Promise.resolve(new Response(JSON.stringify({ results: [] }), { status: 200 }));
+    }) as unknown as typeof fetch;
+    try {
+      const crm = new NotionCrm({ token: 't', databaseId: DB });
+      const r = await crm.upsertContact({ ...contact, email: undefined, phone: undefined } as any);
+      expect(r.status).not.toBe('unknown');
+      const q = await new NotionCrm({ token: 't', databaseId: DB }).updateOpportunityStage({ crmOpportunityId: 'x', stage: 'Assigned', status: 'open' });
+      expect(q).toEqual({ status: 'ok', value: null });
+    } finally {
+      globalThis.fetch = real;
+    }
+  });
+});
