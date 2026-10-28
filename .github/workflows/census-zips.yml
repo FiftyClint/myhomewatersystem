@@ -1,0 +1,32 @@
+# Manual, read-only. Prints the 2020 Census ZCTA-to-place rows for the places named in the input, with the
+# share of each ZCTA's land inside the place. Used to pick market ZIPs (rule: land share >= 0.5).
+name: Census ZIPs for places (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      places:
+        description: 'Pipe-separated exact place names as in NAMELSAD_PLACE_20, with state FIPS prefix, e.g. 21:Louisville/Jefferson County metro government (balance)'
+        required: true
+
+jobs:
+  zips:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pull and filter
+        env:
+          PLACES: ${{ inputs.places }}
+        run: |
+          curl -sSfL -o rel.txt https://www2.census.gov/geo/docs/maps-data/data/rel2020/zcta520/tab20_zcta520_place20_natl.txt
+          head -1 rel.txt
+          python3 - <<'PY'
+          import csv, os
+          want = [p.split(':', 1) for p in os.environ['PLACES'].split('|')]
+          rows = list(csv.DictReader(open('rel.txt', encoding='utf-8-sig'), delimiter='|'))
+          for st, name in want:
+              hits = [r for r in rows if r['GEOID_PLACE_20'][:2] == st and r['NAMELSAD_PLACE_20'] == name and r['GEOID_ZCTA5_20']]
+              print(f'== {st}:{name} rows={len(hits)}')
+              for r in sorted(hits, key=lambda r: r['GEOID_ZCTA5_20']):
+                  z = float(r['AREALAND_ZCTA5_20'] or 0); part = float(r['AREALAND_PART'] or 0)
+                  print(f"ZIPROW|{st}|{name}|{r['GEOID_ZCTA5_20']}|{part / z if z else 0:.3f}")
+          PY
