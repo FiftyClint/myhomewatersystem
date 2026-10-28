@@ -3,7 +3,7 @@
   "slug": "dallas-fort-worth",
   "name": "Dallas-Fort Worth",
   "status": "draft",
-  "config_version": "2026-10-27.1",
+  "config_version": "2026-10-28.1",
   "launch_approval_id": null,
   "business_mode": "dealer_partner",
   "timezone": "America/Chicago",
@@ -90,6 +90,7 @@
     "not_sure"
   ],
   "accept_well_water": false,
+  "texts_allowed": false,
   "business_hours": {
     "days": [
       1,

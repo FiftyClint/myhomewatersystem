@@ -3,6 +3,7 @@ import { marketById } from './context.ts';
 import type { Handler, JobOutcome } from './jobs.ts';
 import type { CallResult } from '../adapters/crm.ts';
 import { crmStageFor } from '../domain/crm-stages.ts';
+import { textsAllowed } from '../domain/config.ts';
 import { getAssignment, getOpportunity } from '../domain/repo.ts';
 import { route } from '../domain/routing.ts';
 import { makeLink } from '../dealer/links.ts';
@@ -35,7 +36,7 @@ export function handlers(ctx: AppContext): Record<string, Handler> {
           postalCode: form.zip, timezone: market.timezone, source: 'myhomewatersystem.com',
           // HighLevel follow-up workflows key off these tags. SMS workflows must require mhws-sms-ok.
           tags: ['mhws', `mhws-market-${market.slug}`, `mhws-mode-${opp.business_mode}`, `mhws-concern-${opp.concern}`,
-            form.consentSms ? 'mhws-sms-ok' : 'mhws-no-sms', `mhws-state-${opp.state}`],
+            form.consentSms && textsAllowed(market) ? 'mhws-sms-ok' : 'mhws-no-sms', `mhws-state-${opp.state}`],
         });
         const fail = asOutcome(r); if (fail) return fail;
         crmContactId = (r as { value: { crmContactId: string } }).value.crmContactId;

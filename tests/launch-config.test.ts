@@ -40,3 +40,19 @@ describe('draft consent wording', () => {
     expect(smsDisclosure({ ...m, seller_display_name: 'Example Dealer' })).toContain('My Home Water System (Aidren LLC) and Example Dealer');
   });
 });
+
+describe('Texas markets take calls and email only (Clint, 2026-10-28, until SB 140 registration is settled)', () => {
+  const texas = ['san-antonio-area', 'houston', 'dallas-fort-worth', 'austin', 'mcallen'];
+  it('every Texas market has texts off, and no other market does', () => {
+    for (const m of MARKETS) expect(m.texts_allowed === false, m.id).toBe(texas.includes(m.id));
+  });
+  it('the service consent names calls, not texts, where texts are off', () => {
+    const sa = MARKETS.find((m) => m.id === 'san-antonio-area')!;
+    for (const seller of [null, 'Example Dealer']) {
+      const text = serviceDisclosure({ ...sa, seller_display_name: seller });
+      expect(text).toContain('including calls to the number you gave');
+      expect(text).not.toMatch(/text/i);
+    }
+    expect(serviceDisclosure(kc as unknown as MarketConfig)).toContain('including calls or texts to the number you gave');
+  });
+});

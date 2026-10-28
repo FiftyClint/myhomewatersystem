@@ -40,6 +40,9 @@ export interface MarketConfig {
   // Clint's call (2026-10-26): take requests before a dealer signs. Each one waits in consent_hold,
   // and the homeowner is asked before it goes to the dealer once one signs.
   accept_before_dealer?: boolean;
+  // false: no marketing texts in this market. The form drops the text consent box and the service
+  // consent names calls only. Clint's call (2026-10-28) for Texas until SB 140 registration is settled.
+  texts_allowed?: boolean;
   // Set at runtime only, never in a config file: production closes a market that has launch blockers,
   // so its pages never show a form that intake would refuse. See buildContext in src/env.ts.
   requests_closed?: boolean;
@@ -87,6 +90,8 @@ export function duplicateWindowDays(m: MarketConfig): number {
     ? m.direct?.duplicate_window_days ?? 90
     : m.dealer_partner?.duplicate_window_days ?? 90;
 }
+
+export const textsAllowed = (m: MarketConfig): boolean => m.texts_allowed !== false;
 
 // Clint's call (2026-10-27): every water site shows a live request form, with or without a phone number.
 // A market takes requests unless paused, retired or closed at runtime, once it has a business mode and

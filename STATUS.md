@@ -1,6 +1,15 @@
 # Status
 
-Last updated: 2026-10-27
+Last updated: 2026-10-28
+
+## 2026-10-28 15:00 UTC: Clint's four answers (code only, not deployed)
+
+- First launch: the four pilot markets plus Chicago, Los Angeles, Houston, Philadelphia, Phoenix, San Diego and Indianapolis. Each opens on its own go. Six of the seven added cities have no fee set, and none has a number or dealer.
+- HighLevel: one Private Integration Token in the real My Home Water System sub-account, saved by Clint as GitHub secret HIGHLEVEL_TOKEN. The production deploy now finds or makes the "My Home Water System" pipeline (scripts/highlevel-pipeline.ts) and stores the token, pipeline ID and stage map on the Worker. Staging never gets it. Live writes still need CRM_PROVIDER and the production policy switched, which wait for his go.
+- Privacy and terms approved as written; pages drop the draft banner.
+- Texas markets (San Antonio area, Houston, Dallas-Fort Worth, Austin, McAllen): calls and email only, no text consent box, until SB 140 registration is settled. disclosure_version owner-approved-2026-10-28.
+- Nameservers: 36 of 38 newer domains switched on 2026-10-27 and are active; jerseywatersystems.com and tampabaywatersystems.com still point at the old pair.
+- Tests: 108 pass. D1: no change to scheduled work (docs/d1-budget.md, now 39 markets).
 
 ## 2026-10-27 18:45 UTC: Powered Land Co duplicate copy rules on the water sites (staging)
 

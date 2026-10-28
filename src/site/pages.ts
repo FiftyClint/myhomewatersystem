@@ -1,4 +1,4 @@
-import { takesRequests, type MarketConfig } from '../domain/config.ts';
+import { takesRequests, textsAllowed, type MarketConfig } from '../domain/config.ts';
 import { serviceDisclosure, smsDisclosure } from '../intake/disclosure.ts';
 import { escapeHtml as e } from '../util.ts';
 import { STATIC_PAGES } from '../../content/pages.ts';
@@ -46,7 +46,7 @@ ${[['soon', 'As soon as possible'], ['months', 'In the next few months'], ['rese
 <label class="f" for="note">Anything about your current system? (optional)</label><textarea id="note" name="note" rows="3" maxlength="500">${e(v.note ?? '')}</textarea>
 <p class="small">Please do not include payment, financing, medical or Social Security information.</p>
 <label class="choice"><input type="checkbox" name="consent_service" value="yes"${v.consent_service === 'yes' ? ' checked' : ''}${aria(er, 'consent_service')}> <span>${e(disclosure)} <a href="/privacy/">Privacy</a></span></label>${err(er, 'consent_service')}
-<label class="choice"><input type="checkbox" name="consent_sms" value="yes"${v.consent_sms === 'yes' ? ' checked' : ''}> <span>${e(sms)}</span></label>${err(er, 'consent_sms')}
+${textsAllowed(m) ? `<label class="choice"><input type="checkbox" name="consent_sms" value="yes"${v.consent_sms === 'yes' ? ' checked' : ''}> <span>${e(sms)}</span></label>${err(er, 'consent_sms')}` : ''}
 <p><button type="submit">Send my request</button></p>
 </form>`;
 }
@@ -120,8 +120,8 @@ export function companyBody(kind: 'about' | 'contact'): string {
 }
 
 // Privacy and terms text, drafted 2026-10-26 from what the build actually does. It stays marked
-// draft until Clint approves this wording; then set LEGAL_APPROVED to the approval date.
-const LEGAL_APPROVED: string | null = null;
+// draft until Clint approves this wording; then set LEGAL_APPROVED to the approval date. Approved 2026-10-28.
+const LEGAL_APPROVED: string | null = '2026-10-28'; // Clint approved as written, 2026-10-28
 const LEGAL_UPDATED = 'October 26, 2026';
 
 function legalText(kind: 'privacy' | 'terms'): string {

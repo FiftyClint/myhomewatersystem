@@ -27,7 +27,7 @@ not on the lead's path. It exists for things that need a clock: a dealer who has
 | --- | --- | --- |
 | Idle: one lookup for jobs, offers, accepted work or held leads | 0 found; at most 3 index probes | 0 |
 | Once a day at 14:00 UTC: dealer license and insurance dates | from the deployed config, no table reads | 1 per new issue only |
-| Live (a lead in flight): config sync | 37 (one per market) | 0 unless a market's config changed |
+| Live (a lead in flight): config sync | 39 (one per market) | 0 unless a market's config changed |
 | Live: offers past SLA, accepted jobs, holds, job claim | rows in flight only, through indexes | jobs run, 1 exception per new issue |
 
 Idle, per day: 288 ticks x at most 3 = at most 864 rows read, 0.02% of the 5 million limit, and 0
@@ -35,10 +35,10 @@ written. That 3 is an upper bound I set, one per index probe; Cloudflare's docs 
 query scans, and a lookup that finds nothing scans none, so the real figure may be 0.
 
 While leads are in flight, as an illustration only (not a forecast): 100 accepted jobs and 20 active
-dealers make about 37 + 220 = 257 reads a tick, or about 74,000 a day at 288 ticks, 1.5% of the limit.
+dealers make about 39 + 220 = 259 reads a tick, or about 74,600 a day at 288 ticks, 1.5% of the limit.
 
-Before this commit the cron ran every minute and synced config on every tick: 37 x 1,440 = 53,280 reads
-a day with nothing in flight.
+Before 2026-10-27 the cron ran every minute and synced config on every tick: 37 x 1,440 = 53,280 reads
+a day with nothing in flight (37 markets then, 39 now).
 
 ## Per lead
 
@@ -47,6 +47,12 @@ Measured in the test database: one lead writes 9 table rows at intake and 15 mor
 so the 100,000 write limit holds about 660 leads a day. Before this commit each lead also deleted and
 re-inserted its market's ZIP rows and scanned the whole ZIP table; it now does that only when the
 market's config changed.
+
+## HighLevel (production, once the token is saved)
+
+Calls to HighLevel are made by the jobs a lead already creates, so they add no scheduled work and no D1
+rows beyond the per-lead count above. The deploy step that finds or makes the pipeline calls HighLevel
+only, not D1.
 
 ## Staging
 

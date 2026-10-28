@@ -1,5 +1,5 @@
 import type { Sql, Stmt } from '../db/sql.ts';
-import { duplicateWindowDays, marketLaunchBlockers, takesRequests, type Concern, type MarketConfig, type Policy } from '../domain/config.ts';
+import { duplicateWindowDays, marketLaunchBlockers, takesRequests, textsAllowed, type Concern, type MarketConfig, type Policy } from '../domain/config.ts';
 import { HOLD_STATES, type State } from '../domain/states.ts';
 import { auditStmt, enqueueStmt, exceptionStmt, syncConfigStmts } from '../domain/repo.ts';
 import { needsRouting } from '../domain/pipeline.ts';
@@ -101,6 +101,8 @@ export async function handleIntake(input: IntakeInput, deps: IntakeDeps): Promis
   if (input.market !== market.id) {
     return { status: 'invalid', errors: { zip: 'This ZIP code is served by a different company than the one shown. Please review the details and submit again.' }, market };
   }
+  // Markets with texts off never show the text box, so a posted yes is not consent we showed.
+  if (!textsAllowed(market)) c.consentSms = false;
   // With no dealer named yet, the request stays with us (the form's consent text says so).
   const noDealer = market.business_mode === 'dealer_partner' && !market.seller_display_name;
   const recipient = market.seller_display_name ?? 'My Home Water System';
@@ -160,7 +162,7 @@ export async function handleIntake(input: IntakeInput, deps: IntakeDeps): Promis
          disclosure_hash, granted, event_time, source_page) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     ).bind(uuid(), contactId, receiptId, channel, purpose, parties, policy.disclosure_version, hash, granted ? 1 : 0, at, c.page);
   stmts.push(consent(c.contactMethod, 'service', true, svcText, svcHash));
-  if (c.phone) stmts.push(consent('sms', 'service', c.consentSms, smsText, smsHash));
+  if (c.phone && textsAllowed(market)) stmts.push(consent('sms', 'service', c.consentSms, smsText, smsHash));
 
   stmts.push(
     db.prepare(

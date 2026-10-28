@@ -75,6 +75,23 @@ jobs:
             elif ! printf '%s\n' "$have" | grep -qx "$n"; then put "$n" "$(openssl rand -hex 32)"
             else echo "kept $n"; fi
           done
+      - name: Connect HighLevel (production only, once the HIGHLEVEL_TOKEN secret is saved)
+        # The token is a HighLevel Private Integration Token from the My Home Water System sub-account.
+        # Staging never receives it. Live CRM writes still need CRM_PROVIDER = "highlevel" in wrangler.toml
+        # and the production policy switched on (src/env.ts chooseCrm); until then leads stay in the mock CRM.
+        if: ${{ inputs.environment == 'production' }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          HIGHLEVEL_TOKEN: ${{ secrets.HIGHLEVEL_TOKEN }}
+        run: |
+          if [ -z "$HIGHLEVEL_TOKEN" ]; then echo "No HIGHLEVEL_TOKEN secret yet; skipping."; exit 0; fi
+          loc=$(grep -o 'HIGHLEVEL_LOCATION_ID = "[^"]*"' wrangler.toml | cut -d'"' -f2)
+          node --experimental-strip-types --no-warnings scripts/highlevel-pipeline.ts "$loc" > "$RUNNER_TEMP/hl.json"
+          put() { printf '%s' "$2" | npx wrangler secret put "$1" --env production > /dev/null; echo "set $1"; }
+          put HIGHLEVEL_TOKEN "$HIGHLEVEL_TOKEN"
+          put HIGHLEVEL_PIPELINE_ID "$(jq -r .pipelineId "$RUNNER_TEMP/hl.json")"
+          put HIGHLEVEL_STAGE_MAP "$(jq -c .stageMap "$RUNNER_TEMP/hl.json")"
       - name: Check the Worker answers
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

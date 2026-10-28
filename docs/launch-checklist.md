@@ -5,7 +5,7 @@
 ## Owner decisions
 - [ ] Business model for the first market (dealer_partner or direct)
 - [ ] Pilot loss cap, ad budget cap, daily target
-- [ ] HighLevel placement (pipeline in CGF vs separate sub-account)
+- [x] HighLevel placement: its own sub-account, My Home Water System (made 2026-10-18)
 - [ ] Coordinator and backup named; technical maintainer named
 - [x] Domain ownership confirmed by Clint on 2026-10-26 for myhomewatersystem.com and the nine city domains in content/sites.ts
 
@@ -14,8 +14,8 @@
 - [ ] Dealer (or installers) who want more: credentials and insurance verified, dates entered in market config
 - [ ] Signed agreement; `agreement_version` entered
 - [ ] Approved ZIP list entered
-- [x] Consent text approved by Clint on 2026-10-26 (no counsel review, his call); `disclosure_version` owner-approved-2026-10-26
-- [ ] Privacy and terms text approved by Clint (drafted 2026-10-26 in src/site/pages.ts); set LEGAL_APPROVED
+- [x] Consent text approved by Clint on 2026-10-26 (no counsel review, his call). Texas variant names calls only (Clint's 2026-10-28 answer on SB 140); `disclosure_version` owner-approved-2026-10-28
+- [x] Privacy and terms text approved by Clint on 2026-10-28 as written; LEGAL_APPROVED set
 - [ ] Direct mode only: contractor licensing for our role, customer contract, sales tax, payments, warranty reserve, insurance
 
 ## Accounts and config
@@ -25,8 +25,8 @@
 - [ ] Phone forwarding for the four numbers: last step before go-live
 - [x] D1 databases created 2026-10-26 on Clint's Cloudflare account (the one with the poweredlandco Workers): mhws-staging dc685077-9aae-4beb-81b3-5e5f4d7788b2, mhws-production 91b9be82-4405-4927-9bb0-65a5ec33b1df; IDs in `wrangler.toml`. Tables are created by the deploy workflow's migration step.
 - [x] LINK_SECRET, HASH_PEPPER, ADMIN_TOKEN, CRM_WEBHOOK_SECRET: the deploy workflow makes each one once if it is missing (ADMIN_TOKEN and CRM_WEBHOOK_SECRET come from GitHub secrets of the same name when those exist)
-- [ ] HIGHLEVEL_TOKEN on mhws-staging (MHWS Test token) and mhws (real token), set by Clint; HIGHLEVEL_LOCATION_ID for production is in `wrangler.toml` (1NdIhzTx9ZJlqnXshDkQ) and is on the staging block list in config/protected.json
-- [ ] HighLevel pipeline, workflows and webhook built (docs/highlevel-setup.md); integration spike passed
+- [ ] HIGHLEVEL_TOKEN saved by Clint as a GitHub secret (Private Integration Token from the My Home Water System sub-account). The production deploy stores it on the Worker with the pipeline ID and stage map. No staging token and no test sub-account (Clint, 2026-10-28). HIGHLEVEL_LOCATION_ID for production is in `wrangler.toml` (1NdIhzTx9ZJlqnXshDkQ) and is on the staging block list in config/protected.json
+- [ ] HighLevel pipeline (made by the production deploy), workflows and webhook built (docs/highlevel-setup.md); integration spike passed in production with one test lead, deleted afterward
 - [x] `/internal/*` needs the ADMIN_TOKEN bearer token, compared in constant time (src/index.ts); robots.txt disallows it
 - [x] Form rate limit: 5 posts a minute per address (FORM_LIMITER binding, both environments), on top of the honeypot
 - [ ] Turnstile on the form: later, if spam shows up

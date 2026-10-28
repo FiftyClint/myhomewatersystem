@@ -64,6 +64,14 @@ describe('T03 consent', () => {
     expect(await count(a.db, 'consent_events', "channel = 'sms' AND granted = 0")).toBe(1);
     expect([...a.crm.contacts.values()][0]!.tags).toContain('mhws-no-sms');
   });
+  it('a market with texts off ignores a posted text yes: no SMS consent row, tagged no-sms', async () => {
+    const markets = structuredClone(MARKETS).map((m) => (m.id === 'demo-dealer' ? { ...m, texts_allowed: false } : m));
+    const a = await app({ markets });
+    await a.submit({ consent_sms: 'yes' });
+    await a.drain();
+    expect(await count(a.db, 'consent_events', "channel = 'sms'")).toBe(0);
+    expect([...a.crm.contacts.values()][0]!.tags).toContain('mhws-no-sms');
+  });
   it('rejects a submission whose ZIP belongs to a different market than the disclosure shown', async () => {
     const a = await app();
     const r = await a.submit({ zip: '00003', market: 'demo-dealer' });
