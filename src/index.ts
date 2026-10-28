@@ -2,7 +2,7 @@ import { buildContext, type Env } from './env.ts';
 import { layout } from './site/layout.ts';
 import { companyBody, legalBody, marketBody, outOfAreaBody, serviceAreasBody, STATIC_PAGES, thankYouBody, unavailableBody } from './site/pages.ts';
 import { cityBody, clusterBody, sitemapXml, urlset } from './site/locations.ts';
-import { cityAboutBody, cityAreaBody, cityAreaJsonLd, cityContactBody, cityDescription, cityHomeBody, cityJsonLd, cityLlmsTxt, cityTitle, cityWaterJson } from './site/city.ts';
+import { cityAboutBody, cityAreaBody, cityAreaJsonLd, cityContactBody, cityDescription, cityHomeBody, cityJsonLd, hubCityJsonLd, cityLlmsTxt, cityTitle, cityWaterJson } from './site/city.ts';
 import { areaPageOf } from '../content/areas.ts';
 import { citiesJson, hardWaterByCityBody, hubHomeBody, hubJsonLd, hubLlmsTxt, stateBody, stateLlmsTxt } from './site/hub.ts';
 import { robotsTxt } from './site/bots.ts';
@@ -197,7 +197,8 @@ export default {
       // A hub city page stays noindex and out of the sitemap until its market has a launch approval.
       if (city && cityMarket) return html(200, page(`Water softeners and filtration in ${city.name} | My Home Water System`,
         `${city.name} water hardness as published by the local utility, and how to get a written water treatment quote.`,
-        cityBody(city, cityMarket, crypto.randomUUID(), { vals: { zip } }), !cityMarket.launch_approval_id));
+        cityBody(city, cityMarket, crypto.randomUUID(), { vals: { zip } }), !cityMarket.launch_approval_id,
+        { jsonLd: hubCityJsonLd(city, cityMarket, `${env.BASE_URL}/locations/${city.slug}/`) }));
       const m = ctx.markets.find((x) => x.slug === loc[1]);
       if (!m) return html(404, page('Not found', 'Not found', '<h1>Page not found</h1>', true));
       return html(200, page(`Water treatment in ${m.name} | My Home Water System`, `Water treatment options and quotes in ${m.name}.`,

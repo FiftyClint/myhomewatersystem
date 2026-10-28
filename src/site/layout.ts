@@ -30,6 +30,7 @@ header.site .wrap{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:center;ju
 nav a{margin-right:14px;text-decoration:none;color:var(--text)}nav a:last-child{margin-right:0}nav a.phone{font-weight:700;color:var(--accent-dark)}
 .answer{font-size:1.05rem;background:var(--soft);border-radius:10px;padding:14px 16px}
 dl.faq dt{font-weight:700;color:var(--ink);margin-top:14px}dl.faq dd{margin:4px 0 0}
+dl.facts{display:grid;grid-template-columns:max-content 1fr;gap:6px 14px;margin:8px 0 16px}dl.facts dt{font-weight:700;color:var(--ink)}dl.facts dd{margin:0}@media(max-width:560px){dl.facts{grid-template-columns:1fr}dl.facts dd{margin-bottom:6px}}
 main{padding:24px 0 48px}
 .banner{background:var(--warn-bg);color:var(--warn);border-bottom:1px solid #f0d9a0;padding:10px 0;font-size:.95rem}
 .disclosure{background:var(--soft);border-left:4px solid var(--accent);padding:12px 16px;margin:16px 0}

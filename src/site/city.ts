@@ -122,10 +122,10 @@ function grainsAnswer(l: CityLocation): string | null {
 // Other covered cities in the same market, then the same state, with their published spans.
 function compareAnswer(l: CityLocation): string | null {
   const pool = LOCATIONS.filter((x) => x.slug !== l.slug && x.scale_mgl);
-  const near = [...pool.filter((x) => x.market_id === l.market_id), ...pool.filter((x) => x.market_id !== l.market_id && x.state === l.state)].slice(0, 4);
+  const near = [...pool.filter((x) => x.market_id === l.market_id), ...pool.filter((x) => x.market_id !== l.market_id && x.state === l.state)].slice(0, 3);
   if (!l.scale_mgl || !near.length) return null;
   const span = (x: CityLocation) => { const [lo, hi] = x.scale_mgl!; return `${lo === hi ? lo : `${lo} to ${hi}`} mg/L${x.scale_converted ? ' (converted from grains)' : ''}`; };
-  return `Published hardness in ${l.name} spans ${span(l)}. Nearby: ${near.map((x) => `${x.name} ${span(x)}`).join('; ')}.`;
+  return `Published hardness in ${l.name} spans ${span(l)}. Covered cities near ${l.name}: ${near.map((x) => `${x.name} ${span(x)}`).join('; ')}. Each figure comes from that city's own utility, not from ${l.name}'s.`;
 }
 
 function softenerAnswer(l: CityLocation): string {
@@ -147,6 +147,58 @@ function sameHomeAnswer(l: CityLocation): string {
   if (!hf.length) return `No published figure covers ${l.name} homes yet, so a test at the house is the only reading.`;
   if (hf.length === 1) return `${hf[0]!.utility} publishes one figure for its whole system (${hf[0]!.period}).${area}`;
   return `${hf.length} published figures cover ${l.name}, from ${new Set(hf.map((f) => f.utility)).size} ${new Set(hf.map((f) => f.utility)).size === 1 ? 'utility' : 'utilities'}; which applies depends on where you live.${area}`;
+}
+
+// Entity facts for answer engines: one line each, every value from a sourced fact above or the city's local details.
+export interface KeyFact { label: string; value: string; src?: { title: string; url: string } }
+
+const DISINFECTANT_WORD: Record<DisinfectantKind, string> = { chlorine: 'Chlorine', chloramine: 'Chloramine', both: 'Chlorine and chloramine', varies: 'Varies by area' };
+
+export function keyFacts(l: CityLocation): KeyFact[] {
+  const d = localOf(l.slug);
+  const hf = hardnessFacts(l)[0];
+  const c = classLabel(l);
+  const out: KeyFact[] = [{ label: 'Water utility', value: utilitiesOf(l).join('; ') || 'Not identified yet' }];
+  if (d.source_water) out.push({ label: 'Source water', value: d.source_water.text, src: { title: d.source_water.source_title, url: d.source_water.source_url } });
+  if (d.disinfectant) out.push({ label: 'Disinfectant', value: DISINFECTANT_WORD[d.disinfectant.kind], src: { title: d.disinfectant.source_title, url: d.disinfectant.source_url } });
+  out.push({ label: 'Published hardness', value: l.scale_mgl ? `${fig(l.scale_mgl)}, about ${l.scale_mgl[0] === l.scale_mgl[1] ? grains(l.scale_mgl[0]) : `${grains(l.scale_mgl[0])} to ${grains(l.scale_mgl[1])}`} grains per gallon${c ? `, ${c} on the USGS scale` : ''}` : 'No published figure found',
+    ...(hf ? { src: { title: hf.source_title, url: hf.source_url } } : {}) });
+  const f = filtrationOf(l.slug);
+  if (f) {
+    const r = f.lead_lines[0]!;
+    out.push({ label: 'Lead service lines', value: `${r.lead === null ? 'Not given' : num(r.lead)} lead, ${r.grr === null ? 'not given' : num(r.grr)} galvanized needing replacement, ${r.unknown === null ? 'not given' : num(r.unknown)} unknown (${r.period[0]!.toLowerCase()}${r.period.slice(1)})`, src: { title: r.source_title, url: r.source_url } });
+    const p = f.pfas;
+    const hi = [p.pfoa_max_ppt !== null ? `PFOA up to ${p.pfoa_max_ppt} ppt` : '', p.pfos_max_ppt !== null ? `PFOS up to ${p.pfos_max_ppt} ppt` : ''].filter(Boolean);
+    out.push({ label: 'PFOA and PFOS (EPA UCMR 5)', value: hi.length ? `${hi.join(', ')}; EPA limit 4.0 ppt each` : `None at or above ${UCMR5_MRL_PPT} ppt in ${p.samples} ${p.utility} samples each, ${p.years}`, src: { title: UCMR5.title, url: UCMR5.url } });
+  }
+  out.push({ label: 'Sources last checked', value: longDate(l.checked_on) });
+  return out;
+}
+
+export function keyFactsBlock(l: CityLocation): string {
+  const rows = keyFacts(l).map((k) => `<dt>${e(k.label)}</dt><dd>${e(k.value)}${k.src ? ` <span class="small" data-citations>(<a href="${e(k.src.url)}" rel="noopener">source</a>)</span>` : ''}</dd>`).join('');
+  return `<section aria-labelledby="facts-h"><h2 id="facts-h">${e(l.name)}, ${e(l.state)} water at a glance</h2><dl class="facts">${rows}</dl></section>`;
+}
+
+// Which system fits, said from this city's own facts: hardness class, disinfectant, lead lines and PFAS.
+export function systemAnswer(l: CityLocation): string {
+  const d = localOf(l.slug);
+  const c = classLabel(l);
+  const f = filtrationOf(l.slug);
+  const parts: string[] = [];
+  if (c && l.scale_mgl) parts.push(l.scale_mgl[1] <= 60
+    ? `${l.name}'s published hardness reads as ${c}, so a softener is unlikely to be the first system a ${l.name} home needs.`
+    : `${l.name}'s published ${fig(l.scale_mgl)} reads as ${c}, which is what a softener treats.`);
+  else parts.push(`With no published hardness figure for ${l.name}, a hardness test at the house decides whether a softener is worth it.`);
+  if (d.disinfectant && d.disinfectant.kind !== 'chlorine') parts.push(`Because ${utilityName(l)} uses ${DISINFECTANT_WORD[d.disinfectant.kind].toLowerCase()}, a whole-home filter for ${l.name} taste and odor should use catalytic carbon (${GENERAL.chloramine_filters?.source_title ?? 'NDSU Extension'}).`);
+  else if (d.disinfectant) parts.push(`${utilityName(l)} uses chlorine, and a softener leaves it in ${l.name} water.`);
+  if (f) {
+    const r = f.lead_lines[0]!;
+    if ((r.lead ?? 0) + (r.grr ?? 0) > 0) parts.push(`${r.utility} lists ${num((r.lead ?? 0) + (r.grr ?? 0))} lead or galvanized lines, and for lead EPA points to point-of-use filters certified to both NSF/ANSI 53 and 42 (EPA consumer tool).`);
+    if (f.pfas.pfoa_max_ppt !== null || f.pfas.pfos_max_ppt !== null) parts.push(`PFAS results at or above 4 ppt in ${f.pfas.utility} water point to a filter certified to NSF/ANSI 53 or 58 for PFAS (EPA home filter guidance).`);
+  }
+  parts.push(`The installing company tests the water at your ${l.name} address before quoting.`);
+  return parts.join(' ');
 }
 
 export function cityFaq(l: CityLocation, m: MarketConfig, brand = `${l.name} Water Systems`): Faq[] {
@@ -173,6 +225,7 @@ export function cityFaq(l: CityLocation, m: MarketConfig, brand = `${l.name} Wat
   if (cmp) out.push({ q: `How does ${l.name} water compare with nearby cities?`, a: cmp });
   out.push(
     { q: `Do I need a water softener in ${l.name}?`, a: softenerAnswer(l) },
+    { q: `Which water treatment system fits a ${l.name} home?`, a: systemAnswer(l) },
   );
   if (!d.by_area) out.push({ q: `Is the water the same in every ${l.name} home?`, a: sameHomeAnswer(l) });
   if (!d.disinfectant) out.push({ q: 'Does a water softener remove chlorine?', a: `No. A softener targets hardness, not the disinfectant ${utilityName(l)} adds.` });
@@ -201,9 +254,47 @@ export function cityJsonLd(site: CitySite, l: CityLocation, m: MarketConfig): ob
     { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: cityFaq(l, m, site.brand).map((f) => ({
       '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) },
     { '@context': 'https://schema.org', '@type': 'WebPage', url, name: cityTitle(site, l), dateModified: l.checked_on, lastReviewed: l.checked_on,
-      about: { '@type': 'City', name: l.name, containedInPlace: { '@type': 'State', name: l.state } },
-      citation: [...hardnessFacts(l).map((f) => ({ '@type': 'CreativeWork', name: f.source_title, url: f.source_url, publisher: { '@type': 'Organization', name: f.utility } })),
-        ...localSources(l).filter((u) => !hardnessFacts(l).some((f) => f.source_url === u.url)).map((u) => ({ '@type': 'CreativeWork', name: u.title, url: u.url }))],
+      isPartOf: { '@type': 'WebSite', url, name: fullBrand(site) },
+      ...cityEntity(l),
+      citation: citations(l),
+      mainEntity: { '@type': 'Service', serviceType: 'Water treatment quote requests', areaServed: { '@type': 'City', name: l.name }, provider: ORG } },
+  ];
+}
+
+// The city as an entity, with its water facts as properties, and the utilities the page cites.
+export function cityEntity(l: CityLocation) {
+  return {
+    about: { '@type': 'City', name: l.name, containedInPlace: { '@type': 'State', name: l.state },
+      additionalProperty: keyFacts(l).map((k) => ({ '@type': 'PropertyValue', name: k.label, value: k.value, ...(k.src ? { url: k.src.url } : {}) })) },
+    mentions: utilitiesOf(l).map((u) => ({ '@type': 'Organization', name: u })),
+  };
+}
+
+export function citations(l: CityLocation): object[] {
+  const seen = new Set<string>();
+  const out: object[] = [];
+  const add = (name: string, url: string, publisher?: string) => {
+    if (seen.has(url)) return; seen.add(url);
+    out.push({ '@type': 'CreativeWork', name, url, ...(publisher ? { publisher: { '@type': 'Organization', name: publisher } } : {}) });
+  };
+  for (const f of hardnessFacts(l)) add(f.source_title, f.source_url, f.utility);
+  for (const u of localSources(l)) add(u.title, u.url);
+  const fl = filtrationOf(l.slug);
+  if (fl) {
+    for (const r of fl.lead_lines) add(r.source_title, r.source_url);
+    add(UCMR5.title, UCMR5.url, 'US EPA');
+    for (const g of Object.values(FG)) add(g.source_title, g.source_url, 'US EPA');
+  }
+  return out;
+}
+
+// JSON-LD for a hub page about a city with no site of its own.
+export function hubCityJsonLd(l: CityLocation, m: MarketConfig, url: string): object[] {
+  return [
+    { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: cityFaq(l, m, HUB_BRAND).map((f) => ({
+      '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) },
+    { '@context': 'https://schema.org', '@type': 'WebPage', url, name: `Water softeners and filtration in ${l.name} | ${HUB_BRAND}`, dateModified: l.checked_on, lastReviewed: l.checked_on,
+      isPartOf: { '@type': 'WebSite', url: ORG.url, name: HUB_BRAND }, ...cityEntity(l), citation: citations(l),
       mainEntity: { '@type': 'Service', serviceType: 'Water treatment quote requests', areaServed: { '@type': 'City', name: l.name }, provider: ORG } },
   ];
 }
@@ -240,7 +331,7 @@ function nearby(l: CityLocation, m: MarketConfig, hubBase: string): string {
     return `<a href="${e(s ? `${siteUrl(s)}/` : `${hubBase}/locations/${x.slug}/`)}">${e(x.name)}</a>`;
   };
   const near = others.length ? `<h2>Nearby cities</h2><p>${others.map(link).join(', ')}.</p>` : '';
-  return `${near}<p>Compare published hardness in other cities on <a href="${e(hubBase)}/hard-water-by-city/">hard water by city</a>.</p>`;
+  return `${near}<p>${e(l.name)} is one of the cities covered by <a href="${e(hubBase)}/">${e(HUB_BRAND)}</a>. Compare ${e(l.name)}'s published hardness with other cities on <a href="${e(hubBase)}/hard-water-by-city/">hard water by city</a>.</p>`;
 }
 
 // The answer card at the top: the figure, its source and date, the USGS class and the scale.
@@ -256,7 +347,7 @@ ${hardnessScale(l)}
 </section>`;
 }
 
-function meaningText(l: CityLocation): string {
+export function meaningText(l: CityLocation): string {
   if (!l.scale_mgl) return `${utilityName(l)} publishes no hardness figure for ${l.name} that we could find, so a test at the house is the only number to go on. Hardness is the calcium and magnesium that leaves scale on fixtures and inside water heaters.`;
   const [lo, hi] = l.scale_mgl;
   const g = lo === hi ? grains(lo) : `${grains(lo)} to ${grains(hi)}`;
@@ -264,7 +355,7 @@ function meaningText(l: CityLocation): string {
 }
 
 // System cards ordered and described from the city's own figures and disinfectant.
-function systemCards(l: CityLocation): string {
+export function systemCards(l: CityLocation): string {
   const d = localOf(l.slug).disinfectant;
   const c = classLabel(l);
   const soft = l.scale_mgl ? l.scale_mgl[1] <= 60 : false;
@@ -276,7 +367,7 @@ function systemCards(l: CityLocation): string {
   return `<div class="grid three">${soft || fl ? filter + ro + softener : softener + filter + ro}</div>`;
 }
 
-function quoteSteps(l: CityLocation): string[] {
+export function quoteSteps(l: CityLocation): string[] {
   const zips = (CITY_ZIPS[l.slug] ?? []).length;
   return [
     zips ? `Send a request from one of the ${zips} ${l.name} ZIP codes listed below.` : `Send a request with your ${l.name} address.`,
@@ -286,7 +377,7 @@ function quoteSteps(l: CityLocation): string[] {
   ];
 }
 
-const toc = (l: CityLocation) => `<nav class="toc" aria-label="On this page"><a href="#water">Local water</a>${filtrationOf(l.slug) ? '<a href="#lead">Lead lines</a><a href="#pfas">PFAS</a>' : ''}<a href="#meaning">What it means</a><a href="#systems">Systems</a><a href="#how">How it works</a><a href="#faq">Questions</a><a href="#request">Request</a></nav>`;
+const toc = (l: CityLocation) => `<nav class="toc" aria-label="On this page"><a href="#facts-h">At a glance</a><a href="#water">Local water</a>${filtrationOf(l.slug) ? '<a href="#lead">Lead lines</a><a href="#pfas">PFAS</a>' : ''}<a href="#meaning">What it means</a><a href="#systems">Systems</a><a href="#how">How it works</a><a href="#faq">Questions</a><a href="#request">Request</a></nav>`;
 
 export function cityHomeBody(site: CitySite, l: CityLocation, m: MarketConfig, requestId: string, hubBase: string, form?: Form): string {
   const zips = CITY_ZIPS[l.slug] ?? [];
@@ -298,6 +389,7 @@ export function cityHomeBody(site: CitySite, l: CityLocation, m: MarketConfig, r
   return `<div class="grid two"><div>
 <h1>Water softeners and filtration in ${e(l.name)}, ${e(l.state)}</h1>
 ${answerCard(l)}
+${keyFactsBlock(l)}
 <div class="disclosure" data-boilerplate><strong>Who you are working with.</strong> ${relationship(m)} We are not a water utility.</div>
 ${toc(l)}
 <h2 id="water">What does ${e(utilityName(l))} publish about ${e(l.name)} water?</h2>
