@@ -166,3 +166,9 @@ Incurred: $0. Two empty D1 databases were created 2026-10-26; I have no verified
 - Owner step: switch those 36 at GoDaddy to priscilla/sonny. The original ten are correct on carlos/kristina.
 
 - 2026-10-27 11:10 UTC: account-wide free plan check written to docs/account-budget.md. Water pages now cost one Worker request each (empty inline icon, tested). Powered Land and party boat cost 4 to 5 requests per page view through `run_worker_first: true`; fixes listed there, not applied. Crons 2 of 5. Analytics not read (Cloudflare connection key rejected).
+
+## 2026-10-28 17:17 UTC
+- Production live for the 11 approved markets. prod-check.yml run: all 16 city domains 200 with the form, healthz crm notion.
+- Bug fixed (18fb617): CRM adapters called fetch as a method, which Workers reject ("Illegal invocation"). Redeployed.
+- Test lead sent to kcwatersystems.com, landed in Water Leads as On Hold, then trashed in Notion and deleted from production D1.
+- First production config sync wrote 1,517 zip_codes rows and 39 markets.
