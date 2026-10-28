@@ -1,0 +1,44 @@
+# Manual production check. Reads /healthz and the home page of each launched city site, and fails if a site
+# does not answer 200, has no request form, or still shows the not-open panel. With send_test_lead=yes it
+# also posts one request labeled TEST LEAD to kcwatersystems.com and prints the result, so the Notion row
+# can be checked and then deleted. Writes nothing else.
+name: Production check (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      send_test_lead:
+        description: 'Post one TEST LEAD request (yes/no)'
+        default: 'no'
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Health and live sites
+        run: |
+          echo "healthz: $(curl -sS https://www.myhomewatersystem.com/healthz)"
+          fail=0
+          for d in mesawatersystems.com chandlerwatersystems.com gilbertwatersystems.com scottsdalewatersystems.com \
+                   vegaswatersystems.com hendersonwatersystems.com sanantoniohomewatersystems.com newbraunfelswatersystems.com \
+                   kcwatersystems.com phoenixhomewatersystems.com chicagowatersystems.com houstonhomewatersystems.com \
+                   indianapoliswatersystems.com losangeleswatersystems.com philadelphiawatersystems.com sandiegowatersystems.com; do
+            code=$(curl -sS -L -o /tmp/p.html -w '%{http_code}' "https://$d/" || echo 000)
+            form=$(grep -c 'action="/api/inquiry"' /tmp/p.html || true)
+            closed=$(grep -c '<h2>Not open yet</h2>' /tmp/p.html || true)
+            echo "$d HTTP $code form=$form not_open=$closed"
+            if [ "$code" != "200" ] || [ "$form" = "0" ] || [ "$closed" != "0" ]; then fail=1; fi
+          done
+          [ $fail = 0 ] && echo "RESULT: all 16 sites open" || { echo "RESULT: at least one site failed"; exit 1; }
+      - name: One test lead
+        if: ${{ inputs.send_test_lead == 'yes' }}
+        run: |
+          rid=$(cat /proc/sys/kernel/random/uuid)
+          curl -sS -X POST https://kcwatersystems.com/api/inquiry -H 'accept: application/json' \
+            --data-urlencode "request_id=$rid" --data-urlencode zip=64111 --data-urlencode homeowner=yes \
+            --data-urlencode concern=hardness --data-urlencode water_source=municipal \
+            --data-urlencode first_name=TEST --data-urlencode "last_name=LEAD delete me" \
+            --data-urlencode contact_method=email --data-urlencode email=test-lead@example.com \
+            --data-urlencode consent_service=yes --data-urlencode page=/ \
+            --data-urlencode "note=Production test by Claude 2026-10-28. Not a real request."
+          echo
