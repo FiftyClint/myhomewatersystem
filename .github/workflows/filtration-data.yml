@@ -5,6 +5,11 @@ name: Filtration screen data (manual)
 
 on:
   workflow_dispatch:
+    inputs:
+      detail_only:
+        description: 'Only print UCMR 5 PFOA/PFOS detail for the owned filtration cities'
+        type: boolean
+        default: false
 
 jobs:
   pull:
@@ -41,7 +46,25 @@ jobs:
               name, st, size = meta[k]
               if size == 'L': print(f"UCMRROW|{k}|{st}|{name}|{b['PFOA']:.2f}|{b['PFOS']:.2f}|{b['n']}")
           PY
+      - name: UCMR 5 detail for the owned filtration cities
+        run: |
+          python3 - <<'PY3'
+          import csv, glob, collections
+          ids = ['NY7003493','MI0001800','MD0300002','CO0116001','TX0570004','MA3035000','MN1270024','MO6010715','PA5020038','TX2200012','OH3102612']
+          f = [p for p in glob.glob('u5/**/*', recursive=True) if 'All' in p and p.endswith('.txt')][0]
+          d = collections.defaultdict(lambda: {'n': 0, 'det': [], 'mrl': set(), 'units': set(), 'dates': []})
+          with open(f, encoding='latin-1') as fh:
+              for r in csv.DictReader(fh, delimiter='\t'):
+                  if r['PWSID'] not in ids or r.get('Contaminant') not in ('PFOA', 'PFOS'): continue
+                  x = d[(r['PWSID'], r['Contaminant'])]
+                  x['n'] += 1; x['mrl'].add(r.get('MRL', '')); x['units'].add(r.get('Units', '')); x['dates'].append(r.get('CollectionDate', ''))
+                  if r.get('AnalyticalResultsSign') == '=': x['det'].append((r.get('AnalyticalResultValue'), r.get('CollectionDate'), r.get('FacilityName'), r.get('SamplePointName')))
+          for (k, c), x in sorted(d.items()):
+              ds = sorted(x['dates'], key=lambda s: s[-4:] + s[:5])
+              print(f"UCMRDETAIL|{k}|{c}|samples={x['n']}|mrl={sorted(x['mrl'])}|units={sorted(x['units'])}|first={ds[0]}|last={ds[-1]}|detects={x['det']}")
+          PY3
       - name: ACS tenure by year built, all places
+        if: ${{ !inputs.detail_only }}
         continue-on-error: true
         run: |
           # api.census.gov now asks for a key, so this uses the data.census.gov table API.
