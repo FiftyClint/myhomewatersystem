@@ -11,12 +11,12 @@ jobs:
     steps:
       - name: Filtration sections on staging
         run: |
-          base=https://mhws-staging.clint-bfa.workers.dev/__site
+          base=https://mhws-staging.clint-bfa.workers.dev/__site  # sets a preview cookie and redirects to /
           fail=0
           for d in nycwatersystems.com detroitwatersystems.com baltimorewatersystems.com denverwatersystems.com \
                    dallaswatersystems.com fortworthwatersystems.com bostonwatersystems.com minneapoliswatersystems.com \
                    stlouiswatersystems.com pittsburghwatersystems.com cincinnatiwatersystems.com; do
-            code=$(curl -sS -L -o /tmp/p.html -w '%{http_code}' "$base/$d/" || echo 000)
+            code=$(curl -sS -L -c /tmp/j -b /tmp/j -o /tmp/p.html -w '%{http_code}' "$base/$d" || echo 000)
             lead=$(grep -c 'id="lead"' /tmp/p.html || true); pfas=$(grep -c 'id="pfas"' /tmp/p.html || true)
             noidx=$(grep -c 'noindex' /tmp/p.html || true)
             first=$(grep -o 'id="lead">[^<]*</h2>[[:space:]]*<p>[^<]*' /tmp/p.html | sed 's/.*<p>//' | cut -c1-140)
