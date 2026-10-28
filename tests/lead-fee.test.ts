@@ -85,8 +85,11 @@ describe('one free lead per dealer, then $95 exclusive (Clint, 2026-10-28)', () 
   it('all eleven launch markets give one free lead per dealer, then $95 per exclusive lead', () => {
     const launch = ['east-valley', 'las-vegas-valley', 'san-antonio-area', 'kansas-city', 'chicago', 'los-angeles',
       'houston', 'philadelphia', 'phoenix', 'san-diego', 'indianapolis'];
+    // The next 10 (2026-10-28) carry the same terms as drafts for staging.
+    const next10 = ['louisville', 'el-paso', 'washington-dc', 'tucson', 'omaha', 'milwaukee', 'wichita', 'aurora', 'tampa-bay', 'lexington'];
     const inProof = PRODUCTION_MARKETS.filter((m) => m.dealer_partner?.free_proof).map((m) => m.id).sort();
-    expect(inProof).toEqual([...launch].sort());
+    expect(inProof).toEqual([...launch, ...next10].sort());
+    for (const id of next10) expect(PRODUCTION_MARKETS.find((m) => m.id === id)!.launch_approval_id, id).toBeNull();
     for (const m of PRODUCTION_MARKETS.filter((x) => launch.includes(x.id))) {
       expect(m.dealer_partner, m.id).toMatchObject({ commercial_model: 'exclusive_lead', fee_trigger_state: 'dealer_accepted',
         fee_cents: 9500, free_proof: { free_leads_per_dealer: 1 } });

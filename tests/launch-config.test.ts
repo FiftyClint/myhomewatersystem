@@ -42,7 +42,7 @@ describe('draft consent wording', () => {
 });
 
 describe('Texas markets take calls and email only (Clint, 2026-10-28, until SB 140 registration is settled)', () => {
-  const texas = ['san-antonio-area', 'houston', 'dallas-fort-worth', 'austin', 'mcallen'];
+  const texas = ['san-antonio-area', 'houston', 'dallas-fort-worth', 'austin', 'mcallen', 'el-paso'];
   it('every Texas market has texts off, and no other market does', () => {
     for (const m of MARKETS) expect(m.texts_allowed === false, m.id).toBe(texas.includes(m.id));
   });

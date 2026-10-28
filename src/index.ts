@@ -194,9 +194,10 @@ export default {
       if (own) return Response.redirect(`${siteUrl(own)}/${url.search}`, 301);
       const city = locationBySlug(loc[1]!);
       const cityMarket = city && ctx.markets.find((x) => x.id === city.market_id);
+      // A hub city page stays noindex and out of the sitemap until its market has a launch approval.
       if (city && cityMarket) return html(200, page(`Water softeners and filtration in ${city.name} | My Home Water System`,
         `${city.name} water hardness as published by the local utility, and how to get a written water treatment quote.`,
-        cityBody(city, cityMarket, crypto.randomUUID(), { vals: { zip } })));
+        cityBody(city, cityMarket, crypto.randomUUID(), { vals: { zip } }), !cityMarket.launch_approval_id));
       const m = ctx.markets.find((x) => x.slug === loc[1]);
       if (!m) return html(404, page('Not found', 'Not found', '<h1>Page not found</h1>', true));
       return html(200, page(`Water treatment in ${m.name} | My Home Water System`, `Water treatment options and quotes in ${m.name}.`,

@@ -40,5 +40,13 @@ import tucson from './tucson.json';
 import jerseyCity from './jersey-city.json';
 import tampaBay from './tampa-bay.json';
 import washingtonDc from './washington-dc.json';
+// Next 10 by owner households on hard water, added 2026-10-28 as drafts for staging (DC, Tucson and Tampa Bay already existed).
+import louisville from './louisville.json';
+import lexington from './lexington.json';
+import elPaso from './el-paso.json';
+import omaha from './omaha.json';
+import milwaukee from './milwaukee.json';
+import wichita from './wichita.json';
+import aurora from './aurora.json';
 
-export const MARKET_CONFIGS = [eastValley, lasVegasValley, sanAntonioArea, kansasCity, phoenix, allentown, atlanta, austin, baltimore, boston, charlotte, chicago, cincinnati, dallasFortWorth, denver, detroit, houston, indianapolis, jacksonville, losAngeles, madison, mcallen, miami, minneapolis, nashville, newYork, oklahomaCity, orlando, philadelphia, pittsburgh, riverside, sanDiego, sanFrancisco, seattle, stLouis, tucson, washingtonDc, jerseyCity, tampaBay] as unknown as MarketConfig[];
+export const MARKET_CONFIGS = [eastValley, lasVegasValley, sanAntonioArea, kansasCity, phoenix, allentown, atlanta, austin, baltimore, boston, charlotte, chicago, cincinnati, dallasFortWorth, denver, detroit, houston, indianapolis, jacksonville, losAngeles, madison, mcallen, miami, minneapolis, nashville, newYork, oklahomaCity, orlando, philadelphia, pittsburgh, riverside, sanDiego, sanFrancisco, seattle, stLouis, tucson, washingtonDc, jerseyCity, tampaBay, louisville, lexington, elPaso, omaha, milwaukee, wichita, aurora] as unknown as MarketConfig[];

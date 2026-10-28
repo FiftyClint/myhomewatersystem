@@ -604,6 +604,115 @@ export const LOCATIONS: CityLocation[] = [
       'The city says hardness changes with the seasons. It also uses stored aquifer water and buys water from Tampa Bay Water when needed.',
     ],
   },
+  {
+    slug: 'louisville', name: 'Louisville', state: 'KY', market_id: 'louisville', scale_mgl: [128, 128], checked_on: '2026-10-28', status: 'draft', reviewer: null,
+    intro: 'Louisville Water serves Louisville Metro from two plants, one on the Ohio River and one that pulls groundwater through the riverbank.',
+    facts: [
+      { utility: 'Louisville Water', label: 'Hardness (as CaCO3)', value: '128 ppm (7.5 grains per gallon), average of both plants', period: 'January 1 to December 31, 2025',
+        source_title: 'Water Quality Report 2025 (Louisville Water)', source_url: 'https://louisvillewater.com/wp-content/uploads/2026/04/LW-CCR-2025-Report-Final.pdf', evidence_ids: ['LOU-U-01'] },
+    ],
+    notes: [
+      'The report gives one hardness figure, the average of finished water from the Crescent Hill and B.E. Payne plants.',
+      'Crescent Hill treats water pumped from the Ohio River. B.E. Payne uses riverbank filtration to collect groundwater from the aquifer.',
+      'The report lists chloramines as the disinfectant left in the water.',
+    ],
+  },
+  {
+    slug: 'lexington', name: 'Lexington', state: 'KY', market_id: 'lexington', scale_mgl: [60, 340], checked_on: '2026-10-28', status: 'draft', reviewer: null,
+    intro: 'Kentucky American Water supplies Lexington from the Kentucky River and Jacobson Reservoir through three treatment plants.',
+    facts: [
+      { utility: 'Kentucky American Water', label: 'Total hardness, Kentucky River Station', value: 'Average 161 ppm, range 60 to 340', period: 'Samples from 2025',
+        source_title: '2025 Annual Water Quality Report (Kentucky American Water, Central and Northern divisions)', source_url: 'https://www.amwater.com/ccr/centralandnorthern.pdf', evidence_ids: ['LEX-U-01'] },
+      { utility: 'Kentucky American Water', label: 'Total hardness, Richmond Road Station', value: 'Average 149 ppm, range 74 to 320', period: 'Samples from 2025',
+        source_title: '2025 Annual Water Quality Report (Kentucky American Water, Central and Northern divisions)', source_url: 'https://www.amwater.com/ccr/centralandnorthern.pdf', evidence_ids: ['LEX-U-01'] },
+      { utility: 'Kentucky American Water', label: 'Total hardness, Kentucky River Station II', value: 'Average 153 ppm, range 85 to 244', period: 'Samples from 2025',
+        source_title: '2025 Annual Water Quality Report (Kentucky American Water, Central and Northern divisions)', source_url: 'https://www.amwater.com/ccr/centralandnorthern.pdf', evidence_ids: ['LEX-U-01'] },
+    ],
+    notes: [
+      'Each plant reports about 9 grains per gallon on average, and single samples ran as low as 60 ppm and as high as 340 ppm.',
+      'Source water is pools 3 and 9 of the Kentucky River and Jacobson Reservoir.',
+      'The report lists chloramines as the disinfectant.',
+    ],
+  },
+  {
+    slug: 'el-paso', name: 'El Paso', state: 'TX', market_id: 'el-paso', scale_mgl: [63, 236], checked_on: '2026-10-28', status: 'draft', reviewer: null,
+    intro: 'El Paso Water blends Rio Grande water, several well fields and the output of a desalination plant, and the mix changes with the season.',
+    facts: [
+      { utility: 'El Paso Water', label: 'Hardness, system average', value: 'About 175 mg/L (about 10.2 grains per gallon)', period: 'Undated document',
+        source_title: 'Chemical Analysis, City Water (El Paso Water)', source_url: 'https://www.epwater.org/ep-water/uploads/chemanalysis.pdf', evidence_ids: ['ELP-U-01'] },
+      { utility: 'El Paso Water', label: 'Total hardness by source', value: '63 to 236 mg/L across seven sources', period: 'Undated document',
+        source_title: 'Chemical Analysis, City Water (El Paso Water)', source_url: 'https://www.epwater.org/ep-water/uploads/chemanalysis.pdf', evidence_ids: ['ELP-U-02'] },
+    ],
+    notes: [
+      'The sheet carries no date, so treat the figures as the utility\'s general description rather than a current reading.',
+      'Some sources run year-round, the Rio Grande plant runs March to September, and several well fields feed the system October to February.',
+      'The softest source on the sheet is the desalination plant at 63 mg/L.',
+    ],
+  },
+  {
+    slug: 'omaha', name: 'Omaha', state: 'NE', market_id: 'omaha', scale_mgl: [133, 141], checked_on: '2026-10-28', status: 'draft', reviewer: null,
+    intro: 'Metropolitan Utilities District runs three plants for Omaha and posts a monthly analysis of finished water for each one.',
+    facts: [
+      { utility: 'Metropolitan Utilities District', label: 'Total hardness, Florence Plant', value: '133 mg/L monthly average', period: 'September 2026',
+        source_title: 'Report of Water Analysis, Florence Plant (MUD)', source_url: 'https://www.mudomaha.com/wp-content/uploads/2026/10/Florence-Water-Analysis-September2026.pdf', evidence_ids: ['OMA-U-01'] },
+      { utility: 'Metropolitan Utilities District', label: 'Total hardness, Platte South Plant', value: '141 mg/L monthly average', period: 'September 2026',
+        source_title: 'Report of Water Analysis, Platte South Plant (MUD)', source_url: 'https://www.mudomaha.com/wp-content/uploads/2026/10/Platte-South-Water-Analysis-September-2026.pdf', evidence_ids: ['OMA-U-02'] },
+      { utility: 'Metropolitan Utilities District', label: 'Total hardness, Platte West Plant', value: '133 mg/L monthly average', period: 'September 2026',
+        source_title: 'Report of Water Analysis, Platte West Plant (MUD)', source_url: 'https://www.mudomaha.com/wp-content/uploads/2026/10/Platte-West-Water-Analysis-September-2026.pdf', evidence_ids: ['OMA-U-03'] },
+    ],
+    notes: [
+      'These are single-month averages. MUD posts a new analysis each month, so the figure moves.',
+      'Which plant serves a given address is not shown on these sheets.',
+    ],
+  },
+  {
+    slug: 'milwaukee', name: 'Milwaukee', state: 'WI', market_id: 'milwaukee', scale_mgl: [112, 142], checked_on: '2026-10-28', status: 'draft', reviewer: null,
+    intro: 'Milwaukee Water Works publishes one hardness figure for the city and describes its water as moderately hard.',
+    facts: [
+      { utility: 'Milwaukee Water Works', label: 'Hardness', value: '137 mg/L (8.01 grains per gallon), range 112 to 142 mg/L', period: 'Undated web page',
+        source_title: 'Water hardness (City of Milwaukee FAQ)', source_url: 'https://city.milwaukee.gov/water/customer/FAQs/qualityandhealth/Water-hardness.htm', evidence_ids: ['MKE-U-01'] },
+    ],
+    notes: [
+      'The city calls this moderately hard. On the USGS scale used on this site, 121 to 180 mg/L counts as hard.',
+      'The page carries no date.',
+    ],
+  },
+  {
+    slug: 'wichita', name: 'Wichita', state: 'KS', market_id: 'wichita', scale_mgl: [150, 150], checked_on: '2026-10-28', status: 'draft', reviewer: null,
+    intro: 'Wichita draws on Cheney Reservoir and the Equus Beds aquifer, and its newest report we could read lists one hardness sample.',
+    facts: [
+      { utility: 'City of Wichita', label: 'Total hardness (as calcium carbonate)', value: '150 ppm', period: 'Sample taken May 22, 2023',
+        source_title: 'Water Quality Report 2024 (City of Wichita, reporting year 2023)', source_url: 'https://www.wichita.gov/ArchiveCenter/ViewFile/Item/8351', evidence_ids: ['ICT-U-01'] },
+    ],
+    notes: [
+      'This is a single sample from 2023. The links to the 2025 and 2026 reports returned an error when we tried them.',
+      'The report lists chlorine and chloramines under disinfectants.',
+    ],
+  },
+  {
+    slug: 'aurora', name: 'Aurora', state: 'CO', market_id: 'aurora', scale_mgl: [87, 198], checked_on: '2026-10-28', status: 'draft', reviewer: null,
+    intro: 'Aurora Water stores river water from three basins in a dozen reservoirs and samples hardness every day.',
+    facts: [
+      { utility: 'Aurora Water', label: 'Hardness (as CaCO3)', value: 'Average 136 ppm, range 87 to 198', period: 'January 1 to December 31, 2025',
+        source_title: '2026 Water Quality Report (City of Aurora)', source_url: 'https://cdnsm5-hosted.civiclive.com/UserFiles/Servers/Server_1881137/File/Residents/Water/Water%20System/Water%20Quality%20and%20Environmental%20Programs/Water_Quality_Report_2026_accessible.pdf', evidence_ids: ['AUR-U-01'] },
+    ],
+    notes: [
+      'Water comes from the Arkansas, Colorado and South Platte river basins, plus wells near the South Platte and Cherry Creek.',
+      'The report lists chloramines as the main disinfectant.',
+    ],
+  },
+  {
+    slug: 'st-petersburg', name: 'St. Petersburg', state: 'FL', market_id: 'tampa-bay', scale_mgl: [158, 158], checked_on: '2026-10-28', status: 'draft', reviewer: null,
+    intro: 'St. Petersburg buys its water from Tampa Bay Water, which blends groundwater, surface water and desalinated seawater.',
+    facts: [
+      { utility: 'City of St. Petersburg Water Resources', label: 'Hardness', value: '158 mg/L, average of monthly samples', period: 'Calendar year 2025',
+        source_title: '2025 Water Quality Report (City of St. Petersburg)', source_url: 'https://cms5.revize.com/revize/stpete/Residents/utility_services/water_services/docs/Water%20Quality%20Report%202025-26%20Web_v06%20(1).pdf', evidence_ids: ['STP-U-01'] },
+    ],
+    notes: [
+      'The report gives an average only, with no range.',
+      'The city disinfects with chloramines.',
+    ],
+  },
 ];
 
 export const locationBySlug = (slug: string): CityLocation | undefined => LOCATIONS.find((l) => l.slug === slug);

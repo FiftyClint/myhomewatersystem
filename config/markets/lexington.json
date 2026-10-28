@@ -1,0 +1,60 @@
+{
+  "id": "lexington",
+  "slug": "lexington",
+  "name": "Lexington",
+  "status": "draft",
+  "config_version": "2026-10-28.5",
+  "launch_approval_id": null,
+  "business_mode": "dealer_partner",
+  "timezone": "America/New_York",
+  "zips": [
+    "40502",
+    "40503",
+    "40504",
+    "40505",
+    "40507",
+    "40508",
+    "40509",
+    "40510",
+    "40511",
+    "40513",
+    "40514",
+    "40515",
+    "40516",
+    "40517",
+    "40526",
+    "40536"
+  ],
+  "supported_concerns": [
+    "hardness",
+    "taste_odor",
+    "drinking_water",
+    "not_sure"
+  ],
+  "accept_well_water": false,
+  "business_hours": {
+    "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "start": "08:00",
+    "end": "17:00"
+  },
+  "seller_display_name": null,
+  "tracking_phone": null,
+  "accept_before_dealer": true,
+  "providers": [],
+  "dealer_partner": {
+    "commercial_model": "exclusive_lead",
+    "fee_trigger_state": "dealer_accepted",
+    "fee_cents": 9500,
+    "free_proof": {
+      "free_leads_per_dealer": 1
+    },
+    "accept_sla_business_minutes": 30,
+    "duplicate_window_days": 90
+  }
+}

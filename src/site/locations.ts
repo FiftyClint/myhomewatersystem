@@ -91,7 +91,7 @@ export function areaDirectory(markets: MarketConfig[]): string {
 export function sitemapXml(baseUrl: string, markets: MarketConfig[], staticPaths: string[]): string {
   const paths = ['/', '/service-areas/', ...staticPaths,
     ...markets.filter((m) => !LOCATIONS.some((l) => l.slug === m.slug)).map((m) => `/locations/${m.slug}/`),
-    ...LOCATIONS.filter((l) => markets.some((m) => m.id === l.market_id) && !siteForSlug(l.slug)).map((l) => `/locations/${l.slug}/`)];
+    ...LOCATIONS.filter((l) => markets.some((m) => m.id === l.market_id && m.launch_approval_id) && !siteForSlug(l.slug)).map((l) => `/locations/${l.slug}/`)];
   return urlset([...new Set(paths)].map((p) => baseUrl + p));
 }
 

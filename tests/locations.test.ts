@@ -1,3 +1,4 @@
+import { MARKET_CONFIGS } from '../config/markets/index.ts';
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import worker from '../src/index.ts';
@@ -118,7 +119,9 @@ describe('city pages', () => {
 
   it('hub sitemap leaves out cities that have their own site; each site lists its own pages', async () => {
     const xml = await (await get(`${BASE}/sitemap.xml`)).text();
-    for (const l of LOCATIONS) expect(xml.includes(`${BASE}/locations/${l.slug}/`), l.slug).toBe(!siteForSlug(l.slug));
+    // A hub city page is listed only once its market has a launch approval (it is noindex until then).
+    const approved = (l: { market_id: string }) => !!MARKET_CONFIGS.find((m) => m.id === l.market_id)?.launch_approval_id;
+    for (const l of LOCATIONS) expect(xml.includes(`${BASE}/locations/${l.slug}/`), l.slug).toBe(!siteForSlug(l.slug) && approved(l));
     expect(xml).toContain(`${BASE}/locations/east-valley/`);
     const cityXml = await (await get('https://mesawatersystems.com/sitemap.xml')).text();
     expect(cityXml).toContain('<loc>https://mesawatersystems.com/</loc>');
