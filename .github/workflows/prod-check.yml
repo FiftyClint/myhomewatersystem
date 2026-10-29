@@ -47,7 +47,7 @@ jobs:
                    nycwatersystems.com detroitwatersystems.com baltimorewatersystems.com denverwatersystems.com \
                    dallaswatersystems.com fortworthwatersystems.com bostonwatersystems.com minneapoliswatersystems.com \
                    stlouiswatersystems.com pittsburghwatersystems.com cincinnatiwatersystems.com \
-                   dcwatersystems.com tucsonwatersystems.com; do
+                   dcwatersystems.com tucsonwatersystems.com tampabaywatersystems.com; do
             probe "https://$d/"
           done
           for s in louisville lexington el-paso omaha milwaukee wichita aurora st-petersburg; do
