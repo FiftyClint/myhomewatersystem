@@ -55,7 +55,7 @@ jobs:
           done
           [ $fail = 0 ] && echo "RESULT: all $n pages open" || { echo "RESULT: at least one of $n pages failed"; exit 1; }
       - name: One test lead
-        if: ${{ inputs.send_test_lead == 'yes' }}
+        if: ${{ always() && inputs.send_test_lead == 'yes' }}
         env:
           D: ${{ inputs.test_domain }}
           M: ${{ inputs.test_market }}
