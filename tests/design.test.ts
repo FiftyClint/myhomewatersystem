@@ -77,6 +77,8 @@ describe('redesign directions', () => {
     expect(h).not.toMatch(/—/);
     // Open ended: no count of cities reads like coverage stops there, and the tab title is not about hardness alone.
     expect(h).not.toMatch(/cities on file|cities covered|\d+ of \d+ cities/);
+    // Every ZIP takes a request, so the hub promises no local company and counts no areas.
+    expect(h).not.toMatch(/written quote from a local company|Taking requests in \d+/);
     for (const k of ['id="check-h"', 'Your ZIP code or city', 'How Is Your Water Affecting You?']) expect(h, k).toContain(k);
     expect(await (await get('/', '')).text()).toContain('<title>How Hard Is Your Water?');
   });

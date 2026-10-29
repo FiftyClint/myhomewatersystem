@@ -486,7 +486,7 @@ ${stats}</div><div class="hero-side">${zip}</div></section>`;
   const zipB = `<form class="zipform" method="get" action="/check" id="request" data-boilerplate><label for="zip">Your ZIP code or city</label><div class="zrow"><input type="text" id="zip" name="zip" autocomplete="postal-code" maxlength="60" placeholder="ZIP code or city"><button type="submit">Check my water</button></div><p class="small">Any U.S. ZIP code or city works. We use it only to show what is published for your water and whether a local company serves you.</p></form>`;
   const heroB = `<section class="hero hub-hero"><div class="hero-copy"><p class="kicker">Every answer here comes from EPA, USGS or a utility's own report</p>
 <h1>How is your water affecting you?</h1>
-<p class="lede">Lead pipes, PFAS, chlorine taste, hard water and private wells each have a published answer. Enter your ZIP code or city to see what is known about your water and how to check it, then get one written quote from a local company.</p>
+<p class="lede">Lead pipes, PFAS, chlorine taste, hard water and private wells each have a published answer. Enter your ZIP code or city to see what is known about your water and how to check it, then send one request, from any ZIP code.</p>
 ${zipB}${quickB}</div>${HOUSE}</section>
 ${hubConcernsBlock(hcs)}
 ${checkOwnWaterBlock()}`;
@@ -509,8 +509,8 @@ ${d === 'b' ? `<p class="small">On a private well, the system follows what your 
 </section>
 <section class="band" aria-labelledby="how-h">${n('How it works')}
 <h2 id="how-h">How does it work?</h2>
-<ol class="steps4"><li>${d === 'b' ? `<span class="ic">${ICONS.home}</span>` : '<span class="k">01</span>'}<strong>Check your ZIP</strong><span>Find your city's page and its published figures.</span></li><li>${d === 'b' ? `<span class="ic">${ICONS.quote}</span>` : '<span class="k">02</span>'}<strong>Send one request</strong><span>It goes to the one local company named for your area.</span></li><li>${d === 'b' ? `<span class="ic">${ICONS.test}</span>` : '<span class="k">03</span>'}<strong>Home assessment</strong><span>Your own tap gets tested before anything is recommended.</span></li><li>${d === 'b' ? `<span class="ic">${ICONS.softener}</span>` : '<span class="k">04</span>'}<strong>Written quote</strong><span>Booking is not a purchase.</span></li></ol>
-${live.length ? `<details class="more"><summary>Taking requests in ${live.length} areas</summary><p>${live.map((m) => e(m.name)).join(', ')}.</p></details>` : ''}
+<ol class="steps4"><li>${d === 'b' ? `<span class="ic">${ICONS.home}</span>` : '<span class="k">01</span>'}<strong>Check your ZIP</strong><span>Find your city's page and its published figures.</span></li><li>${d === 'b' ? `<span class="ic">${ICONS.quote}</span>` : '<span class="k">02</span>'}<strong>Send one request</strong><span>It goes to the one local company named for your area. Where none is set up yet, it stays with us.</span></li><li>${d === 'b' ? `<span class="ic">${ICONS.test}</span>` : '<span class="k">03</span>'}<strong>Home assessment</strong><span>Your own tap gets tested before anything is recommended.</span></li><li>${d === 'b' ? `<span class="ic">${ICONS.softener}</span>` : '<span class="k">04</span>'}<strong>Written quote</strong><span>Booking is not a purchase.</span></li></ol>
+${live.length ? `<details class="more"><summary>Areas where we are lining up a local company</summary><p>${live.map((m) => e(m.name)).join(', ')}.</p></details>` : ''}
 <p class="small">Classes follow the <a href="${USGS_HARDNESS}" rel="noopener">U.S. Geological Survey</a>. Data: <a href="/data/cities.json">cities.json</a>, <a href="/llms.txt">llms.txt</a>. We are not a water utility.</p>
 </section>`;
 }
