@@ -381,34 +381,37 @@ function filtrationLists(ls: CityLocation[]): Lists {
   return { withF, found, maxLead };
 }
 
-// The hub's concern cards: the same questions as a city page, answered across the cities on file, plus
-// private wells, which no utility tests. General statements are EPA's and USGS's own (content/concerns.ts).
-function hubConcernsBlock(ls: CityLocation[], withFig: CityLocation[], veryHard: CityLocation[], li: Lists): string {
+// The hub's concern cards. The hub serves a homeowner anywhere, so each card answers from EPA or USGS
+// first and uses a city on file only as an example, never as a count that reads like coverage. Private
+// wells, which no utility tests, get their own card. General statements are in content/concerns.ts.
+function hubConcerns(ls: CityLocation[], withFig: CityLocation[], li: Lists): Concern[] {
   const and = (xs: string[]) => (xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`);
-  const withDis = ls.filter((l) => localOf(l.slug).disinfectant);
-  const chlor = withDis.filter((l) => ['chloramine', 'both'].includes(localOf(l.slug).disinfectant!.kind));
+  const chlor = ls.find((l) => l.slug === 'denver' && localOf(l.slug).disinfectant?.kind === 'chloramine') ?? ls.find((l) => localOf(l.slug).disinfectant?.kind === 'chloramine' && !localOf(l.slug).disinfectant!.text.startsWith('The '));
   const gc = GENERAL.chloramine_filters;
-  const zipAsk = { concern: '', label: 'Check my city', href: '#request' };
+  const zipAsk = { concern: '', label: 'Check my water', href: '#request' };
   const cs: Concern[] = [];
-  if (li.maxLead) {
-    const r = filtrationOf(li.maxLead.slug)!.lead_lines[0]!;
-    cs.push({ id: 'lead', icon: 'pipe', tag: 'Lead pipes', q: 'Does your city have lead service lines?', status: `${li.withF.length} city inventories on file`, tone: 'warn',
-      facts: `The largest count on file is ${e(li.maxLead.name)}, where ${e(r.utility)} lists ${num(r.lead ?? 0)} lead lines (${e(r.period.charAt(0).toLowerCase() + r.period.slice(1))}).${cite(r.source_title, r.source_url)}`,
-      means: `${e(FG.lead_filters.text)}${cite(FG.lead_filters.source_title, FG.lead_filters.source_url, 'EPA lead filters')}`,
-      fix: { label: 'Reverse osmosis', href: '/reverse-osmosis/' }, ask: zipAsk });
-    cs.push({ id: 'pfas', icon: 'drop', tag: 'PFAS', q: 'Has PFAS been found in your water?', status: `Found in ${li.found.length} of ${li.withF.length} cities on file`, tone: li.found.length ? 'warn' : 'good',
-      facts: `EPA's UCMR 5 data shows PFOA or PFOS at or above 4 ppt for ${e(and(li.found.map((l) => l.name)))}. The other ${li.withF.length - li.found.length} cities on file had none at that level.${cite(UCMR5.title, UCMR5.url, UCMR5.title)}`,
-      means: `${e(FG.pfas_mcl.text)}${cite(FG.pfas_mcl.source_title, FG.pfas_mcl.source_url, 'EPA PFAS rule')}`,
-      fix: { label: 'Reverse osmosis', href: '/reverse-osmosis/' }, ask: zipAsk });
-  }
-  if (withDis.length) cs.push({ id: 'disinfectant', icon: 'filter', tag: 'Taste and smell', q: 'What does your utility add to the water?', status: `Chloramine in ${chlor.length} of ${withDis.length} cities`, tone: 'info',
-    facts: `In each of the ${withDis.length} cities with a published disinfectant, the utility adds chlorine, chloramine or both after treatment. ${chlor.length} of them use chloramine, alone or with chlorine. Each city's page names its own.`,
+  const lead = li.maxLead && filtrationOf(li.maxLead.slug)!.lead_lines[0]!;
+  cs.push({ id: 'lead', icon: 'pipe', tag: 'Lead pipes', q: 'Does your home have a lead service line?', status: 'Your utility had to list them', tone: 'warn',
+    facts: `${e(CG.check_lead.text)}${cite(CG.check_lead.source_title, CG.check_lead.source_url)}${lead ? ` ${e(lead.utility)} lists ${num(lead.lead ?? 0)} lead lines in ${e(li.maxLead!.name)}, the largest count we have read so far.${cite(lead.source_title, lead.source_url)}` : ''}`,
+    means: `${e(FG.lead_filters.text)}${cite(FG.lead_filters.source_title, FG.lead_filters.source_url, 'EPA lead filters')}`,
+    fix: { label: 'Reverse osmosis', href: '/reverse-osmosis/' }, ask: zipAsk });
+  cs.push({ id: 'pfas', icon: 'drop', tag: 'PFAS', q: 'Has PFAS been found in your water?', status: 'EPA tested 2023 to 2025', tone: 'info',
+    facts: `${e(CG.check_pfas.text)}${cite(CG.check_pfas.source_title, CG.check_pfas.source_url)}${li.found.length ? ` Cities whose results we have read with PFOA or PFOS at or above ${UCMR5_MRL_PPT} ppt include ${e(and(li.found.map((l) => l.name)))}.${cite(UCMR5.title, UCMR5.url, UCMR5.title)}` : ''}`,
+    means: `${e(FG.pfas_mcl.text)}${cite(FG.pfas_mcl.source_title, FG.pfas_mcl.source_url, 'EPA PFAS rule')}`,
+    fix: { label: 'Reverse osmosis', href: '/reverse-osmosis/' }, ask: zipAsk });
+  const cd = chlor && localOf(chlor.slug).disinfectant!;
+  cs.push({ id: 'disinfectant', icon: 'filter', tag: 'Taste and smell', q: 'What does your utility add to the water?', status: 'Chlorine or chloramine', tone: 'info',
+    facts: `Every utility we have read so far adds chlorine, chloramine or both after treatment, and its own reports name which.${cd ? ` Here is one example from ${e(chlor!.name)}. ${e(cd.text)}${cite(cd.source_title, cd.source_url)}` : ''}`,
     means: gc ? `${e(gc.text)}${cite(gc.source_title, gc.source_url, 'NDSU Extension')}` : undefined,
     fix: { label: 'Whole-home filtration', href: '/whole-home-filtration/' }, ask: zipAsk });
-  cs.push({ id: 'hardness', icon: 'softener', tag: 'Scale and hard water', q: 'How hard is your water?', status: `${veryHard.length} cities very hard`, tone: 'info',
-    facts: `${withFig.length} of the ${ls.length} cities publish a hardness number, and ${veryHard.length} reach very hard at the top of their range. <a href="#top-h">See the hardest</a>.`,
-    means: `${e(CG.hardness_effects.text)}${cite(CG.hardness_effects.source_title, CG.hardness_effects.source_url, 'USGS')}`,
+  const hardest = [...withFig].sort((a, b) => b.scale_mgl![1] - a.scale_mgl![1])[0];
+  cs.push({ id: 'hardness', icon: 'softener', tag: 'Scale and hard water', q: 'How hard is your water?', status: 'A nuisance, not a health issue', tone: 'info',
+    facts: `${e(CG.hardness_effects.text)}${cite(CG.hardness_effects.source_title, CG.hardness_effects.source_url, 'USGS')}${hardest ? ` The hardest we have read so far is ${e(hardest.name)}, where the published range tops out at ${num(hardest.scale_mgl![1])} mg/L. <a href="#top-h">See the hardest we have found</a>.` : ''}`,
     fix: { label: 'Water softeners', href: '/water-softeners/' }, ask: zipAsk });
+  return cs;
+}
+
+function hubConcernsBlock(cs: Concern[]): string {
   const w = CG;
   const well = `<article class="concern wide t-warn" aria-labelledby="wellwater"><div class="ch"><span class="ic">${ICONS.well}</span><p class="tag">Private wells</p></div>
 <h3 id="wellwater">On a private well, who tests your water?</h3><p class="status">You do</p>
@@ -419,9 +422,32 @@ function hubConcernsBlock(ls: CityLocation[], withFig: CityLocation[], veryHard:
 <div class="fix"><a class="ask" href="#request">Get my well water tested</a></div></article>`;
   return `<section class="band concerns" aria-labelledby="concerns-h">
 <h2 id="concerns-h">What could be in your water?</h2>
-<p class="lead-in">The questions homeowners ask most, answered from EPA, USGS and the utilities' own reports. Your city's page has its own figures.</p>
+<p class="lead-in">The questions homeowners ask most, answered from EPA, USGS and the utilities' own reports. A city named in a card is an example, and your own utility's report has your figures.</p>
 <div class="cgrid">${cs.map(concernCard).join('')}${well}</div>
 </section>`;
+}
+
+// How a homeowner anywhere checks their own water, for the hub and for a ZIP or city we have no page for.
+export function checkOwnWaterBlock(): string {
+  const w = CG;
+  return `<section class="band" aria-labelledby="check-h">
+<h2 id="check-h">How do you check your own water?</h2>
+<ol class="steps4 check"><li><span class="ic">${ICONS.test}</span><strong>Read your utility's annual report</strong><span>${e(w.check_report.text)}${cite(w.check_report.source_title, w.check_report.source_url)}</span></li>
+<li><span class="ic">${ICONS.pipe}</span><strong>Ask for the service line inventory</strong><span>Ask your utility whether the line to your address is listed as lead, galvanized or unknown.${cite(w.check_lead.source_title, w.check_lead.source_url)}</span></li>
+<li><span class="ic">${ICONS.drop}</span><strong>Look up PFAS results</strong><span>Search your water system by name in EPA's UCMR 5 Data Finder.${cite(w.check_pfas.source_title, w.check_pfas.source_url)}</span></li>
+<li><span class="ic">${ICONS.well}</span><strong>Test a private well yourself</strong><span>No utility tests a private well, so EPA tells owners to test it every year.${cite(w.well_testing.source_title, w.well_testing.source_url)}</span></li></ol>
+</section>`;
+}
+
+// /check when the ZIP or city has no page here: say so plainly, then how to check it anyway.
+export function checkNotOnFileV2(q: string, isZip: boolean): string {
+  const what = isZip ? `ZIP code ${e(q)}` : e(q);
+  return `<section class="hero"><div class="hero-copy"><p class="kicker">Your water has a published answer wherever you live</p>
+<h1>We do not have a page for ${what} yet</h1>
+<p class="lede">The steps below show where to find it, and they work in any U.S. city or on a private well. We did not store what you typed.</p>
+<div class="ctas"><a class="btn" href="#check-h">How to check your water</a><a class="btn ghost" href="/">Back to the questions</a></div></div>${HOUSE}</section>
+${checkOwnWaterBlock()}
+<section class="band"><p class="small">A local company can only test your tap and quote a system where one is set up. <a href="/service-areas/">See where we take requests today</a>.</p></section>`;
 }
 
 export function hubHomeV2(ls: CityLocation[], markets: MarketConfig[], d: Design): string {
@@ -450,22 +476,25 @@ export function hubHomeV2(ls: CityLocation[], markets: MarketConfig[], d: Design
 <h1>How hard is your water? Published hardness for ${ls.length} U.S. cities</h1>
 <p class="lede">Every figure is copied from the city's water utility with its date and a link to the report. Read yours, then get one written quote from one local company.</p>
 ${stats}</div><div class="hero-side">${zip}</div></section>`;
-  const statsB = `<div class="stats"><div><b>${ls.length}</b><span>cities covered</span></div><div><b>${lists.withF.length}</b><span>with lead line and PFAS results</span></div><div><b>${withFig.length}</b><span>with a published hardness number</span></div></div>`;
-  const heroB = `<section class="hero hub-hero"><div class="hero-copy"><p class="kicker">Water facts for ${ls.length} U.S. cities, from the utilities' own reports</p>
+  const hcs = hubConcerns(ls, withFig, lists);
+  const quickB = `<ul class="quick">${hcs.map((c) => `<li class="t-${c.tone}"><a href="#${c.id}"><span>${e(c.tag)}</span><b>${e(c.status)}</b></a></li>`).join('')}<li class="t-warn"><a href="#wellwater"><span>Private wells</span><b>You test it yourself</b></a></li></ul>`;
+  const zipB = `<form class="zipform" method="get" action="/check" id="request" data-boilerplate><label for="zip">Your ZIP code or city</label><div class="zrow"><input type="text" id="zip" name="zip" autocomplete="postal-code" maxlength="60" placeholder="ZIP code or city"><button type="submit">Check my water</button></div><p class="small">Any U.S. ZIP code or city works. We use it only to show what is published for your water and whether a local company serves you.</p></form>`;
+  const heroB = `<section class="hero hub-hero"><div class="hero-copy"><p class="kicker">Every answer here comes from EPA, USGS or a utility's own report</p>
 <h1>How is your water affecting you?</h1>
-<p class="lede">Lead pipes, PFAS, chlorine taste, hard water and private wells each have a published answer. Enter your ZIP to see your city's figures and sources, then get one written quote from one local company.</p>
-${zip}${statsB}</div>${HOUSE}</section>
-${hubConcernsBlock(ls, withFig, veryHard, lists)}`;
+<p class="lede">Lead pipes, PFAS, chlorine taste, hard water and private wells each have a published answer. Enter your ZIP code or city to see what is known about your water and how to check it, then get one written quote from a local company.</p>
+${zipB}${quickB}</div>${HOUSE}</section>
+${hubConcernsBlock(hcs)}
+${checkOwnWaterBlock()}`;
   const hero = d === 'b' ? heroB : heroA;
   return `${hero}
 <section class="band" aria-labelledby="top-h">${n('Hardest water')}
 <h2 id="top-h">Where is the water hardest?</h2>
-<p class="lead-in">The top of each city's published range, on the USGS scale from 0 to ${SCALE_MAX} mg/L. Checked ${e(longDate(checked))}.</p>
+<p class="lead-in">${d === 'b' ? `These are examples from the utilities we have read so far, each bar showing the top of the city's published range on the USGS scale from 0 to ${SCALE_MAX} mg/L.` : `The top of each city's published range, on the USGS scale from 0 to ${SCALE_MAX} mg/L.`} Checked ${e(longDate(checked))}.</p>
 <ol class="hbars">${top.map(bar).join('')}</ol>
 <p><a class="arrow" href="/hard-water-by-city/">Every city, utility, period and source</a></p>
 </section>
 <section class="band" aria-labelledby="cities-h">${n('Find your city')}
-<h2 id="cities-h">Find your city</h2>${legend}
+<h2 id="cities-h">${d === 'b' ? 'Cities with their own page' : 'Find your city'}</h2>${d === 'b' ? '<p class="lead-in">Not listed? Enter your ZIP code or city above, or follow <a href="#check-h">how to check your own water</a>.</p>' : ''}${legend}
 <div class="states">${states.map((st) => `<div class="state"><h3>${e(st)}</h3><div class="chips">${ls.filter((l) => l.state === st).map(chip).join('')}</div></div>`).join('')}</div>
 </section>
 <section class="band" aria-labelledby="sys-h">${n('Systems')}

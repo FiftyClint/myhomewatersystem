@@ -2,6 +2,14 @@
 
 Last updated: 2026-10-29
 
+## 2026-10-29 13:55 UTC: Hub B opened up for any location (staging only)
+- Clint asked why the hub said "11 cities on file" instead of staying open ended. Hub B no longer shows any count of cities. Each concern card answers from EPA or USGS first (CCR rule, the lead service line inventory rule, UCMR 5, USGS hardness, EPA private wells), and a city we have read appears only as an example.
+- New "How do you check your own water?" section: utility annual report, service line inventory, EPA UCMR 5 Data Finder, testing a private well. Evidence rows GEN-C-06 to GEN-C-08.
+- The hub box takes a ZIP code or a city name. A listed city goes to its page. A ZIP or city with no page gets a how-to-check page, and nothing is stored. The classic look keeps its own out-of-area answer.
+- The request form still takes only ZIPs where a local company is set up, because a lead anywhere else has nobody to go to.
+- Hub tab title in A and B is now "How Is Your Water Affecting You? Lead, PFAS, Chlorine and Hard Water". Classic keeps the hardness title.
+- D1: no new reads or writes (the /check city match is in memory), no cron. 132 tests pass, typecheck clean.
+
 ## 2026-10-29 13:40 UTC: Design B rebuilt around "How is your water affecting you?" (staging only)
 
 - Clint picked B's UX and said it was "only about hardness": "the CTA should be more towards, how is your water hurting you? and then we answer that question with facts". B's city pages now open with "How is <city> water affecting you?", quick answers in the first screen, and concern cards for lead service lines, PFAS against EPA's 4.0 ppt limit, the utility's disinfectant and hardness. Each card gives the local figure as published, one EPA, USGS or NDSU sentence on what it means, the system that addresses it and a link that opens the form with that concern chosen (`?concern=`, form values only).

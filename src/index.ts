@@ -1,6 +1,6 @@
 import { buildContext, type Env } from './env.ts';
 import { displayPhone, layout } from './site/layout.ts';
-import { cityPageV2, hubCrumbs, hubHomeV2, shellV2 } from './site/v2.ts';
+import { checkNotOnFileV2, cityPageV2, hubCrumbs, hubHomeV2, shellV2 } from './site/v2.ts';
 import { designCookie, designFor, DESIGN_NAMES, DESIGNS, parseDesign, type Design } from './site/design.ts';
 import { companyBody, legalBody, marketBody, outOfAreaBody, serviceAreasBody, STATIC_PAGES, thankYouBody, unavailableBody } from './site/pages.ts';
 import { cityBody, clusterBody, sitemapXml, urlset } from './site/locations.ts';
@@ -197,8 +197,9 @@ export default {
     if (path === '/llms.txt') return asset(hubLlmsTxt(env.BASE_URL, ctx.markets), TEXT);
     if (path === '/data/cities.json') return asset(citiesJson(ctx.markets), JSONT);
 
-    if (path === '/' && req.method === 'GET') return html(200, page('How Hard Is Your Water? Hardness by City | My Home Water System',
-      'Drinking water hardness for U.S. cities, copied from each utility with its source and date, and how to get a written quote for a softener or filter.', (design === 'classic' ? hubHomeBody(ctx.markets) : hubHomeV2(listedCities(ctx.markets), ctx.markets, design)),
+    if (path === '/' && req.method === 'GET') return html(200, page(design === 'classic' ? 'How Hard Is Your Water? Hardness by City | My Home Water System' : 'How Is Your Water Affecting You? Lead, PFAS, Chlorine and Hard Water | My Home Water System',
+      design === 'classic' ? 'Drinking water hardness for U.S. cities, copied from each utility with its source and date, and how to get a written quote for a softener or filter.'
+        : 'Lead pipes, PFAS, chlorine, hard water and private wells, answered from EPA, USGS and utility reports, with how to check your own water and get a written quote.', (design === 'classic' ? hubHomeBody(ctx.markets) : hubHomeV2(listedCities(ctx.markets), ctx.markets, design)),
       false, { jsonLd: hubJsonLd(env.BASE_URL, ctx.markets), alternates: `<link rel="alternate" type="application/json" href="${env.BASE_URL}/data/cities.json"><link rel="alternate" type="text/plain" title="llms.txt" href="${env.BASE_URL}/llms.txt">` }));
     if (path === '/hard-water-by-city/' && req.method === 'GET') return html(200, page('Hard Water by City: Published Hardness and Sources | My Home Water System',
       'Water hardness for U.S. cities exactly as each utility publishes it, with the period, the source document and the USGS class.', hardWaterByCityBody(ctx.markets),
@@ -206,6 +207,14 @@ export default {
 
     if (path === '/check' && req.method === 'GET') {
       const zip = (url.searchParams.get('zip') ?? '').trim();
+      // The new designs take a city name too, and answer a place with no page here with how to check it.
+      if (design !== 'classic' && !/^\d{5}$/.test(zip)) {
+        const q = zip.replace(/,.*$/, '').replace(/\s+/g, ' ').trim().toLowerCase();
+        const c = q ? listedCities(ctx.markets).find((l) => l.name.toLowerCase() === q) : undefined;
+        if (c) { const s2 = siteForSlug(c.slug); return Response.redirect(s2 ? `${siteUrl(s2)}/` : `${env.BASE_URL}/locations/${c.slug}/`, 303); }
+        if (!zip) return Response.redirect(`${env.BASE_URL}/#request`, 303);
+        return html(200, page('Check your water | My Home Water System', 'How to check your drinking water in any U.S. city or on a private well.', checkNotOnFileV2(zip.slice(0, 60), false), true));
+      }
       const m = /^\d{5}$/.test(zip) ? findMarket(ctx.markets, zip, !staging) : null;
       if (m) {
         const c = cityForZip(zip, m);
@@ -213,6 +222,7 @@ export default {
         if (s2) return Response.redirect(`${siteUrl(s2)}/?zip=${zip}#request`, 303);
         return Response.redirect(`${env.BASE_URL}/locations/${c?.slug ?? m.slug}/?zip=${zip}#request`, 303);
       }
+      if (design !== 'classic' && /^\d{5}$/.test(zip)) return html(200, page('Check your water | My Home Water System', 'How to check your drinking water in any U.S. city or on a private well.', checkNotOnFileV2(zip, true), true));
       return html(200, page('Not in our service area | My Home Water System', 'Service availability', /^\d{5}$/.test(zip) ? outOfAreaBody(zip) : '<h1>Enter a 5-digit ZIP code</h1><p><a href="/">Back</a></p>', true));
     }
 

@@ -72,8 +72,27 @@ describe('redesign directions', () => {
     expect(h).toContain('<h1>How is your water affecting you?</h1>');
     for (const k of ['id="wellwater"', 'id="lead"', 'id="pfas"', 'id="disinfectant"', 'id="hardness"', 'Dallas', 'action="/check"', '"Dataset"']) expect(h, k).toContain(k);
     for (const u of ['https://www.epa.gov/privatewells/protect-your-homes-water', 'https://www.epa.gov/privatewells/potential-well-water-contaminants-and-their-impacts',
-      'https://www.epa.gov/sdwa/secondary-drinking-water-standards-guidance-nuisance-chemicals']) expect(h, u).toContain(u);
+      'https://www.epa.gov/sdwa/secondary-drinking-water-standards-guidance-nuisance-chemicals', 'https://www.epa.gov/ccr/ccr-information-consumers',
+      'https://www.epa.gov/ground-water-and-drinking-water/revised-lead-and-copper-rule']) expect(h, u).toContain(u);
     expect(h).not.toMatch(/—/);
+    // Open ended: no count of cities reads like coverage stops there, and the tab title is not about hardness alone.
+    expect(h).not.toMatch(/cities on file|cities covered|\d+ of \d+ cities/);
+    for (const k of ['id="check-h"', 'Your ZIP code or city', 'How Is Your Water Affecting You?']) expect(h, k).toContain(k);
+    expect(await (await get('/', '')).text()).toContain('<title>How Hard Is Your Water?');
+  });
+
+  it('design b: the hub check takes a city name, and a place with no page gets how to check it', async () => {
+    const r = await get('/check?zip=Aurora', 'mhws_design=b');
+    expect(r.status).toBe(303);
+    expect(r.headers.get('location')).toContain('/locations/aurora/');
+    for (const q of ['Boise%2C%20ID', '99501']) {
+      const t = await (await get(`/check?zip=${q}`, 'mhws_design=b')).text();
+      for (const k of ['id="check-h"', 'https://www.epa.gov/ccr/ccr-information-consumers', 'https://www.epa.gov/privatewells/protect-your-homes-water', 'We did not store what you typed.']) expect(t, k).toContain(k);
+      expect(t).not.toMatch(/—/);
+    }
+    expect(await (await get('/check?zip=%3Cscript%3E', 'mhws_design=b')).text()).not.toContain('<script>');
+    // The classic look keeps its own out-of-area answer.
+    expect(await (await get('/check?zip=99501')).text()).toContain('We do not serve 99501 yet');
   });
 
   it('every concern statement has its evidence row', () => {
