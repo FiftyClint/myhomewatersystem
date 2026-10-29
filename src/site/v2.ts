@@ -21,6 +21,7 @@ import { cityHref, HUB_BRAND, siteForSlug, siteUrl } from '../../content/sites.t
 import { classLabel, classOf, hardnessAnswer, hardnessFacts, longDate, MGL_PER_GRAIN, USGS_HARDNESS } from './water.ts';
 import { cityFaq, factsTable, filterAdvice, isOpen, leadAnswer, pfasAnswer, quoteSteps, systemAnswer, utilityNameOf, type Faq } from './city.ts';
 import { inquiryForm } from './pages.ts';
+import { NO_DEALER_ID, NO_DEALER_MARKET } from '../domain/no-dealer.ts';
 import type { Design } from './design.ts';
 import company from '../../config/company.json';
 
@@ -308,14 +309,15 @@ ${zips.length ? `<details class="more"><summary>${zips.length} ${e(l.name)} ZIP 
 }
 
 function relationship(m: MarketConfig): string {
+  if (!isOpen(m) || m.id === NO_DEALER_ID) return 'No local company is set up for this area yet. Your request stays with us, and we ask you before we share it with any company.';
   return m.business_mode === 'dealer_partner' && m.seller_display_name
     ? `We connect homeowners with ${e(m.seller_display_name)}, which provides your estimate, contract, installation and ongoing service.`
     : 'We are lining up one local company to serve this area. The request form names that company before you submit.';
 }
 
+// A market that is not open still takes requests, held by us with no dealer (Clint, 2026-10-29).
 function requestBlock(m: MarketConfig, l: CityLocation, form: string, d: Design): string {
-  const open = isOpen(m);
-  const panel = open ? form : `<div class="panel" id="request"><h2>Not open yet</h2><p>${e(l.name)} requests are not open yet.</p></div>`;
+  const panel = form;
   const disclosure = `<div class="disclosure" data-boilerplate><strong>Who you are working with.</strong> ${relationship(m)} We are not a water utility.</div>`;
   if (d === 'b') return `<div class="formcard">${panel}${disclosure}</div>`;
   return `<section class="band request" aria-label="Request a quote"><div class="req-copy"><p class="kicker">Request</p><p class="req-h">One written quote for your ${e(l.name)} home, from one local company.</p>
@@ -336,12 +338,12 @@ function heroCopy(l: CityLocation, m: MarketConfig): { lede: string; kicker: str
 export function cityPageV2(l: CityLocation, m: MarketConfig, requestId: string, hubBase: string, d: Design, o: { brand: string; page: string; onHub: boolean; crumbs?: string; form?: Form }): string {
   const faq = cityFaq(l, m, o.brand);
   const open = isOpen(m);
-  const form = inquiryForm({ requestId, market: m, page: o.page, brand: o.onHub ? undefined : o.brand, ...o.form });
+  const form = inquiryForm({ requestId, market: open ? m : NO_DEALER_MARKET, page: o.page, brand: o.onHub ? undefined : o.brand, ...o.form });
   let i = 0;
   const n = (k: string) => (d === 'a' ? `<p class="sec"><span>${String(++i).padStart(2, '0')}</span>${e(k)}</p>` : '');
   const { lede, kicker } = heroCopy(l, m);
   const h1 = `<h1>Water softeners and filtration in ${e(l.name)}, ${e(l.state)}</h1>`;
-  const ctas = open ? '<div class="ctas"><a class="btn" href="#request">Get a written quote</a><a class="btn ghost" href="#facts-h">See the water facts</a></div>' : '<div class="ctas"><a class="btn ghost" href="#facts-h">See the water facts</a></div>';
+  const ctas = `<div class="ctas"><a class="btn" href="#request">${open ? 'Get a written quote' : 'Send a request'}</a><a class="btn ghost" href="#facts-h">See the water facts</a></div>`;
   const body = [
     waterBlock(l, n), leadPfasBlock(l, d, n), systemsBlock(l, d, n, hubBase, o.onHub), stepsBlock(l, d, n), faqBlock(faq, n),
   ].join('\n');
@@ -352,22 +354,22 @@ export function cityPageV2(l: CityLocation, m: MarketConfig, requestId: string, 
     const names = cs.map((c) => (c.id === 'lead' ? 'lead pipes' : c.id === 'pfas' ? 'PFAS' : c.id === 'disinfectant' && dis ? `the ${disWordOf(dis.kind)} ${u} adds` : 'hardness'));
     const ledeB = `Here is what the published sources say about ${names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}` : names[0]} in ${l.name}, what each means for your home, and which system addresses it.`;
     const quick = `<ul class="quick">${cs.map((c) => `<li class="t-${c.tone}"><a href="#${c.id}"><span>${e(c.tag)}</span><b>${e(c.status)}</b></a></li>`).join('')}</ul>`;
-    const ctasB = `<div class="ctas">${open ? '<a class="btn" href="#request">Test my water and get a quote</a>' : ''}<a class="btn ghost" href="#concerns-h">See what we found</a></div>`;
+    const ctasB = `<div class="ctas"><a class="btn" href="#request">${open ? 'Test my water and get a quote' : 'Send a request'}</a><a class="btn ghost" href="#concerns-h">See what we found</a></div>`;
     return `<section class="hero"><div class="hero-copy">${o.crumbs ?? ''}<p class="kicker">Water softeners and filtration in ${e(l.name)}, ${e(l.state)}</p><h1>How is ${e(l.name)} water affecting you?</h1><p class="lede">${e(ledeB)}</p>${quick}${ctasB}
-<ul class="trust"><li>${ICONS.test}Figures from ${e(u)}, EPA and USGS, each linked</li><li>${ICONS.quote}Written quote, no obligation</li><li>${ICONS.home}One local company, named before you send</li></ul>
+<ul class="trust"><li>${ICONS.test}Figures from ${e(u)}, EPA and USGS, each linked</li><li>${ICONS.quote}${open ? 'Written quote, no obligation' : 'Free to send, no obligation'}</li><li>${ICONS.home}${open ? 'One local company, named before you send' : 'Nothing shared without your yes'}</li></ul>
 ${HOUSE}</div>${requestBlock(m, l, form, d)}</section>
 ${concernsBlock(l, hubBase, o.onHub)}
 <div class="sheet">${answerBlock(l, d)}${glanceBlock(l)}</div>
 ${[waterBlock(l, n), systemsBlock(l, d, n, hubBase, o.onHub), stepsBlock(l, d, n), faqBlock(faq, n)].join('\n')}
 ${coverageBlock(l, m, hubBase, o.onHub)}
-${open ? '<a class="sticky-cta" href="#request">Test my water</a>' : ''}`;
+<a class="sticky-cta" href="#request">${open ? 'Test my water' : 'Send a request'}</a>`;
   }
   return `<section class="hero"><div class="hero-copy">${o.crumbs ?? ''}<p class="kicker">${e(kicker)}</p>${h1}<p class="lede">${e(lede)}</p>${ctas}</div>${answerBlock(l, d)}</section>
 ${glanceBlock(l)}
 ${body}
 ${requestBlock(m, l, form, d)}
 ${coverageBlock(l, m, hubBase, o.onHub)}
-${open ? '<a class="sticky-cta" href="#request">Get a written quote</a>' : ''}`;
+<a class="sticky-cta" href="#request">${open ? 'Get a written quote' : 'Send a request'}</a>`;
 }
 
 // ---------------------------------------------------------------------------------------------------
@@ -439,15 +441,18 @@ export function checkOwnWaterBlock(): string {
 </section>`;
 }
 
-// /check when the ZIP or city has no page here: say so plainly, then how to check it anyway.
-export function checkNotOnFileV2(q: string, isZip: boolean): string {
+// /check when the ZIP or city has no page here: say so plainly, then how to check it anyway, and a form
+// that takes the request with no dealer (Clint, 2026-10-29: the form takes every ZIP).
+export function checkNotOnFileV2(q: string, isZip: boolean, requestId: string, form: Form = {}): string {
   const what = isZip ? `ZIP code ${e(q)}` : e(q);
+  const f = inquiryForm({ requestId, market: NO_DEALER_MARKET, page: '/check', vals: { zip: isZip ? q : undefined, ...form.vals }, errors: form.errors });
   return `<section class="hero"><div class="hero-copy"><p class="kicker">Your water has a published answer wherever you live</p>
 <h1>We do not have a page for ${what} yet</h1>
-<p class="lede">The steps below show where to find it, and they work in any U.S. city or on a private well. We did not store what you typed.</p>
-<div class="ctas"><a class="btn" href="#check-h">How to check your water</a><a class="btn ghost" href="/">Back to the questions</a></div></div>${HOUSE}</section>
+<p class="lede">The steps below show where to find it, and they work in any U.S. city or on a private well. No local company is set up for this area yet, and you can still send us a request.</p>
+<div class="ctas"><a class="btn" href="#check-h">How to check your water</a><a class="btn ghost" href="#request">Send a request</a></div></div>
+<div class="formcard">${f}<div class="disclosure" data-boilerplate><strong>Who you are working with.</strong> ${relationship(NO_DEALER_MARKET)} We are not a water utility.</div></div></section>
 ${checkOwnWaterBlock()}
-<section class="band"><p class="small">A local company can only test your tap and quote a system where one is set up. <a href="/service-areas/">See where we take requests today</a>.</p></section>`;
+`;
 }
 
 export function hubHomeV2(ls: CityLocation[], markets: MarketConfig[], d: Design): string {

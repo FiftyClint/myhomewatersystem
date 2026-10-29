@@ -2,6 +2,15 @@
 
 Last updated: 2026-10-29
 
+## 2026-10-29 14:10 UTC: Design B live on every water site, and the form takes every ZIP
+
+- Clint said "Yes, yes" to putting Design B live on all the water sites and to the form taking every ZIP. Production sets `SITE_DESIGN = "b"`.
+- A ZIP with no open market is stored under the market `no-dealer-assigned` (`src/domain/no-dealer.ts`) in the `out_of_area` state, and nothing routes it. Its Notion Water Leads row has Market "no-dealer-assigned" and a name ending "no dealer assigned".
+- Its thank-you says no water treatment company is set up for that ZIP, so we cannot promise a local test or quote, and that we ask before sharing with any company. Texts are off for these requests, so only call or email consent is stored, naming My Home Water System alone.
+- Consent: a no-dealer request is accepted from the no-dealer form or from any city form that named only us. A form that named a dealer is refused.
+- In A and B, a city page whose market is not open (15 city sites today) shows the no-dealer form instead of "Not open yet". The hub check page for a ZIP or city with no page now carries the same form. The classic look is unchanged.
+- D1: a no-dealer lead changes 11 rows, the same as a Denver lead held for consent once Denver's config is stored; no new cron (docs/d1-budget.md). 136 tests pass, typecheck clean.
+
 ## 2026-10-29 13:55 UTC: Hub B opened up for any location (staging only)
 - Clint asked why the hub said "11 cities on file" instead of staying open ended. Hub B no longer shows any count of cities. Each concern card answers from EPA or USGS first (CCR rule, the lead service line inventory rule, UCMR 5, USGS hardness, EPA private wells), and a city we have read appears only as an example.
 - New "How do you check your own water?" section: utility annual report, service line inventory, EPA UCMR 5 Data Finder, testing a private well. Evidence rows GEN-C-06 to GEN-C-08.

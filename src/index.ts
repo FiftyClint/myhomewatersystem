@@ -2,7 +2,7 @@ import { buildContext, type Env } from './env.ts';
 import { displayPhone, layout } from './site/layout.ts';
 import { checkNotOnFileV2, cityPageV2, hubCrumbs, hubHomeV2, shellV2 } from './site/v2.ts';
 import { designCookie, designFor, DESIGN_NAMES, DESIGNS, parseDesign, type Design } from './site/design.ts';
-import { companyBody, legalBody, marketBody, outOfAreaBody, serviceAreasBody, STATIC_PAGES, thankYouBody, unavailableBody } from './site/pages.ts';
+import { companyBody, legalBody, marketBody, noDealerAreaThankYou, outOfAreaBody, serviceAreasBody, STATIC_PAGES, thankYouBody, unavailableBody } from './site/pages.ts';
 import { cityBody, clusterBody, sitemapXml, urlset } from './site/locations.ts';
 import { cityAboutBody, cityAreaBody, cityAreaJsonLd, cityContactBody, cityDescription, cityHomeBody, cityJsonLd, hubCityJsonLd, cityLlmsTxt, cityTitle, cityWaterJson } from './site/city.ts';
 import { areaPageOf } from '../content/areas.ts';
@@ -14,6 +14,8 @@ import { CITY_ZIPS } from '../content/zips.ts';
 import { aliasTarget, ALIAS_DOMAINS, CITY_SITES, HUB_BRAND, HUB_DOMAIN, normalizeHost, siteForHost, siteForSlug, siteUrl, STATE_SITES, stateSiteForHost, type CitySite } from '../content/sites.ts';
 import type { MarketConfig } from './domain/config.ts';
 import { handleIntake, findMarket } from './intake/intake.ts';
+import { NO_DEALER_ID } from './domain/no-dealer.ts';
+import { isOpen } from './site/city.ts';
 import { providerPage } from './dealer/page.ts';
 import { internalApi } from './internal/api.ts';
 import { crmHook } from './hooks/crm.ts';
@@ -213,7 +215,7 @@ export default {
         const c = q ? listedCities(ctx.markets).find((l) => l.name.toLowerCase() === q) : undefined;
         if (c) { const s2 = siteForSlug(c.slug); return Response.redirect(s2 ? `${siteUrl(s2)}/` : `${env.BASE_URL}/locations/${c.slug}/`, 303); }
         if (!zip) return Response.redirect(`${env.BASE_URL}/#request`, 303);
-        return html(200, page('Check your water | My Home Water System', 'How to check your drinking water in any U.S. city or on a private well.', checkNotOnFileV2(zip.slice(0, 60), false), true));
+        return html(200, page('Check your water | My Home Water System', 'How to check your drinking water in any U.S. city or on a private well.', checkNotOnFileV2(zip.slice(0, 60), false, crypto.randomUUID()), true));
       }
       const m = /^\d{5}$/.test(zip) ? findMarket(ctx.markets, zip, !staging) : null;
       if (m) {
@@ -222,7 +224,13 @@ export default {
         if (s2) return Response.redirect(`${siteUrl(s2)}/?zip=${zip}#request`, 303);
         return Response.redirect(`${env.BASE_URL}/locations/${c?.slug ?? m.slug}/?zip=${zip}#request`, 303);
       }
-      if (design !== 'classic' && /^\d{5}$/.test(zip)) return html(200, page('Check your water | My Home Water System', 'How to check your drinking water in any U.S. city or on a private well.', checkNotOnFileV2(zip, true), true));
+      if (design !== 'classic' && /^\d{5}$/.test(zip)) {
+        // A city page whose market is not open still takes the request, held with no dealer.
+        const closed = ctx.markets.find((x) => x.zips.includes(zip));
+        const c = closed && cityForZip(zip, closed);
+        if (c) { const s2 = siteForSlug(c.slug); return Response.redirect(s2 ? `${siteUrl(s2)}/?zip=${zip}#request` : `${env.BASE_URL}/locations/${c.slug}/?zip=${zip}#request`, 303); }
+        return html(200, page('Check your water | My Home Water System', 'How to check your drinking water in any U.S. city or on a private well.', checkNotOnFileV2(zip, true, crypto.randomUUID()), true));
+      }
       return html(200, page('Not in our service area | My Home Water System', 'Service availability', /^\d{5}$/.test(zip) ? outOfAreaBody(zip) : '<h1>Enter a 5-digit ZIP code</h1><p><a href="/">Back</a></p>', true));
     }
 
@@ -265,7 +273,7 @@ export default {
       if (!staging && !env.HASH_PEPPER) return html(503, page('Unavailable', 'Error', unavailableBody(siteMarket?.tracking_phone), true));
       // A database error (for example D1's daily limit) shows the try-again page, never a raw Worker error.
       const r: Awaited<ReturnType<typeof handleIntake>> = await handleIntake(form, { db: ctx.db, markets: ctx.markets, policy: ctx.policy,
-        hashPepper: env.HASH_PEPPER ?? 'staging-pepper', requireLaunchable: !staging })
+        hashPepper: env.HASH_PEPPER ?? 'staging-pepper', requireLaunchable: !staging, anyZip: true })
         .catch((err) => { console.error('intake failed', err instanceof Error ? err.message : String(err)); return { status: 'unavailable' as const, reason: 'storage_error' }; });
       const wantsJson = (req.headers.get('accept') ?? '').includes('application/json');
       if (wantsJson) return new Response(JSON.stringify(r.status === 'invalid' ? { status: r.status, errors: r.errors } : r), {
@@ -275,11 +283,22 @@ export default {
       if (r.status === 'accepted') exec?.waitUntil(drain(ctx));
       switch (r.status) {
         case 'accepted':
-          return html(200, page('Request received', 'Request received', thankYouBody(r.recipient, r.mode, r.duplicate, !!r.noDealer), true));
+          return html(200, page('Request received', 'Request received', r.noDealerArea ? noDealerAreaThankYou(form.zip ?? '', r.duplicate, env.BASE_URL)
+            : thankYouBody(r.recipient, r.mode, r.duplicate, !!r.noDealer), true));
         case 'discarded': return html(200, page('Request received', 'Request received', '<h1>Thanks.</h1>', true));
         case 'out_of_area': return html(200, page('Not in our service area', 'Service availability', outOfAreaBody(r.zip), true));
         case 'unavailable': return html(503, page('Please try again', 'Error', unavailableBody(siteMarket?.tracking_phone), true));
         case 'invalid': {
+          const rid0 = form.request_id ?? crypto.randomUUID();
+          // The no-dealer form: back to the page it was on, a city page whose market is not open or the check page.
+          if (form.market === NO_DEALER_ID && !r.market) {
+            const back = { vals: form, errors: r.errors };
+            if (site && siteCity && siteMarket && !isOpen(siteMarket)) return html(422, page('Check your details', 'Error', cityHome(design, site, siteCity, siteMarket, rid0, env.BASE_URL, back), true));
+            const hc = locationBySlug((form.page ?? '').replace(/^\/locations\/|\/$/g, ''));
+            const hm = hc && ctx.markets.find((x) => x.id === hc.market_id);
+            if (hc && hm && !isOpen(hm) && !site) return html(422, page('Check your details', 'Error', hubCity(design, hc, hm, rid0, env.BASE_URL, back), true));
+            return html(422, page('Check your details', 'Error', checkNotOnFileV2(form.zip ?? '', /^\d{5}$/.test(form.zip ?? ''), rid0, back), true));
+          }
           const m = r.market ?? ctx.markets.find((x) => x.id === form.market) ?? ctx.markets.find((x) => x.zips.includes(form.zip ?? ''));
           if (!m) return html(422, page('Check your details', 'Error', '<h1>Please check your ZIP code</h1><p><a href="/">Start again</a></p>', true));
           const rid = form.request_id ?? crypto.randomUUID();

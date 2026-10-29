@@ -4,6 +4,7 @@ import { HOLD_STATES, type State } from '../domain/states.ts';
 import { auditStmt, enqueueStmt, exceptionStmt, syncConfigStmts } from '../domain/repo.ts';
 import { needsRouting } from '../domain/pipeline.ts';
 import { serviceDisclosure, smsDisclosure } from './disclosure.ts';
+import { NO_DEALER_ID, NO_DEALER_MARKET, namesOnlyUs } from '../domain/no-dealer.ts';
 import { normalizeEmail, normalizePhone, nowIso, sha256Hex, uuid } from '../util.ts';
 
 export const FORM_VERSION = 'inquiry-v1';
@@ -13,7 +14,7 @@ const MAX_FIELD = 200;
 export interface IntakeInput { [k: string]: string | undefined }
 
 export type IntakeResult =
-  | { status: 'accepted'; opportunityId: string; state: State; recipient: string; mode: 'dealer_partner' | 'direct'; duplicate: boolean; replay: boolean; noDealer?: boolean }
+  | { status: 'accepted'; opportunityId: string; state: State; recipient: string; mode: 'dealer_partner' | 'direct'; duplicate: boolean; replay: boolean; noDealer?: boolean; noDealerArea?: boolean }
   | { status: 'invalid'; errors: Record<string, string>; market?: MarketConfig }
   | { status: 'out_of_area'; zip: string }
   | { status: 'unavailable'; reason: string }
@@ -87,6 +88,8 @@ export function qualify(m: MarketConfig, c: Clean): { state: State; reason?: str
 
 export interface IntakeDeps {
   db: Sql; markets: MarketConfig[]; policy: Policy; hashPepper: string; requireLaunchable: boolean; now?: Date;
+  // true: a ZIP no open market serves is stored under NO_DEALER_MARKET instead of turned away (Clint, 2026-10-29).
+  anyZip?: boolean;
 }
 
 export async function handleIntake(input: IntakeInput, deps: IntakeDeps): Promise<IntakeResult> {
@@ -95,22 +98,29 @@ export async function handleIntake(input: IntakeInput, deps: IntakeDeps): Promis
   if (!v.ok) return { status: 'invalid', errors: v.errors };
   const c = v.value;
   const { db, policy } = deps;
-  const market = findMarket(deps.markets, c.zip, deps.requireLaunchable);
-  if (!market) return { status: 'out_of_area', zip: c.zip };
-  // Consent is only valid for the party the person saw named on the form.
-  if (input.market !== market.id) {
-    return { status: 'invalid', errors: { zip: 'This ZIP code is served by a different company than the one shown. Please review the details and submit again.' }, market };
+  const found = findMarket(deps.markets, c.zip, deps.requireLaunchable);
+  if (!found && !deps.anyZip) return { status: 'out_of_area', zip: c.zip };
+  const market = found ?? NO_DEALER_MARKET;
+  const noDealerArea = !found;
+  // Consent is only valid for the party the person saw named on the form. A ZIP outside every open market
+  // is held by us alone, so any form that named only us is the consent it needs, stored as that form showed it.
+  const shown = noDealerArea
+    ? (input.market === NO_DEALER_ID ? NO_DEALER_MARKET : deps.markets.find((m) => m.id === input.market && namesOnlyUs(m)))
+    : input.market === market.id ? market : undefined;
+  if (!shown) {
+    return noDealerArea ? { status: 'invalid', errors: { zip: 'Please reload the page and try again.' } }
+      : { status: 'invalid', errors: { zip: 'This ZIP code is served by a different company than the one shown. Please review the details and submit again.' }, market };
   }
   // Markets with texts off never show the text box, so a posted yes is not consent we showed.
-  if (!textsAllowed(market)) c.consentSms = false;
+  if (!textsAllowed(shown)) c.consentSms = false;
   // With no dealer named yet, the request stays with us (the form's consent text says so).
-  const noDealer = market.business_mode === 'dealer_partner' && !market.seller_display_name;
+  const noDealer = namesOnlyUs(market);
   const recipient = market.seller_display_name ?? 'My Home Water System';
 
   const replay = await db.prepare(
     'SELECT o.id, o.state FROM lead_receipts r JOIN opportunities o ON o.receipt_id = r.id WHERE r.request_id = ?',
   ).bind(c.requestId).first<{ id: string; state: State }>();
-  if (replay) return { status: 'accepted', opportunityId: replay.id, state: replay.state, recipient, mode: market.business_mode!, duplicate: false, replay: true, noDealer };
+  if (replay) return { status: 'accepted', opportunityId: replay.id, state: replay.state, recipient, mode: market.business_mode!, duplicate: false, replay: true, noDealer, noDealerArea };
 
   const now = deps.now ?? new Date();
   const at = nowIso(now);
@@ -122,7 +132,7 @@ export async function handleIntake(input: IntakeInput, deps: IntakeDeps): Promis
   ).bind(emailHash, phoneHash).first<{ id: string }>();
   const contactId = existing?.id ?? uuid();
 
-  let { state, reason } = qualify(market, c);
+  let { state, reason } = noDealerArea ? { state: 'out_of_area' as State, reason: 'no dealer assigned: no open market serves this ZIP' } : qualify(market, c);
   if (noDealer && state === 'qualified') { state = 'consent_hold'; reason = 'no dealer named yet: ask the homeowner before sharing with a dealer'; }
   let duplicate = false;
   if (existing) {
@@ -137,7 +147,7 @@ export async function handleIntake(input: IntakeInput, deps: IntakeDeps): Promis
 
   const receiptId = uuid(), oppId = uuid();
   const payload = JSON.stringify(c);
-  const svcText = serviceDisclosure(market), smsText = smsDisclosure(market);
+  const svcText = serviceDisclosure(shown), smsText = smsDisclosure(shown);
   const svcHash = await sha256Hex(svcText), smsHash = await sha256Hex(smsText);
   const parties = JSON.stringify(market.business_mode === 'direct' || noDealer ? ['My Home Water System'] : ['My Home Water System', recipient]);
 
@@ -154,7 +164,7 @@ export async function handleIntake(input: IntakeInput, deps: IntakeDeps): Promis
   if (!existing) {
     stmts.push(db.prepare(
       'INSERT INTO contacts (id, email_hash, phone_hash, timezone, created_at) VALUES (?, ?, ?, ?, ?)',
-    ).bind(contactId, emailHash, phoneHash, market.timezone, at));
+    ).bind(contactId, emailHash, phoneHash, shown.timezone, at));
   }
   const consent = (channel: string, purpose: string, granted: boolean, text: string, hash: string) =>
     db.prepare(
@@ -162,7 +172,7 @@ export async function handleIntake(input: IntakeInput, deps: IntakeDeps): Promis
          disclosure_hash, granted, event_time, source_page) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     ).bind(uuid(), contactId, receiptId, channel, purpose, parties, policy.disclosure_version, hash, granted ? 1 : 0, at, c.page);
   stmts.push(consent(c.contactMethod, 'service', true, svcText, svcHash));
-  if (c.phone && textsAllowed(market)) stmts.push(consent('sms', 'service', c.consentSms, smsText, smsHash));
+  if (c.phone && textsAllowed(shown)) stmts.push(consent('sms', 'service', c.consentSms, smsText, smsHash));
 
   stmts.push(
     db.prepare(
@@ -192,10 +202,10 @@ export async function handleIntake(input: IntakeInput, deps: IntakeDeps): Promis
       const again = await db.prepare(
         'SELECT o.id, o.state FROM lead_receipts r JOIN opportunities o ON o.receipt_id = r.id WHERE r.request_id = ?',
       ).bind(c.requestId).first<{ id: string; state: State }>();
-      if (again) return { status: 'accepted', opportunityId: again.id, state: again.state, recipient, mode: market.business_mode!, duplicate: false, replay: true, noDealer };
+      if (again) return { status: 'accepted', opportunityId: again.id, state: again.state, recipient, mode: market.business_mode!, duplicate: false, replay: true, noDealer, noDealerArea };
     }
     // Never show success if the record was not stored.
     return { status: 'unavailable', reason: 'storage_error' };
   }
-  return { status: 'accepted', opportunityId: oppId, state, recipient, mode: market.business_mode!, duplicate, replay: false, noDealer };
+  return { status: 'accepted', opportunityId: oppId, state, recipient, mode: market.business_mode!, duplicate, replay: false, noDealer, noDealerArea };
 }

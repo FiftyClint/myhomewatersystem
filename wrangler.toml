@@ -29,7 +29,7 @@ simple = { limit = 5, period = 60 }
 name = "mhws"
 # Leads go to the Notion database "Water Leads (myhomewatersystem.com)" (Clint, 2026-10-28). Without the
 # NOTION_TOKEN secret the Worker falls back to the mock CRM and leads stay in D1 only.
-vars = { ENVIRONMENT = "production", BASE_URL = "https://www.myhomewatersystem.com", CRM_PROVIDER = "notion", NOTION_DATABASE_ID = "eacec3dbd9a84c02b50df41271adb04a", HIGHLEVEL_LOCATION_ID = "1NdIhzTx9ZJlqnXshDkQ" }
+vars = { ENVIRONMENT = "production", BASE_URL = "https://www.myhomewatersystem.com", SITE_DESIGN = "b", CRM_PROVIDER = "notion", NOTION_DATABASE_ID = "eacec3dbd9a84c02b50df41271adb04a", HIGHLEVEL_LOCATION_ID = "1NdIhzTx9ZJlqnXshDkQ" }
 # The hub, every city site, the LA alias and the California directory, apex and www. A production deploy attaches these as Workers custom
 # domains, which needs each domain added to this Cloudflare account first (guide Stage 6).
 routes = [

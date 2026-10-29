@@ -73,3 +73,21 @@ If Notion is down, each failed attempt claims and requeues its job: 2 job-row up
 the jobs_due index. At most 5 attempts per job (policy max_job_attempts), so the worst case adds
 4 retries x 4 rows x 3 jobs = 48 rows per lead, about 200 in all, which still holds about 500 leads a
 day under the 100,000 write limit. Retries are picked up by the existing 5-minute cron.
+
+## Every ZIP takes a request, and Design B goes live (2026-10-29)
+
+Clint said yes to both. Design B is page rendering only: no database reads or writes, no scheduled job.
+
+A ZIP that no open market serves is now stored under the market `no-dealer-assigned` in the `out_of_area`
+state instead of being turned away. It runs one job (crm_sync), not the three a routed lead runs. Measured in
+the test database: a no-dealer lead changes 11 rows, one of them its market's config row written the first
+time only. A Denver lead held for consent changes 43 on a fresh database, of which 32 are Denver's first
+config rows (1 market and 31 ZIPs), leaving 11. So a no-dealer lead costs the same as the held leads every
+market takes today, inside the per-lead bound above (about 150 rows with index touches), and 100,000 writes
+a day still holds at least about 660 leads of any mix. Reads per lead: the same three lookups at intake (replay, contact,
+stored market config) and the crm_sync reads.
+
+The no-dealer market is not in the deployed market list, so the cron never syncs it. Its config row is
+written once, by the first such lead. While a lead is in flight the config sync reads the markets table,
+which then has one more row: one more read per live tick. Idle use is unchanged: at most 864 rows read a
+day and 0 written. No cron or other scheduled job is added.

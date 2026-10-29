@@ -1,5 +1,6 @@
 import { takesRequests, textsAllowed, type MarketConfig } from '../domain/config.ts';
 import { serviceDisclosure, smsDisclosure } from '../intake/disclosure.ts';
+import { NO_DEALER_ID } from '../domain/no-dealer.ts';
 import { escapeHtml as e } from '../util.ts';
 import { STATIC_PAGES } from '../../content/pages.ts';
 import { LOCATIONS } from '../../content/locations.ts';
@@ -23,8 +24,10 @@ export function inquiryForm(o: { requestId: string; market: MarketConfig; vals?:
   const disclosure = serviceDisclosure(m);
   const sms = smsDisclosure(m);
   return `<form class="inquiry" method="post" action="/api/inquiry" id="request" novalidate data-boilerplate>
-<h2 style="margin-top:0">Request a quote</h2>
-${party ? `<p class="small">Your request goes to <strong>${e(party)}</strong>.</p>` : '<p class="small">A local specialist will contact you about your request.</p>'}
+<h2 style="margin-top:0">${m.id === NO_DEALER_ID ? 'Send a request' : 'Request a quote'}</h2>
+${party ? `<p class="small">Your request goes to <strong>${e(party)}</strong>.</p>` : m.id === NO_DEALER_ID
+    ? '<p class="small">No local company is set up for your area yet, so your request comes to My Home Water System.</p>'
+    : '<p class="small">A local specialist will contact you about your request.</p>'}
 ${o.brand ? `<p class="small">${e(o.brand)} is run by My Home Water System.</p>` : ''}
 ${Object.keys(er).length ? '<p class="err" role="alert">Please fix the items marked below.</p>' : ''}
 <input type="hidden" name="request_id" value="${e(o.requestId)}"><input type="hidden" name="page" value="${e(o.page)}"><input type="hidden" name="market" value="${e(m.id)}">
@@ -95,6 +98,15 @@ export function thankYouBody(recipient: string, mode: string | null, duplicate: 
   return `<h1>Thanks. We received your request.</h1>
 <p>${noDealer ? 'A local specialist will contact you by the method you chose.' : `${mode === 'direct' ? 'My Home Water System' : e(recipient)} will contact you by the method you chose during business hours.`}${duplicate ? ' It looks like you already have an open request with us, so a coordinator will check and avoid contacting you twice.' : ''}</p>
 <p>Nothing is booked yet, and sending a request is not a purchase.</p>
+<p>To change how we contact you, see <a href="/communication-preferences/">communication preferences</a>.</p>`;
+}
+
+// A request from a ZIP no open market serves (Clint, 2026-10-29). It promises no local company.
+export function noDealerAreaThankYou(zip: string, duplicate: boolean, hubBase: string): string {
+  return `<h1>Thanks. We received your request.</h1>
+<p>No water treatment company is set up for ZIP code ${e(zip)} yet, so we cannot promise a local test or quote.</p>
+<p>Your request stays with My Home Water System. If a company is set up for your area, we will tell you its name and ask you before we share your request.${duplicate ? ' It looks like you already sent us a request, so we will not contact you twice.' : ''}</p>
+<p>Sending a request is not a purchase. Here is <a href="${e(hubBase)}/#check-h">how to check your own water</a> in the meantime.</p>
 <p>To change how we contact you, see <a href="/communication-preferences/">communication preferences</a>.</p>`;
 }
 

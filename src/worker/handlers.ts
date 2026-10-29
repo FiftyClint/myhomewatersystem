@@ -1,3 +1,4 @@
+import { NO_DEALER_ID } from '../domain/no-dealer.ts';
 import type { AppContext } from './context.ts';
 import { marketById } from './context.ts';
 import type { Handler, JobOutcome } from './jobs.ts';
@@ -45,7 +46,7 @@ export function handlers(ctx: AppContext): Record<string, Handler> {
       if (!opp.crm_opportunity_id) {
         const stage = crmStageFor(opp.state)?.stage ?? 'New Inquiry';
         const r = await crm.createOpportunity({
-          crmContactId, stage, name: `${form.firstName} ${form.lastName} - ${opp.concern} - ${opp.zip}`,
+          crmContactId, stage, name: `${form.firstName} ${form.lastName} - ${opp.concern} - ${opp.zip}${opp.market_id === NO_DEALER_ID ? ' - no dealer assigned' : ''}`,
         });
         const fail = asOutcome(r); if (fail) return fail;
         await db.prepare('UPDATE opportunities SET crm_opportunity_id = ? WHERE id = ? AND crm_opportunity_id IS NULL')

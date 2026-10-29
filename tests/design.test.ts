@@ -87,7 +87,9 @@ describe('redesign directions', () => {
     expect(r.headers.get('location')).toContain('/locations/aurora/');
     for (const q of ['Boise%2C%20ID', '99501']) {
       const t = await (await get(`/check?zip=${q}`, 'mhws_design=b')).text();
-      for (const k of ['id="check-h"', 'https://www.epa.gov/ccr/ccr-information-consumers', 'https://www.epa.gov/privatewells/protect-your-homes-water', 'We did not store what you typed.']) expect(t, k).toContain(k);
+      for (const k of ['id="check-h"', 'https://www.epa.gov/ccr/ccr-information-consumers', 'https://www.epa.gov/privatewells/protect-your-homes-water',
+        'action="/api/inquiry"', 'name="market" value="no-dealer-assigned"', 'No local company is set up for your area yet']) expect(t, k).toContain(k);
+      expect(t).not.toContain('A local specialist');
       expect(t).not.toMatch(/—/);
     }
     expect(await (await get('/check?zip=%3Cscript%3E', 'mhws_design=b')).text()).not.toContain('<script>');
