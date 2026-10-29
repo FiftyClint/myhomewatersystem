@@ -2,6 +2,14 @@
 
 Last updated: 2026-10-29
 
+## 2026-10-29 13:40 UTC: Design B rebuilt around "How is your water affecting you?" (staging only)
+
+- Clint picked B's UX and said it was "only about hardness": "the CTA should be more towards, how is your water hurting you? and then we answer that question with facts". B's city pages now open with "How is <city> water affecting you?", quick answers in the first screen, and concern cards for lead service lines, PFAS against EPA's 4.0 ppt limit, the utility's disinfectant and hardness. Each card gives the local figure as published, one EPA, USGS or NDSU sentence on what it means, the system that addresses it and a link that opens the form with that concern chosen (`?concern=`, form values only).
+- A city with no lead or PFAS figures on file shows no card for them. A city under the limit says "Below EPA's limit"; Dallas, Fort Worth and Cincinnati say what was found.
+- The hub home in B asks "How is your water affecting you?" and adds private wells from EPA (annual testing, bacteria, nitrate, iron at the 0.3 mg/L guideline). New sourced statements: `content/concerns.ts`, evidence GEN-C-01 to GEN-C-05.
+- Design A and the classic look are unchanged. D1: no change, no new reads or writes, no scheduled job.
+- Tests: 131 pass.
+
 ## 2026-10-29: two redesign directions on staging (production unchanged)
 
 - Clint: "Looks cheap, looks like AI, and looks like a block of poorly presented 2000s text wall." Two directions built for the city home page, the hub city pages and the hub home: A "Water report" (paper and ink, IBM Plex, one cobalt accent, numbered sections, figures set large) and B "Neighborhood" (white and sand, Figtree, navy with a tangerine button, rounded cards, line icons, the form in the first screen). Code: `src/site/v2.ts`, `src/site/design.ts`.

@@ -62,6 +62,9 @@ type PageFn = (title: string, description: string, body: string, noindex?: boole
 type Form = { vals?: Record<string, string | undefined>; errors?: Record<string, string> };
 const ld = (o: object): string => `<script type="application/ld+json">${JSON.stringify(o).replace(/</g, '\\u003c')}</script>`;
 // A city site's home page and a hub city page, in the classic look or one of the redesign directions.
+// A concern card's "Ask about" link opens the form with that concern chosen. Only the form's own values are taken.
+const CONCERNS = ['hardness', 'taste_odor', 'drinking_water', 'not_sure'];
+const prefill = (url: URL) => { const c = url.searchParams.get('concern'); return c && CONCERNS.includes(c) ? { concern: c } : {}; };
 const cityHome = (d: Design, site: CitySite, l: CityLocation, m: MarketConfig, rid: string, hubBase: string, form: Form) => (d === 'classic'
   ? cityHomeBody(site, l, m, rid, hubBase, form) : cityPageV2(l, m, rid, hubBase, d, { brand: site.brand, page: '/', onHub: false, form }));
 const hubCity = (d: Design, l: CityLocation, m: MarketConfig, rid: string, hubBase: string, form: Form) => (d === 'classic'
@@ -80,7 +83,7 @@ async function citySite(req: Request, url: URL, env: Env, site: CitySite, city: 
   if (path === '/water.json') return asset(cityWaterJson(site, city, m), JSONT);
   if (path === '/') {
     const zip = url.searchParams.get('zip') ?? undefined;
-    return html(200, page(cityTitle(site, city), cityDescription(city), cityHome(design, site, city, m, crypto.randomUUID(), env.BASE_URL, { vals: { zip } }),
+    return html(200, page(cityTitle(site, city), cityDescription(city), cityHome(design, site, city, m, crypto.randomUUID(), env.BASE_URL, { vals: { zip, ...prefill(url) } }),
       false, { canonical: `${base}/`, jsonLd: cityJsonLd(site, city, m),
         alternates: `<link rel="alternate" type="application/json" href="${base}/water.json"><link rel="alternate" type="text/plain" title="llms.txt" href="${base}/llms.txt">` }));
   }
@@ -224,7 +227,7 @@ export default {
       // A hub city page stays noindex and out of the sitemap until its market has a launch approval.
       if (city && cityMarket) return html(200, page(`Water softeners and filtration in ${city.name} | My Home Water System`,
         `${city.name} water hardness as published by the local utility, and how to get a written water treatment quote.`,
-        hubCity(design, city, cityMarket, crypto.randomUUID(), env.BASE_URL, { vals: { zip } }), !cityMarket.launch_approval_id,
+        hubCity(design, city, cityMarket, crypto.randomUUID(), env.BASE_URL, { vals: { zip, ...prefill(url) } }), !cityMarket.launch_approval_id,
         { jsonLd: hubCityJsonLd(city, cityMarket, `${env.BASE_URL}/locations/${city.slug}/`) }));
       const m = ctx.markets.find((x) => x.slug === loc[1]);
       if (!m) return html(404, page('Not found', 'Not found', '<h1>Page not found</h1>', true));

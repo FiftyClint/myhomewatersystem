@@ -3,6 +3,8 @@ import worker from '../src/index.ts';
 import { LOCATIONS } from '../content/locations.ts';
 import { check, crawl } from '../scripts/check-duplicate-copy.ts';
 import { designFor } from '../src/site/design.ts';
+import { readFileSync } from 'node:fs';
+import { CONCERN_GENERAL } from '../content/concerns.ts';
 
 // The two redesign directions (task "Make the water systems sites look premium", 2026-10-29). Each must keep
 // every answer-engine element and the working request form of the classic pages.
@@ -37,6 +39,47 @@ describe('redesign directions', () => {
       expect(h).toContain('href="https://denverwatersystems.com/"');
     });
   }
+
+  it('design b: a city page leads with how the water affects you and answers each concern from its source', async () => {
+    const t = await (await get('/', 'mhws_site=denverwatersystems.com; mhws_design=b')).text();
+    expect(t).toContain('<h1>How is Denver water affecting you?</h1>');
+    for (const k of ['id="concerns-h"', 'id="lead"', 'id="pfas"', 'id="disinfectant"', 'id="hardness"', 'href="#lead"', '15,826 lead lines listed', 'Below EPA&#39;s limit', 'Chloramine']) expect(t, k).toContain(k);
+    for (const u of ['https://www.usgs.gov/water-science-school/science/hardness-water', 'https://www.ndsu.edu/agriculture/extension/publications/filtration-sediment-activated-carbon-and-mixed-media',
+      'https://www.epa.gov/dwucmr/occurrence-data-unregulated-contaminant-monitoring-rule', 'https://www.epa.gov/sdwa/and-polyfluoroalkyl-substances-pfas']) expect(t, u).toContain(u);
+    for (const c of ['drinking_water', 'taste_odor', 'hardness', 'not_sure']) expect(t).toContain(`href="?concern=${c}#request"`);
+    // A city with PFAS at or above 4 ppt says it was found, not below the limit.
+    const dal = await (await get('/', 'mhws_site=dallaswatersystems.com; mhws_design=b')).text();
+    expect(dal).toContain('Found, up to PFOA 6.3 ppt and PFOS 5.1 ppt');
+    expect(dal).not.toContain('Below EPA&#39;s limit');
+    // A hub city with no lead or PFAS figures on file shows no card for them.
+    const c = await (await get('/locations/aurora/', 'mhws_design=b')).text();
+    expect(c).toContain('id="hardness"');
+    expect(c).not.toContain('id="pfas"');
+    expect(c).not.toMatch(/—/);
+    const a = await (await get('/', 'mhws_site=denverwatersystems.com; mhws_design=a')).text();
+    expect(a).not.toContain('id="concerns-h"');
+  });
+
+  it('design b: a concern link chooses that concern in the form, and only the form\'s own values', async () => {
+    const t = await (await get('/?concern=taste_odor', 'mhws_site=denverwatersystems.com; mhws_design=b')).text();
+    expect(t).toContain('<option value="taste_odor" selected>');
+    const bad = await (await get('/?concern=%22%3E%3Cscript%3E', 'mhws_site=denverwatersystems.com; mhws_design=b')).text();
+    expect(bad).not.toContain(' selected>');
+  });
+
+  it('design b: the hub home asks how your water affects you and covers private wells from EPA', async () => {
+    const h = await (await get('/', 'mhws_design=b')).text();
+    expect(h).toContain('<h1>How is your water affecting you?</h1>');
+    for (const k of ['id="wellwater"', 'id="lead"', 'id="pfas"', 'id="disinfectant"', 'id="hardness"', 'Dallas', 'action="/check"', '"Dataset"']) expect(h, k).toContain(k);
+    for (const u of ['https://www.epa.gov/privatewells/protect-your-homes-water', 'https://www.epa.gov/privatewells/potential-well-water-contaminants-and-their-impacts',
+      'https://www.epa.gov/sdwa/secondary-drinking-water-standards-guidance-nuisance-chemicals']) expect(h, u).toContain(u);
+    expect(h).not.toMatch(/—/);
+  });
+
+  it('every concern statement has its evidence row', () => {
+    const ids = new Set(readFileSync('docs/research/evidence.csv', 'utf8').split('\n').slice(1).map((l) => l.split(',')[0]));
+    for (const [k, v] of Object.entries(CONCERN_GENERAL)) for (const id of v.evidence_ids) expect(ids.has(id), `${k}: ${id}`).toBe(true);
+  });
 
   it('production stays on the classic look unless SITE_DESIGN names a direction, and ignores the preview cookie', async () => {
     expect(designFor('mhws_design=a', undefined, false)).toBe('classic');

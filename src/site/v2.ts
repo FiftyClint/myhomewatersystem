@@ -12,7 +12,8 @@ import type { MarketConfig } from '../domain/config.ts';
 import { escapeHtml as e } from '../util.ts';
 import type { CityLocation } from '../../content/locations.ts';
 import { locationsInMarket } from '../../content/locations.ts';
-import { localOf } from '../../content/local-details.ts';
+import { GENERAL, localOf } from '../../content/local-details.ts';
+import { CONCERN_GENERAL as CG } from '../../content/concerns.ts';
 import { areaPageOf } from '../../content/areas.ts';
 import { CITY_ZIPS } from '../../content/zips.ts';
 import { filtrationOf, FILTRATION_GENERAL as FG, UCMR5, UCMR5_MRL_PPT } from '../../content/filtration.ts';
@@ -73,6 +74,9 @@ const ICONS: Record<string, string> = {
   ro: '<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M10 20h16a6 6 0 0 1 6 6v2"/><path d="M14 20v-6h8v6"/><path d="M32 33c0 2.5-1.8 4.5-4 4.5s-4-2-4-4.5c0-3 4-7.5 4-7.5s4 4.5 4 7.5z"/><path d="M6 42h36"/></svg>',
   test: '<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M18 6h12M20 6v16L10 38a3 3 0 0 0 2.6 4.5h22.8A3 3 0 0 0 38 38L28 22V6"/><path d="M15 31h18"/></svg>',
   quote: '<svg viewBox="0 0 48 48" aria-hidden="true"><rect x="10" y="6" width="28" height="36" rx="3"/><path d="M16 16h16M16 23h16M16 30h10"/></svg>',
+  pipe: '<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M4 16h14a6 6 0 0 1 6 6v20"/><path d="M4 26h8a2 2 0 0 1 2 2v14"/><path d="M30 10h14M30 18h14"/><path d="M30 10v8"/></svg>',
+  drop: '<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M36 28c0 7-5.4 13-12 13s-12-6-12-13C12 19 24 6 24 6s12 13 12 22z"/><path d="M19 30a5 5 0 0 0 5 5"/></svg>',
+  well: '<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M10 20h28M14 20V8h20v12"/><path d="M12 20v20h24V20"/><path d="M24 12v14"/><path d="M21 26h6v5h-6z"/></svg>',
   home: '<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M6 22 24 8l18 14"/><path d="M11 19v21h26V19"/><path d="M20 40V28h8v12"/></svg>',
 };
 
@@ -157,6 +161,88 @@ ${leadBar(l)}
 <p class="note">${e(filterAdvice(l, f))} <span data-citations>${src(FG.lead_filters.source_title, FG.lead_filters.source_url, 'EPA lead filters')}; ${src(FG.pfas_filters.source_title, FG.pfas_filters.source_url, 'EPA PFAS filters')}</span></p></article>
 </div>
 ${more ? `<details class="more"><summary>Inventory detail and source notes</summary>${f.lead_lines.length > 1 ? `<ul>${f.lead_lines.map((x) => `<li>${e(x.utility)}: ${x.lead === null ? 'lead not given' : `${num(x.lead)} lead`}, ${x.grr === null ? 'galvanized not given' : `${num(x.grr)} galvanized`}, ${x.unknown === null ? 'unknown not given' : `${num(x.unknown)} unknown`} (${e(x.period)}). ${src(x.source_title, x.source_url)}</li>`).join('')}</ul>` : ''}${f.notes.length ? `<ul>${f.notes.map((x) => `<li>${e(x)}</li>`).join('')}</ul>` : ''}</details>` : ''}
+</section>`;
+}
+
+// ---------------------------------------------------------------------------------------------------
+// Design B leads with "How is your water affecting you?" (Clint, 2026-10-29: "the CTA should be more towards,
+// how is your water hurting you? and then we answer that question with facts"). Each concern card gives the
+// local figure as published, one agency sentence on what it means, the system that addresses it and a link
+// that opens the request form with that concern chosen. A concern with no local figure on file is left out,
+// never filled with a guess. Below a limit is said plainly.
+
+interface Concern {
+  id: string; icon: string; tag: string; q: string; status: string; tone: 'good' | 'warn' | 'info';
+  facts: string; means?: string; extra?: string; fix?: { label: string; href: string }; ask: { concern: string; label: string; href?: string };
+}
+
+const askHref = (a: Concern['ask']) => a.href ?? `?concern=${a.concern}#request`;
+
+function concernCard(c: Concern): string {
+  return `<article class="concern t-${c.tone}" aria-labelledby="${c.id}"><div class="ch"><span class="ic">${ICONS[c.icon]}</span><p class="tag">${e(c.tag)}</p></div>
+<h3 id="${c.id}">${e(c.q)}</h3><p class="status">${e(c.status)}</p>
+<p>${c.facts}</p>${c.extra ?? ''}${c.means ? `<p class="means">${c.means}</p>` : ''}
+<div class="fix">${c.fix ? `<a class="arrow" href="${e(c.fix.href)}">${e(c.fix.label)}</a>` : ''}<a class="ask" href="${e(askHref(c.ask))}">${e(c.ask.label)}</a></div></article>`;
+}
+
+const cite = (title: string, url: string, label?: string) => ` <span data-citations>${src(title, url, label)}</span>`;
+const disWordOf = (k: string) => (k === 'both' ? 'chlorine and chloramine' : k === 'varies' ? 'a disinfectant that varies by area' : k);
+
+export function cityConcerns(l: CityLocation, g: (p: string) => string): Concern[] {
+  const u = utilityNameOf(l);
+  const f = filtrationOf(l.slug);
+  const dis = localOf(l.slug).disinfectant;
+  const out: Concern[] = [];
+  if (f) {
+    const r = f.lead_lines[0]!;
+    const more = f.lead_lines.length > 1 || f.notes.length;
+    out.push({ id: 'lead', icon: 'pipe', tag: 'Lead pipes', q: `Does ${l.name} have lead service lines?`,
+      status: r.lead === null ? 'Count not given' : r.lead === 0 ? 'No lead lines listed' : `${num(r.lead)} lead lines listed`, tone: r.lead ? 'warn' : 'good',
+      facts: `${e(leadAnswer(l, f))}${cite(r.source_title, r.source_url, r.source_title)}`,
+      extra: `${leadBar(l)}${more ? `<details class="more"><summary>Inventory detail and source notes</summary>${f.lead_lines.length > 1 ? `<ul>${f.lead_lines.map((x) => `<li>${e(x.utility)}: ${x.lead === null ? 'lead not given' : `${num(x.lead)} lead`}, ${x.grr === null ? 'galvanized not given' : `${num(x.grr)} galvanized`}, ${x.unknown === null ? 'unknown not given' : `${num(x.unknown)} unknown`} (${e(x.period)}). ${src(x.source_title, x.source_url)}</li>`).join('')}</ul>` : ''}${f.notes.length ? `<ul>${f.notes.map((x) => `<li>${e(x)}</li>`).join('')}</ul>` : ''}</details>` : ''}`,
+      means: `The count covers all of ${e(l.name)}. What matters is whether your own line is one. For a ${e(l.name)} home on one, EPA points to filters certified to both NSF/ANSI 53 and 42 for lead.${cite(FG.lead_filters.source_title, FG.lead_filters.source_url, 'EPA lead filters')}`,
+      fix: { label: `Reverse osmosis for ${l.name} taps`, href: g('/reverse-osmosis/') }, ask: { concern: 'drinking_water', label: 'Ask about lead' } });
+    const p = f.pfas;
+    const none = p.pfoa_max_ppt === null && p.pfos_max_ppt === null;
+    const hi = [p.pfoa_max_ppt !== null ? `PFOA ${p.pfoa_max_ppt} ppt` : '', p.pfos_max_ppt !== null ? `PFOS ${p.pfos_max_ppt} ppt` : ''].filter(Boolean);
+    out.push({ id: 'pfas', icon: 'drop', tag: 'PFAS', q: `Has PFAS been found in ${l.name} water?`,
+      status: none ? "Below EPA's limit" : `Found, up to ${hi.join(' and ')}`, tone: none ? 'good' : 'warn',
+      facts: `${e(pfasAnswer(l, p))}${cite(UCMR5.title, UCMR5.url, UCMR5.title)}`,
+      means: none
+        ? `Every ${e(p.utility)} result for ${e(l.name)} was under 4 ppt, which is below EPA's limit for both.${cite(FG.pfas_mcl.source_title, FG.pfas_mcl.source_url, 'EPA PFAS rule')}`
+        : `For PFAS at a ${e(l.name)} tap, EPA points to home filters certified to NSF/ANSI 53 or 58.${cite(FG.pfas_filters.source_title, FG.pfas_filters.source_url, 'EPA PFAS filters')}`,
+      fix: { label: `Reverse osmosis for ${l.name} taps`, href: g('/reverse-osmosis/') }, ask: { concern: 'drinking_water', label: 'Ask about PFAS' } });
+  }
+  if (dis) {
+    const gc = GENERAL.chloramine_filters;
+    out.push({ id: 'disinfectant', icon: 'filter', tag: 'Taste and smell', q: `What does ${u} add to your water?`,
+      status: cap(disWordOf(dis.kind)), tone: 'info',
+      facts: `${e(dis.text)}${cite(dis.source_title, dis.source_url)}`,
+      means: dis.kind !== 'chlorine' && gc ? `If the taste or smell bothers you, a whole-home filter for ${e(l.name)}'s chloramine needs catalytic carbon, which is made to adsorb it.${cite(gc.source_title, gc.source_url, 'NDSU Extension')}`
+        : `If the taste or smell of ${e(u)}'s chlorine bothers you, a whole-home filter is the system that addresses it.`,
+      fix: { label: `Whole-home filtration in ${l.name}`, href: g('/whole-home-filtration/') }, ask: { concern: 'taste_odor', label: 'Ask about taste and smell' } });
+  }
+  const c = classLabel(l);
+  const h = CG.hardness_effects;
+  out.push({ id: 'hardness', icon: 'softener', tag: 'Scale and hard water', q: `Is hard water a problem in ${l.name}?`,
+    status: c ? cap(c) : 'Not published', tone: 'info',
+    facts: l.scale_mgl
+      ? `${e(u)} reports ${e(fig(l.scale_mgl))}, about ${l.scale_mgl[0] === l.scale_mgl[1] ? grains(l.scale_mgl[0]) : `${grains(l.scale_mgl[0])} to ${grains(l.scale_mgl[1])}`} grains per gallon. <a href="#answer-h">See where ${e(l.name)} falls on the scale</a>.`
+      : `${e(u)} publishes no hardness figure we could find, so a test at your ${e(l.name)} tap is the number to use.`,
+    means: `${e(h.text)}${cite(h.source_title, h.source_url, 'USGS')}`,
+    fix: { label: `Water softeners in ${l.name}`, href: g('/water-softeners/') }, ask: { concern: 'hardness', label: 'Ask about hard water' } });
+  return out;
+}
+
+function concernsBlock(l: CityLocation, hubBase: string, onHub: boolean): string {
+  const g = (p: string) => (onHub ? p : `${hubBase}${p}`);
+  const cs = cityConcerns(l, g);
+  const u = utilityNameOf(l);
+  return `<section class="band concerns" aria-labelledby="concerns-h">
+<h2 id="concerns-h">What is in ${e(l.name)} water, and does it matter for you?</h2>
+<p class="lead-in">${cs.length === 4 ? 'Four' : cs.length === 2 ? 'Two' : String(cs.length)} things ${e(l.name)} homeowners ask about, each answered from ${e(u)}, EPA or USGS with a link to the source.</p>
+<div class="cgrid">${cs.map(concernCard).join('')}</div>
+<div class="other"><div><h3>Noticing something else in your ${e(l.name)} water?</h3><p>Stains, spots, a smell or a taste can start in the house as well as at ${e(u)}. The home assessment is where your own tap gets checked.</p></div><a class="btn" href="?concern=not_sure#request">Test my water</a></div>
 </section>`;
 }
 
@@ -260,13 +346,21 @@ export function cityPageV2(l: CityLocation, m: MarketConfig, requestId: string, 
     waterBlock(l, n), leadPfasBlock(l, d, n), systemsBlock(l, d, n, hubBase, o.onHub), stepsBlock(l, d, n), faqBlock(faq, n),
   ].join('\n');
   if (d === 'b') {
-    return `<section class="hero"><div class="hero-copy">${o.crumbs ?? ''}<p class="kicker">${e(kicker)}</p>${h1}<p class="lede">${e(lede)}</p>${ctas}
-<ul class="trust"><li>${ICONS.test}Figures from ${e(utilityNameOf(l))} and EPA</li><li>${ICONS.quote}Written quote, no obligation</li><li>${ICONS.home}One local company, named before you send</li></ul>
+    const u = utilityNameOf(l);
+    const cs = cityConcerns(l, (p) => (o.onHub ? p : `${hubBase}${p}`));
+    const dis = localOf(l.slug).disinfectant;
+    const names = cs.map((c) => (c.id === 'lead' ? 'lead pipes' : c.id === 'pfas' ? 'PFAS' : c.id === 'disinfectant' && dis ? `the ${disWordOf(dis.kind)} ${u} adds` : 'hardness'));
+    const ledeB = `Here is what the published sources say about ${names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}` : names[0]} in ${l.name}, what each means for your home, and which system addresses it.`;
+    const quick = `<ul class="quick">${cs.map((c) => `<li class="t-${c.tone}"><a href="#${c.id}"><span>${e(c.tag)}</span><b>${e(c.status)}</b></a></li>`).join('')}</ul>`;
+    const ctasB = `<div class="ctas">${open ? '<a class="btn" href="#request">Test my water and get a quote</a>' : ''}<a class="btn ghost" href="#concerns-h">See what we found</a></div>`;
+    return `<section class="hero"><div class="hero-copy">${o.crumbs ?? ''}<p class="kicker">Water softeners and filtration in ${e(l.name)}, ${e(l.state)}</p><h1>How is ${e(l.name)} water affecting you?</h1><p class="lede">${e(ledeB)}</p>${quick}${ctasB}
+<ul class="trust"><li>${ICONS.test}Figures from ${e(u)}, EPA and USGS, each linked</li><li>${ICONS.quote}Written quote, no obligation</li><li>${ICONS.home}One local company, named before you send</li></ul>
 ${HOUSE}</div>${requestBlock(m, l, form, d)}</section>
+${concernsBlock(l, hubBase, o.onHub)}
 <div class="sheet">${answerBlock(l, d)}${glanceBlock(l)}</div>
-${body}
+${[waterBlock(l, n), systemsBlock(l, d, n, hubBase, o.onHub), stepsBlock(l, d, n), faqBlock(faq, n)].join('\n')}
 ${coverageBlock(l, m, hubBase, o.onHub)}
-${open ? '<a class="sticky-cta" href="#request">Get a written quote</a>' : ''}`;
+${open ? '<a class="sticky-cta" href="#request">Test my water</a>' : ''}`;
   }
   return `<section class="hero"><div class="hero-copy">${o.crumbs ?? ''}<p class="kicker">${e(kicker)}</p>${h1}<p class="lede">${e(lede)}</p>${ctas}</div>${answerBlock(l, d)}</section>
 ${glanceBlock(l)}
@@ -278,6 +372,57 @@ ${open ? '<a class="sticky-cta" href="#request">Get a written quote</a>' : ''}`;
 
 // ---------------------------------------------------------------------------------------------------
 // Hub home in A or B.
+
+type Lists = { withF: CityLocation[]; found: CityLocation[]; maxLead: CityLocation | undefined };
+function filtrationLists(ls: CityLocation[]): Lists {
+  const withF = ls.filter((l) => filtrationOf(l.slug));
+  const found = withF.filter((l) => { const p = filtrationOf(l.slug)!.pfas; return p.pfoa_max_ppt !== null || p.pfos_max_ppt !== null; });
+  const maxLead = [...withF].sort((a, b) => (filtrationOf(b.slug)!.lead_lines[0]!.lead ?? 0) - (filtrationOf(a.slug)!.lead_lines[0]!.lead ?? 0))[0];
+  return { withF, found, maxLead };
+}
+
+// The hub's concern cards: the same questions as a city page, answered across the cities on file, plus
+// private wells, which no utility tests. General statements are EPA's and USGS's own (content/concerns.ts).
+function hubConcernsBlock(ls: CityLocation[], withFig: CityLocation[], veryHard: CityLocation[], li: Lists): string {
+  const and = (xs: string[]) => (xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`);
+  const withDis = ls.filter((l) => localOf(l.slug).disinfectant);
+  const chlor = withDis.filter((l) => ['chloramine', 'both'].includes(localOf(l.slug).disinfectant!.kind));
+  const gc = GENERAL.chloramine_filters;
+  const zipAsk = { concern: '', label: 'Check my city', href: '#request' };
+  const cs: Concern[] = [];
+  if (li.maxLead) {
+    const r = filtrationOf(li.maxLead.slug)!.lead_lines[0]!;
+    cs.push({ id: 'lead', icon: 'pipe', tag: 'Lead pipes', q: 'Does your city have lead service lines?', status: `${li.withF.length} city inventories on file`, tone: 'warn',
+      facts: `The largest count on file is ${e(li.maxLead.name)}, where ${e(r.utility)} lists ${num(r.lead ?? 0)} lead lines (${e(r.period.charAt(0).toLowerCase() + r.period.slice(1))}).${cite(r.source_title, r.source_url)}`,
+      means: `${e(FG.lead_filters.text)}${cite(FG.lead_filters.source_title, FG.lead_filters.source_url, 'EPA lead filters')}`,
+      fix: { label: 'Reverse osmosis', href: '/reverse-osmosis/' }, ask: zipAsk });
+    cs.push({ id: 'pfas', icon: 'drop', tag: 'PFAS', q: 'Has PFAS been found in your water?', status: `Found in ${li.found.length} of ${li.withF.length} cities on file`, tone: li.found.length ? 'warn' : 'good',
+      facts: `EPA's UCMR 5 data shows PFOA or PFOS at or above 4 ppt for ${e(and(li.found.map((l) => l.name)))}. The other ${li.withF.length - li.found.length} cities on file had none at that level.${cite(UCMR5.title, UCMR5.url, UCMR5.title)}`,
+      means: `${e(FG.pfas_mcl.text)}${cite(FG.pfas_mcl.source_title, FG.pfas_mcl.source_url, 'EPA PFAS rule')}`,
+      fix: { label: 'Reverse osmosis', href: '/reverse-osmosis/' }, ask: zipAsk });
+  }
+  if (withDis.length) cs.push({ id: 'disinfectant', icon: 'filter', tag: 'Taste and smell', q: 'What does your utility add to the water?', status: `Chloramine in ${chlor.length} of ${withDis.length} cities`, tone: 'info',
+    facts: `In each of the ${withDis.length} cities with a published disinfectant, the utility adds chlorine, chloramine or both after treatment. ${chlor.length} of them use chloramine, alone or with chlorine. Each city's page names its own.`,
+    means: gc ? `${e(gc.text)}${cite(gc.source_title, gc.source_url, 'NDSU Extension')}` : undefined,
+    fix: { label: 'Whole-home filtration', href: '/whole-home-filtration/' }, ask: zipAsk });
+  cs.push({ id: 'hardness', icon: 'softener', tag: 'Scale and hard water', q: 'How hard is your water?', status: `${veryHard.length} cities very hard`, tone: 'info',
+    facts: `${withFig.length} of the ${ls.length} cities publish a hardness number, and ${veryHard.length} reach very hard at the top of their range. <a href="#top-h">See the hardest</a>.`,
+    means: `${e(CG.hardness_effects.text)}${cite(CG.hardness_effects.source_title, CG.hardness_effects.source_url, 'USGS')}`,
+    fix: { label: 'Water softeners', href: '/water-softeners/' }, ask: zipAsk });
+  const w = CG;
+  const well = `<article class="concern wide t-warn" aria-labelledby="wellwater"><div class="ch"><span class="ic">${ICONS.well}</span><p class="tag">Private wells</p></div>
+<h3 id="wellwater">On a private well, who tests your water?</h3><p class="status">You do</p>
+<p>${e(w.well_testing.text)}${cite(w.well_testing.source_title, w.well_testing.source_url)}</p>
+<ul class="wl"><li><strong>Bacteria</strong><span>${e(w.well_bacteria.text)}${cite(w.well_bacteria.source_title, w.well_bacteria.source_url)}</span></li>
+<li><strong>Nitrate</strong><span>${e(w.well_nitrate.text)}${cite(w.well_nitrate.source_title, w.well_nitrate.source_url)}</span></li>
+<li><strong>Iron</strong><span>${e(w.iron.text)}${cite(w.iron.source_title, w.iron.source_url)}</span></li></ul>
+<div class="fix"><a class="ask" href="#request">Get my well water tested</a></div></article>`;
+  return `<section class="band concerns" aria-labelledby="concerns-h">
+<h2 id="concerns-h">What could be in your water?</h2>
+<p class="lead-in">The questions homeowners ask most, answered from EPA, USGS and the utilities' own reports. Your city's page has its own figures.</p>
+<div class="cgrid">${cs.map(concernCard).join('')}${well}</div>
+</section>`;
+}
 
 export function hubHomeV2(ls: CityLocation[], markets: MarketConfig[], d: Design): string {
   const withFig = ls.filter((l) => l.scale_mgl);
@@ -300,10 +445,18 @@ export function hubHomeV2(ls: CityLocation[], markets: MarketConfig[], d: Design
   const sys = (icon: string, t: string, s: string, href: string) => `<a class="sys" href="${href}">${d === 'b' ? `<span class="ic">${ICONS[icon]}</span>` : ''}<strong>${t}</strong><span>${s}</span><em>How it works</em></a>`;
   let i = 0;
   const n = (k: string) => (d === 'a' ? `<p class="sec"><span>${String(++i).padStart(2, '0')}</span>${e(k)}</p>` : '');
-  const hero = `<section class="hero hub-hero"><div class="hero-copy"><p class="kicker">Water hardness by city, from the utilities' own reports</p>
+  const lists = filtrationLists(ls);
+  const heroA = `<section class="hero hub-hero"><div class="hero-copy"><p class="kicker">Water hardness by city, from the utilities' own reports</p>
 <h1>How hard is your water? Published hardness for ${ls.length} U.S. cities</h1>
 <p class="lede">Every figure is copied from the city's water utility with its date and a link to the report. Read yours, then get one written quote from one local company.</p>
-${d === 'b' ? `${zip}${stats}` : stats}</div>${d === 'b' ? HOUSE : `<div class="hero-side">${zip}</div>`}</section>`;
+${stats}</div><div class="hero-side">${zip}</div></section>`;
+  const statsB = `<div class="stats"><div><b>${ls.length}</b><span>cities covered</span></div><div><b>${lists.withF.length}</b><span>with lead line and PFAS results</span></div><div><b>${withFig.length}</b><span>with a published hardness number</span></div></div>`;
+  const heroB = `<section class="hero hub-hero"><div class="hero-copy"><p class="kicker">Water facts for ${ls.length} U.S. cities, from the utilities' own reports</p>
+<h1>How is your water affecting you?</h1>
+<p class="lede">Lead pipes, PFAS, chlorine taste, hard water and private wells each have a published answer. Enter your ZIP to see your city's figures and sources, then get one written quote from one local company.</p>
+${zip}${statsB}</div>${HOUSE}</section>
+${hubConcernsBlock(ls, withFig, veryHard, lists)}`;
+  const hero = d === 'b' ? heroB : heroA;
   return `${hero}
 <section class="band" aria-labelledby="top-h">${n('Hardest water')}
 <h2 id="top-h">Where is the water hardest?</h2>
@@ -318,6 +471,7 @@ ${d === 'b' ? `${zip}${stats}` : stats}</div>${d === 'b' ? HOUSE : `<div class="
 <section class="band" aria-labelledby="sys-h">${n('Systems')}
 <h2 id="sys-h">What should I compare?</h2>
 <div class="cards3">${sys('softener', 'Water softener', 'For scale and hard water.', '/water-softeners/')}${sys('filter', 'Whole-home filter', 'For chlorine or chloramine taste and odor.', '/whole-home-filtration/')}${sys('ro', 'Reverse osmosis', 'For drinking water at one tap.', '/reverse-osmosis/')}</div>
+${d === 'b' ? `<p class="small">On a private well, the system follows what your test shows. <a href="#wellwater">What EPA says to test for</a>.</p>` : ''}
 </section>
 <section class="band" aria-labelledby="how-h">${n('How it works')}
 <h2 id="how-h">How does it work?</h2>
@@ -591,6 +745,23 @@ a.card.link{display:block;text-decoration:none;color:var(--text)}a.card.link str
 main>.wrap>h1:first-child,main>.wrap>.grid:first-child,main>.wrap>p:first-child{margin-top:44px}
 form.inquiry:not(.formcard form){background:#fff;border:1px solid var(--line);border-radius:22px;padding:24px}
 ol.steps li{margin-bottom:8px}.toc{display:none}
+.quick{list-style:none;padding:0;margin:20px 0 4px;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;max-width:36em}
+.quick a{display:flex;flex-direction:column;gap:2px;text-decoration:none;background:var(--sand);border-radius:14px;padding:10px 14px;border-left:4px solid var(--blue);height:100%}
+.quick span{font-size:.78rem;font-weight:700;color:var(--muted)}.quick b{color:var(--ink);font-size:.98rem;line-height:1.25}
+.quick .t-warn a{border-left-color:var(--orange)}.quick .t-good a{border-left-color:var(--ok)}.quick a:hover{box-shadow:inset 0 0 0 2px var(--line)}
+.concerns{margin-top:8px}.cgrid{display:grid;gap:18px;margin-top:22px}@media(min-width:860px){.cgrid{grid-template-columns:1fr 1fr}}
+.concern{background:#fff;border:1px solid var(--line);border-radius:22px;padding:24px;display:flex;flex-direction:column;border-top:6px solid var(--blue)}
+.concern.t-warn{border-top-color:var(--orange)}.concern.t-good{border-top-color:var(--ok)}.concern.wide{grid-column:1/-1}
+.concern .ch{display:flex;align-items:center;gap:12px;margin-bottom:10px}.concern .ch .ic{margin:0;width:44px;height:44px;border-radius:14px}.concern .tag{margin:0;font-weight:700;font-size:.86rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.concern h3{font-size:1.25rem;margin-bottom:6px}.concern .status{font-size:1.6rem;font-weight:800;letter-spacing:-.02em;line-height:1.15;color:var(--ink);margin:0 0 12px}
+.concern.t-warn .status{color:var(--orange-d)}.concern.t-good .status{color:var(--ok)}
+.concern>p{font-size:.95rem}.concern .means{background:var(--sand);border-radius:14px;padding:12px 14px;font-size:.92rem;color:var(--text)}
+.concern .fix{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;margin-top:auto;padding-top:8px}
+a.ask{display:inline-block;font-weight:700;text-decoration:none;color:var(--orange-d);border:2px solid #f6c7b2;border-radius:999px;padding:7px 14px;font-size:.92rem}a.ask:hover{background:#fdf0ea;border-color:var(--orange)}
+.wl{list-style:none;padding:0;margin:4px 0 14px;display:grid;gap:12px}@media(min-width:860px){.wl{grid-template-columns:repeat(3,1fr)}}
+.wl li{background:var(--sand);border-radius:14px;padding:14px;font-size:.92rem;display:flex;flex-direction:column;gap:4px}.wl strong{color:var(--ink)}
+.other{display:flex;flex-wrap:wrap;gap:16px 28px;align-items:center;justify-content:space-between;background:var(--ink);color:#d7dfea;border-radius:22px;padding:24px 28px;margin-top:18px}
+.other h3{color:#fff;font-size:1.2rem}.other p{margin:0;max-width:44em}.other .btn{box-shadow:none}
 `;
 
 // The breadcrumb a hub city page carries above its heading.
