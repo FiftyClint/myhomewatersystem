@@ -1,6 +1,16 @@
 # Status
 
-Last updated: 2026-10-28
+Last updated: 2026-10-29
+
+## 2026-10-29: two redesign directions on staging (production unchanged)
+
+- Clint: "Looks cheap, looks like AI, and looks like a block of poorly presented 2000s text wall." Two directions built for the city home page, the hub city pages and the hub home: A "Water report" (paper and ink, IBM Plex, one cobalt accent, numbered sections, figures set large) and B "Neighborhood" (white and sand, Figtree, navy with a tangerine button, rounded cards, line icons, the form in the first screen). Code: `src/site/v2.ts`, `src/site/design.ts`.
+- Both keep the answer card, the at-a-glance facts, the "which system fits" answer, every source link, the FAQ that feeds FAQPage JSON-LD, the not-a-utility disclosure and the same request form. Guide and legal pages take the new header, footer and type only.
+- Staging preview: `/__design/a`, `/__design/b`, `/__design/classic`, or `/__site/<domain>?design=a`. Production stays on the classic look; it changes only when `SITE_DESIGN` is set to the pick, after Clint's go.
+- Fonts are self-hosted static assets (`public/fonts`, SIL Open Font License) through a new `[assets]` block, so they cost no Worker requests. CSP adds `font-src 'self'`.
+- Copy fix on every look: a hardness label that already names the utility no longer reads "Hardness, Denver Water reported by Denver Water".
+- D1: no change. The redesign adds no database reads or writes and no scheduled job.
+- Tests: 127 pass (new tests/design.test.ts, including the duplicate copy check under A and B).
 
 ## 2026-10-28 16:35 UTC: leads go to Notion (code only, not deployed)
 

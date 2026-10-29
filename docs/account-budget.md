@@ -16,7 +16,7 @@ figure below is per page view, not a measured total.
 ## Requests per page view, measured from built pages
 | Workers | Sites | Worker requests per view | Why |
 |---|---|---|---|
-| My Home Water System (mhws) | hub + city sites | 1 | CSS inline, `<link rel="icon" href="data:,">` (test: cron-cost.test.ts) |
+| My Home Water System (mhws) | hub + city sites | 1 | CSS inline, `<link rel="icon" href="data:,">` (test: cron-cost.test.ts). The redesign directions add one self-hosted font file from `public/fonts`, served as a static asset that never runs the Worker, cached a year by `public/_headers` (2026-10-29) |
 | Powered Land Co hub + 18 states | 19 | 4 | HTML, 1 CSS, 1 font, /favicon.ico, all through the Worker (`run_worker_first: true`) |
 | Party boat (planned) | 7 | 5 on the home page | HTML, 2 CSS, 1 font, /favicon.ico, same setting |
 | usdareapgrant | 1 | 0 for pages | `run_worker_first: ["/api/*"]`; only form posts count |

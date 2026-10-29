@@ -28,6 +28,7 @@ export interface Env {
   HIGHLEVEL_STAGE_MAP?: string;
   NOTION_TOKEN?: string;
   NOTION_DATABASE_ID?: string;
+  SITE_DESIGN?: string; // 'a' or 'b' switches production to a redesign direction once Clint picks one
   ANTHROPIC_API_KEY?: string;
   FORM_LIMITER?: RateLimit;
 }

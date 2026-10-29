@@ -2,6 +2,9 @@
 name = "mhws"
 main = "src/index.ts"
 compatibility_date = "2025-09-01"
+# Self-hosted fonts for the redesign directions. Static assets are served without running the Worker.
+[assets]
+directory = "./public"
 
 [triggers]
 crons = ["*/5 * * * *"]

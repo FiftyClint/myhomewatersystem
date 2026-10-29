@@ -1,15 +1,17 @@
 import { buildContext, type Env } from './env.ts';
-import { layout } from './site/layout.ts';
+import { displayPhone, layout } from './site/layout.ts';
+import { cityPageV2, hubCrumbs, hubHomeV2, shellV2 } from './site/v2.ts';
+import { designCookie, designFor, DESIGN_NAMES, DESIGNS, parseDesign, type Design } from './site/design.ts';
 import { companyBody, legalBody, marketBody, outOfAreaBody, serviceAreasBody, STATIC_PAGES, thankYouBody, unavailableBody } from './site/pages.ts';
 import { cityBody, clusterBody, sitemapXml, urlset } from './site/locations.ts';
 import { cityAboutBody, cityAreaBody, cityAreaJsonLd, cityContactBody, cityDescription, cityHomeBody, cityJsonLd, hubCityJsonLd, cityLlmsTxt, cityTitle, cityWaterJson } from './site/city.ts';
 import { areaPageOf } from '../content/areas.ts';
-import { citiesJson, hardWaterByCityBody, hubHomeBody, hubJsonLd, hubLlmsTxt, stateBody, stateLlmsTxt } from './site/hub.ts';
+import { citiesJson, hardWaterByCityBody, hubHomeBody, listedCities, hubJsonLd, hubLlmsTxt, stateBody, stateLlmsTxt } from './site/hub.ts';
 import { robotsTxt } from './site/bots.ts';
 import { isSyndicated } from './site/noindex.ts';
 import { locationBySlug, locationsInMarket, type CityLocation } from '../content/locations.ts';
 import { CITY_ZIPS } from '../content/zips.ts';
-import { aliasTarget, ALIAS_DOMAINS, CITY_SITES, HUB_DOMAIN, normalizeHost, siteForHost, siteForSlug, siteUrl, STATE_SITES, stateSiteForHost, type CitySite } from '../content/sites.ts';
+import { aliasTarget, ALIAS_DOMAINS, CITY_SITES, HUB_BRAND, HUB_DOMAIN, normalizeHost, siteForHost, siteForSlug, siteUrl, STATE_SITES, stateSiteForHost, type CitySite } from '../content/sites.ts';
 import type { MarketConfig } from './domain/config.ts';
 import { handleIntake, findMarket } from './intake/intake.ts';
 import { providerPage } from './dealer/page.ts';
@@ -23,7 +25,7 @@ import { timingSafeEqual } from './util.ts';
 
 const MAX_BODY = 16 * 1024;
 const SECURITY_HEADERS: Record<string, string> = {
-  'content-security-policy': "default-src 'none'; style-src 'unsafe-inline'; img-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'",
+  'content-security-policy': "default-src 'none'; style-src 'unsafe-inline'; img-src 'self'; font-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'",
   'x-content-type-options': 'nosniff',
   'referrer-policy': 'strict-origin-when-cross-origin',
 };
@@ -57,9 +59,17 @@ async function readForm(req: Request): Promise<Record<string, string> | null> {
 
 type PageFn = (title: string, description: string, body: string, noindex?: boolean, more?: { canonical?: string; jsonLd?: object[]; alternates?: string }) => string;
 
+type Form = { vals?: Record<string, string | undefined>; errors?: Record<string, string> };
+const ld = (o: object): string => `<script type="application/ld+json">${JSON.stringify(o).replace(/</g, '\\u003c')}</script>`;
+// A city site's home page and a hub city page, in the classic look or one of the redesign directions.
+const cityHome = (d: Design, site: CitySite, l: CityLocation, m: MarketConfig, rid: string, hubBase: string, form: Form) => (d === 'classic'
+  ? cityHomeBody(site, l, m, rid, hubBase, form) : cityPageV2(l, m, rid, hubBase, d, { brand: site.brand, page: '/', onHub: false, form }));
+const hubCity = (d: Design, l: CityLocation, m: MarketConfig, rid: string, hubBase: string, form: Form) => (d === 'classic'
+  ? cityBody(l, m, rid, form) : cityPageV2(l, m, rid, hubBase, d, { brand: HUB_BRAND, page: `/locations/${l.slug}/`, onHub: true, crumbs: hubCrumbs(l, m), form }));
+
 // Routes that differ on a city site. Returns null for routes every host shares (intake, legal pages,
 // dealer links, internal API, hooks), which the main handler serves with the city's branding.
-async function citySite(req: Request, url: URL, env: Env, site: CitySite, city: CityLocation, m: MarketConfig, page: PageFn, staging: boolean): Promise<Response | null> {
+async function citySite(req: Request, url: URL, env: Env, site: CitySite, city: CityLocation, m: MarketConfig, page: PageFn, staging: boolean, design: Design): Promise<Response | null> {
   const path = url.pathname;
   const base = siteUrl(site);
   if (req.method !== 'GET' && req.method !== 'HEAD') return null;
@@ -70,7 +80,7 @@ async function citySite(req: Request, url: URL, env: Env, site: CitySite, city: 
   if (path === '/water.json') return asset(cityWaterJson(site, city, m), JSONT);
   if (path === '/') {
     const zip = url.searchParams.get('zip') ?? undefined;
-    return html(200, page(cityTitle(site, city), cityDescription(city), cityHomeBody(site, city, m, crypto.randomUUID(), env.BASE_URL, { vals: { zip } }),
+    return html(200, page(cityTitle(site, city), cityDescription(city), cityHome(design, site, city, m, crypto.randomUUID(), env.BASE_URL, { vals: { zip } }),
       false, { canonical: `${base}/`, jsonLd: cityJsonLd(site, city, m),
         alternates: `<link rel="alternate" type="application/json" href="${base}/water.json"><link rel="alternate" type="text/plain" title="llms.txt" href="${base}/llms.txt">` }));
   }
@@ -113,9 +123,20 @@ export default {
       const d = pick[1]!;
       const known = [...CITY_SITES.map((s) => s.domain), ...STATE_SITES.map((s) => s.domain), ...Object.keys(ALIAS_DOMAINS)];
       if (d !== 'hub' && !known.includes(d)) return new Response('unknown site', { status: 404 });
-      return new Response(null, { status: 303, headers: { location: '/',
-        'set-cookie': d === 'hub' ? 'mhws_site=; Path=/; Max-Age=0; Secure; HttpOnly; SameSite=Lax' : `mhws_site=${d}; Path=/; Max-Age=86400; Secure; HttpOnly; SameSite=Lax` } });
+      const h = new Headers({ location: '/' });
+      h.append('set-cookie', d === 'hub' ? 'mhws_site=; Path=/; Max-Age=0; Secure; HttpOnly; SameSite=Lax' : `mhws_site=${d}; Path=/; Max-Age=86400; Secure; HttpOnly; SameSite=Lax`);
+      const want = parseDesign(url.searchParams.get('design'));
+      if (want) h.append('set-cookie', designCookie(want));
+      return new Response(null, { status: 303, headers: h });
     }
+    // Staging previews the redesign directions by cookie too: /__design/a, /__design/b, /__design/classic.
+    const dpick = staging ? path.match(/^\/__design\/([a-z]+)$/) : null;
+    if (dpick) {
+      const d = parseDesign(dpick[1]);
+      if (!d) return new Response('unknown design', { status: 404 });
+      return new Response(null, { status: 303, headers: { location: '/', 'set-cookie': designCookie(d) } });
+    }
+    const design = designFor(req.headers.get('cookie'), env.SITE_DESIGN, staging);
     const host = (staging ? (req.headers.get('cookie') ?? '').match(/(?:^|;\s*)mhws_site=([a-z0-9.-]+)/)?.[1] : undefined) ?? url.host;
 
     // The hub lives at BASE_URL (www). Its bare domain forwards there.
@@ -139,12 +160,18 @@ export default {
     const base = site ? siteUrl(site) : state ? `https://${state.domain}` : env.BASE_URL;
 
     const brandName = site?.brand ?? state?.brand;
-    const page = (title: string, description: string, body: string, noindex = false, more: { canonical?: string; jsonLd?: object[]; alternates?: string } = {}) =>
-      layout({ title: brandName ? title.replace(/ \| My Home Water System$/, ` | ${brandName}`) : title, description, path, body,
-        noindex: noindex || staging, banner, baseUrl: base, brand: brandName, phone: siteMarket?.tracking_phone ?? null, ...more });
+    const pageBanner = staging ? `${banner} Look: ${DESIGNS.map((d) => d === design ? `<strong>${DESIGN_NAMES[d]}</strong>` : `<a href="/__design/${d}">${DESIGN_NAMES[d]}</a>`).join(' · ')}.` : null;
+    const page = (title: string, description: string, body: string, noindex = false, more: { canonical?: string; jsonLd?: object[]; alternates?: string } = {}) => {
+      const t = brandName ? title.replace(/ \| My Home Water System$/, ` | ${brandName}`) : title;
+      const phone = siteMarket?.tracking_phone ?? null;
+      if (design === 'classic') return layout({ title: t, description, path, body, noindex: noindex || staging, banner: pageBanner, baseUrl: base, brand: brandName, phone, ...more });
+      return shellV2({ title: t, description, canonical: more.canonical ?? `${base}${path}`, noindex: noindex || staging, banner: pageBanner,
+        brand: brandName ?? 'My Home Water System', city: !!site, phone, phoneDisplay: phone ? displayPhone(phone) : null,
+        jsonLd: (more.jsonLd ?? []).map(ld).join(''), alternates: more.alternates ?? '', body, open: body.includes('id="request"') && body.includes('action="/api/inquiry"') }, design);
+    };
 
     if (site && siteCity && siteMarket) {
-      const r = await citySite(req, url, env, site, siteCity, siteMarket, page, staging);
+      const r = await citySite(req, url, env, site, siteCity, siteMarket, page, staging, design);
       if (r) return r;
     }
 
@@ -168,7 +195,7 @@ export default {
     if (path === '/data/cities.json') return asset(citiesJson(ctx.markets), JSONT);
 
     if (path === '/' && req.method === 'GET') return html(200, page('How Hard Is Your Water? Hardness by City | My Home Water System',
-      'Drinking water hardness for U.S. cities, copied from each utility with its source and date, and how to get a written quote for a softener or filter.', hubHomeBody(ctx.markets),
+      'Drinking water hardness for U.S. cities, copied from each utility with its source and date, and how to get a written quote for a softener or filter.', (design === 'classic' ? hubHomeBody(ctx.markets) : hubHomeV2(listedCities(ctx.markets), ctx.markets, design)),
       false, { jsonLd: hubJsonLd(env.BASE_URL, ctx.markets), alternates: `<link rel="alternate" type="application/json" href="${env.BASE_URL}/data/cities.json"><link rel="alternate" type="text/plain" title="llms.txt" href="${env.BASE_URL}/llms.txt">` }));
     if (path === '/hard-water-by-city/' && req.method === 'GET') return html(200, page('Hard Water by City: Published Hardness and Sources | My Home Water System',
       'Water hardness for U.S. cities exactly as each utility publishes it, with the period, the source document and the USGS class.', hardWaterByCityBody(ctx.markets),
@@ -197,7 +224,7 @@ export default {
       // A hub city page stays noindex and out of the sitemap until its market has a launch approval.
       if (city && cityMarket) return html(200, page(`Water softeners and filtration in ${city.name} | My Home Water System`,
         `${city.name} water hardness as published by the local utility, and how to get a written water treatment quote.`,
-        cityBody(city, cityMarket, crypto.randomUUID(), { vals: { zip } }), !cityMarket.launch_approval_id,
+        hubCity(design, city, cityMarket, crypto.randomUUID(), env.BASE_URL, { vals: { zip } }), !cityMarket.launch_approval_id,
         { jsonLd: hubCityJsonLd(city, cityMarket, `${env.BASE_URL}/locations/${city.slug}/`) }));
       const m = ctx.markets.find((x) => x.slug === loc[1]);
       if (!m) return html(404, page('Not found', 'Not found', '<h1>Page not found</h1>', true));
@@ -244,10 +271,10 @@ export default {
           if (!m) return html(422, page('Check your details', 'Error', '<h1>Please check your ZIP code</h1><p><a href="/">Start again</a></p>', true));
           const rid = form.request_id ?? crypto.randomUUID();
           if (site && siteCity && siteMarket && siteMarket.id === m.id) {
-            return html(422, page('Check your details', 'Error', cityHomeBody(site, siteCity, m, rid, env.BASE_URL, { vals: form, errors: r.errors }), true));
+            return html(422, page('Check your details', 'Error', cityHome(design, site, siteCity, m, rid, env.BASE_URL, { vals: form, errors: r.errors }), true));
           }
           const city = locationBySlug((form.page ?? '').replace(/^\/locations\/|\/$/g, ''));
-          const body = city && city.market_id === m.id ? cityBody(city, m, rid, { vals: form, errors: r.errors })
+          const body = city && city.market_id === m.id ? hubCity(design, city, m, rid, env.BASE_URL, { vals: form, errors: r.errors })
             : locationsInMarket(m.id).length ? clusterBody(m, rid, { vals: form, errors: r.errors }) : marketBody(m, rid, { vals: form, errors: r.errors });
           return html(422, page('Check your details', 'Error', body, true));
         }

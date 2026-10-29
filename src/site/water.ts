@@ -32,7 +32,8 @@ export const hardnessFacts = (l: CityLocation) => l.facts.filter((f) => /hardnes
 export function hardnessAnswer(l: CityLocation): string {
   const fs = hardnessFacts(l);
   if (!fs.length) return `We have not found a published hardness figure for ${l.name}. Your utility's latest water quality report is the place to check.`;
-  const parts = fs.map((f) => `${f.label} reported by ${f.utility}: ${f.value} (${f.period}).`);
+  // A label that already names the utility ("Hardness, Denver Water") is not followed by "reported by Denver Water".
+  const parts = fs.map((f) => (f.label.includes(f.utility) ? `${f.label}: ${f.value} (${f.period}).` : `${f.label} reported by ${f.utility}: ${f.value} (${f.period}).`));
   return `${parts.join(' ')}${new Set(fs.map((f) => f.utility)).size > 1 ? ' Check which utility appears on your water bill.' : ''}`;
 }
 

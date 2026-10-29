@@ -39,6 +39,7 @@ const grains = (mgl: number) => (mgl / MGL_PER_GRAIN).toFixed(1);
 
 // The utility named in the city's facts, for sentences that would otherwise be the same on every site.
 const utilityName = (l: CityLocation) => { const u = utilitiesOf(l); return u.length === 1 ? u[0]! : u.length ? `${l.name}'s utilities` : `${l.name}'s utility`; };
+export const utilityNameOf = utilityName;
 const fig = ([lo, hi]: [number, number]) => (lo === hi ? `${lo} mg/L` : `${lo} to ${hi} mg/L`);
 
 // Filtration cities (content/filtration.ts): lead service lines and PFOA/PFOS, said from the city's own figures.
@@ -67,7 +68,7 @@ export function pfasAnswer(l: CityLocation, p: PfasFact): string {
   return `${found} EPA's limit for each in ${l.name} drinking water is 4.0 ppt, which ${p.utility} has until 2029 to meet; a May 18, 2026 proposal would allow until 2031.`;
 }
 
-const filterAdvice = (l: CityLocation, f: CityFiltration) =>
+export const filterAdvice = (l: CityLocation, f: CityFiltration) =>
   `For lead in a ${l.name} home, EPA points to filters certified to both NSF/ANSI 53 and 42 for reduction to 5 ppb or less. For PFAS from ${l.name} taps, it points to NSF/ANSI 53 or 58.`;
 
 const srcLink = (title: string, url: string) => `<a href="${e(url)}" rel="noopener">${e(title)}</a>`;

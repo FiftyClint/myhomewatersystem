@@ -61,14 +61,14 @@ export function mainText(html: string): string {
 export const words = (text: string): string[] => text.toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, ' ').split(/\s+/).filter(Boolean);
 
 // Every page reachable from "/" on each site through same-site links.
-export async function crawl(): Promise<Page[]> {
+export async function crawl(env: typeof ENV = ENV): Promise<Page[]> {
   const sites = [HUB, ...CITY_SITES.map((s) => s.domain), ...STATE_SITES.map((s) => s.domain)];
   const pages: Page[] = [];
   for (const site of sites) {
     const queue = ['/'], seen = new Set(queue);
     while (queue.length) {
       const path = queue.shift()!;
-      const r = await worker.fetch(new Request(`https://${site}${path}`), ENV);
+      const r = await worker.fetch(new Request(`https://${site}${path}`), env);
       if (r.status !== 200 || !(r.headers.get('content-type') ?? '').includes('text/html')) continue;
       const html = await r.text();
       pages.push({ site, path, html, noindex: NOINDEX.test(html) });
