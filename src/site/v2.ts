@@ -209,7 +209,7 @@ export function cityConcerns(l: CityLocation, g: (p: string) => string): Concern
       status: none ? "Below EPA's limit" : `Found, up to ${hi.join(' and ')}`, tone: none ? 'good' : 'warn',
       facts: `${e(pfasAnswer(l, p))}${cite(UCMR5.title, UCMR5.url, UCMR5.title)}`,
       means: none
-        ? `Every ${e(p.utility)} result for ${e(l.name)} was under 4 ppt, which is below EPA's limit for both.${cite(FG.pfas_mcl.source_title, FG.pfas_mcl.source_url, 'EPA PFAS rule')}`
+        ? `Every result for ${e(l.name)} was under 4 ppt, which is below EPA's limit for both.${cite(FG.pfas_mcl.source_title, FG.pfas_mcl.source_url, 'EPA PFAS rule')}`
         : `For PFAS at a ${e(l.name)} tap, EPA points to home filters certified to NSF/ANSI 53 or 58.${cite(FG.pfas_filters.source_title, FG.pfas_filters.source_url, 'EPA PFAS filters')}`,
       fix: { label: `Reverse osmosis for ${l.name} taps`, href: g('/reverse-osmosis/') }, ask: { concern: 'drinking_water', label: 'Ask about PFAS' } });
   }
@@ -745,7 +745,9 @@ a.card.link{display:block;text-decoration:none;color:var(--text)}a.card.link str
 main>.wrap>h1:first-child,main>.wrap>.grid:first-child,main>.wrap>p:first-child{margin-top:44px}
 form.inquiry:not(.formcard form){background:#fff;border:1px solid var(--line);border-radius:22px;padding:24px}
 ol.steps li{margin-bottom:8px}.toc{display:none}
-.quick{list-style:none;padding:0;margin:20px 0 4px;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;max-width:36em}
+.quick{list-style:none;padding:0;margin:20px 0 4px;display:grid;grid-template-columns:1fr 1fr;gap:8px;max-width:34em}
+[id]{scroll-margin-top:96px}
+.concern .leadbar .ok,.concern .legend i.ok{background:var(--sky)}
 .quick a{display:flex;flex-direction:column;gap:2px;text-decoration:none;background:var(--sand);border-radius:14px;padding:10px 14px;border-left:4px solid var(--blue);height:100%}
 .quick span{font-size:.78rem;font-weight:700;color:var(--muted)}.quick b{color:var(--ink);font-size:.98rem;line-height:1.25}
 .quick .t-warn a{border-left-color:var(--orange)}.quick .t-good a{border-left-color:var(--ok)}.quick a:hover{box-shadow:inset 0 0 0 2px var(--line)}
