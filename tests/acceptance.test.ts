@@ -299,8 +299,8 @@ describe('T15 content and launch guards', () => {
     }
     // Kansas City has Clint's go (2026-10-28) and no blockers; a market without a go stays closed.
     expect(marketLaunchBlockers(kc as unknown as MarketConfig)).toEqual([]);
-    const denver = MARKET_CONFIGS.find((m) => m.slug === 'denver')!;
-    expect(marketLaunchBlockers(denver)).toContain('no launch approval recorded');
+    const atlanta = MARKET_CONFIGS.find((m) => m.slug === 'atlanta')!;
+    expect(marketLaunchBlockers(atlanta)).toContain('no launch approval recorded');
   });
 });
 

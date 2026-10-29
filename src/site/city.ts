@@ -232,7 +232,7 @@ export function cityFaq(l: CityLocation, m: MarketConfig, brand = `${l.name} Wat
   out.push(
     { q: `How much does a water softener cost in ${l.name}?`, a: `We publish no prices for ${l.name}. The installing company gives a written quote after an assessment at your home.` },
     { q: 'Who installs the system?', a: installerAnswer(m, l) },
-    { q: `Is ${brand} part of the city or the water utility?`, a: `No. ${brand} is not affiliated with ${utilitiesOf(l).join(' or ') || 'the local utility'}; it copies and links the published figures.` },
+    { q: `Is ${brand} part of the ${l.name} city government or water utility?`, a: `No. ${brand} is not affiliated with ${utilitiesOf(l).join(' or ') || 'the local utility'}; it copies and links the published figures.` },
     { q: 'Is booking an assessment a purchase?', a: 'No, and a request commits you to nothing.' },
   );
   return out;

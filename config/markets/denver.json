@@ -3,8 +3,8 @@
   "slug": "denver",
   "name": "Denver",
   "status": "draft",
-  "config_version": "2026-10-27.1",
-  "launch_approval_id": null,
+  "config_version": "2026-10-29.1",
+  "launch_approval_id": "clint-go-2026-10-29T02:10Z",
   "business_mode": "dealer_partner",
   "timezone": "America/Denver",
   "zips": [
@@ -63,9 +63,12 @@
   "accept_before_dealer": true,
   "providers": [],
   "dealer_partner": {
-    "commercial_model": null,
-    "fee_trigger_state": null,
-    "fee_cents": 0,
+    "commercial_model": "exclusive_lead",
+    "fee_trigger_state": "dealer_accepted",
+    "fee_cents": 9500,
+    "free_proof": {
+      "free_leads_per_dealer": 1
+    },
     "accept_sla_business_minutes": 30,
     "duplicate_window_days": 90
   }

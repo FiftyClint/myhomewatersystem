@@ -1,7 +1,7 @@
-# Manual production check. Reads /healthz and the home page of each launched city site, and fails if a site
-# does not answer 200, has no request form, or still shows the not-open panel. With send_test_lead=yes it
-# also posts one request labeled TEST LEAD to kcwatersystems.com and prints the result, so the Notion row
-# can be checked and then deleted. Writes nothing else.
+# Manual production check. Prints the nameservers of the zones still held back, reads /healthz, every launched
+# city site's home page and every launched hub city page, and fails if one does not answer 200, has no request
+# form, or still shows the not-open panel. With send_test_lead=yes it also posts one request labeled TEST LEAD
+# to the chosen site and prints the result, so the Notion row can be checked and then deleted. Writes nothing else.
 name: Production check (manual)
 
 on:
@@ -10,35 +10,63 @@ on:
       send_test_lead:
         description: 'Post one TEST LEAD request (yes/no)'
         default: 'no'
+      test_domain:
+        description: 'Site that gets the test lead'
+        default: 'denverwatersystems.com'
+      test_market:
+        description: 'Market id of that site'
+        default: 'denver'
+      test_zip:
+        description: 'A ZIP in that market'
+        default: '80202'
 
 jobs:
   check:
     runs-on: ubuntu-latest
     steps:
+      - name: Held zones
+        run: |
+          for d in tampabaywatersystems.com jerseywatersystems.com; do echo "$d NS: $(dig +short NS $d | tr '\n' ' ')"; done
       - name: Health and live sites
         run: |
           echo "healthz: $(curl -sS https://www.myhomewatersystem.com/healthz)"
-          fail=0
+          fail=0; n=0
+          probe() {
+            code=$(curl -sS -L -o /tmp/p.html -w '%{http_code}' "$1" || echo 000)
+            form=$(grep -c 'action="/api/inquiry"' /tmp/p.html || true)
+            closed=$(grep -c '<h2>Not open yet</h2>' /tmp/p.html || true)
+            noidx=$(grep -c 'name="robots" content="noindex' /tmp/p.html || true)
+            echo "$1 HTTP $code form=$form not_open=$closed noindex=$noidx"
+            n=$((n+1))
+            if [ "$code" != "200" ] || [ "$form" = "0" ] || [ "$closed" != "0" ]; then fail=1; fi
+          }
           for d in mesawatersystems.com chandlerwatersystems.com gilbertwatersystems.com scottsdalewatersystems.com \
                    vegaswatersystems.com hendersonwatersystems.com sanantoniohomewatersystems.com newbraunfelswatersystems.com \
                    kcwatersystems.com phoenixhomewatersystems.com chicagowatersystems.com houstonhomewatersystems.com \
-                   indianapoliswatersystems.com losangeleswatersystems.com philadelphiawatersystems.com sandiegowatersystems.com; do
-            code=$(curl -sS -L -o /tmp/p.html -w '%{http_code}' "https://$d/" || echo 000)
-            form=$(grep -c 'action="/api/inquiry"' /tmp/p.html || true)
-            closed=$(grep -c '<h2>Not open yet</h2>' /tmp/p.html || true)
-            echo "$d HTTP $code form=$form not_open=$closed"
-            if [ "$code" != "200" ] || [ "$form" = "0" ] || [ "$closed" != "0" ]; then fail=1; fi
+                   indianapoliswatersystems.com losangeleswatersystems.com philadelphiawatersystems.com sandiegowatersystems.com \
+                   nycwatersystems.com detroitwatersystems.com baltimorewatersystems.com denverwatersystems.com \
+                   dallaswatersystems.com fortworthwatersystems.com bostonwatersystems.com minneapoliswatersystems.com \
+                   stlouiswatersystems.com pittsburghwatersystems.com cincinnatiwatersystems.com \
+                   dcwatersystems.com tucsonwatersystems.com; do
+            probe "https://$d/"
           done
-          [ $fail = 0 ] && echo "RESULT: all 16 sites open" || { echo "RESULT: at least one site failed"; exit 1; }
+          for s in louisville lexington el-paso omaha milwaukee wichita aurora st-petersburg; do
+            probe "https://www.myhomewatersystem.com/locations/$s/"
+          done
+          [ $fail = 0 ] && echo "RESULT: all $n pages open" || { echo "RESULT: at least one of $n pages failed"; exit 1; }
       - name: One test lead
         if: ${{ inputs.send_test_lead == 'yes' }}
+        env:
+          D: ${{ inputs.test_domain }}
+          M: ${{ inputs.test_market }}
+          Z: ${{ inputs.test_zip }}
         run: |
           rid=$(cat /proc/sys/kernel/random/uuid)
-          curl -sS -X POST https://kcwatersystems.com/api/inquiry -H 'accept: application/json' \
-            --data-urlencode "request_id=$rid" --data-urlencode zip=64111 --data-urlencode homeowner=yes \
+          curl -sS -X POST "https://$D/api/inquiry" -H 'accept: application/json' \
+            --data-urlencode "request_id=$rid" --data-urlencode "zip=$Z" --data-urlencode homeowner=yes \
             --data-urlencode concern=hardness --data-urlencode water_source=municipal \
             --data-urlencode first_name=TEST --data-urlencode "last_name=LEAD delete me" \
             --data-urlencode contact_method=email --data-urlencode email=test-lead@example.com \
-            --data-urlencode consent_service=yes --data-urlencode page=/ --data-urlencode market=kansas-city \
-            --data-urlencode "note=Production test by Claude 2026-10-28. Not a real request."
+            --data-urlencode consent_service=yes --data-urlencode page=/ --data-urlencode "market=$M" \
+            --data-urlencode "note=Production test by Claude 2026-10-29. Not a real request."
           echo

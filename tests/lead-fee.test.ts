@@ -82,14 +82,16 @@ describe('one free lead per dealer, then $95 exclusive (Clint, 2026-10-28)', () 
     expect(await count(a.db, 'ledger_entries')).toBe(0);
   });
 
-  it('all eleven launch markets give one free lead per dealer, then $95 per exclusive lead', () => {
-    const launch = ['east-valley', 'las-vegas-valley', 'san-antonio-area', 'kansas-city', 'chicago', 'los-angeles',
+  it('every launch market gives one free lead per dealer, then $95 per exclusive lead', () => {
+    const first11 = ['east-valley', 'las-vegas-valley', 'san-antonio-area', 'kansas-city', 'chicago', 'los-angeles',
       'houston', 'philadelphia', 'phoenix', 'san-diego', 'indianapolis'];
-    // The next 10 (2026-10-28) carry the same terms as drafts for staging.
+    // Clint, 2026-10-29 02:10 UTC, "All 21 live": the next 10 and the owned filtration cities.
     const next10 = ['louisville', 'el-paso', 'washington-dc', 'tucson', 'omaha', 'milwaukee', 'wichita', 'aurora', 'tampa-bay', 'lexington'];
+    const filtration = ['new-york', 'detroit', 'baltimore', 'denver', 'dallas-fort-worth', 'boston', 'minneapolis', 'st-louis', 'pittsburgh', 'cincinnati'];
+    const launch = [...first11, ...next10, ...filtration];
     const inProof = PRODUCTION_MARKETS.filter((m) => m.dealer_partner?.free_proof).map((m) => m.id).sort();
-    expect(inProof).toEqual([...launch, ...next10].sort());
-    for (const id of next10) expect(PRODUCTION_MARKETS.find((m) => m.id === id)!.launch_approval_id, id).toBeNull();
+    expect(inProof).toEqual([...launch].sort());
+    for (const id of [...next10, ...filtration]) expect(PRODUCTION_MARKETS.find((m) => m.id === id)!.launch_approval_id, id).toBe('clint-go-2026-10-29T02:10Z');
     for (const m of PRODUCTION_MARKETS.filter((x) => launch.includes(x.id))) {
       expect(m.dealer_partner, m.id).toMatchObject({ commercial_model: 'exclusive_lead', fee_trigger_state: 'dealer_accepted',
         fee_cents: 9500, free_proof: { free_leads_per_dealer: 1 } });
