@@ -295,7 +295,7 @@ export function hubHomeV2(ls: CityLocation[], markets: MarketConfig[], d: Design
     return `<a class="chip" href="${e(cityHref(l.slug))}"><i class="${c ? `dot-${c.replace(' ', '-')}` : 'dot-none'}"></i>${e(l.name)}</a>`;
   };
   const zip = `<form class="zipform" method="get" action="/check" id="request" data-boilerplate><label for="zip">Your ZIP code</label><div class="zrow"><input type="text" id="zip" name="zip" inputmode="numeric" autocomplete="postal-code" maxlength="5" placeholder="e.g. 64111"><button type="submit">Check my water</button></div><p class="small">We use it only to find your city's page and whether a local company serves it.</p></form>`;
-  const stats = `<div class="stats"><div><b>${ls.length}</b><span>cities covered</span></div><div><b>${withFig.length}</b><span>with a published hardness figure</span></div><div><b>${veryHard.length}</b><span>very hard at the top of their range</span></div></div>`;
+  const stats = `<div class="stats"><div><b>${ls.length}</b><span>cities covered</span></div><div><b>${withFig.length}</b><span>with a published hardness number</span></div><div><b>${veryHard.length}</b><span>very hard at the top of their range</span></div></div>`;
   const legend = '<p class="legend-row"><span><i class="dot-soft"></i>Soft</span><span><i class="dot-moderately-hard"></i>Moderately hard</span><span><i class="dot-hard"></i>Hard</span><span><i class="dot-very-hard"></i>Very hard</span><span><i class="dot-none"></i>No figure</span></p>';
   const sys = (icon: string, t: string, s: string, href: string) => `<a class="sys" href="${href}">${d === 'b' ? `<span class="ic">${ICONS[icon]}</span>` : ''}<strong>${t}</strong><span>${s}</span><em>How it works</em></a>`;
   let i = 0;
