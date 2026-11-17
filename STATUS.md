@@ -1,6 +1,14 @@
 # Status
 
-Last updated: 2026-10-29
+Last updated: 2026-11-17
+
+## 2026-11-17: analytics, Search Console, lead alerts
+
+- Production check (read-only D1 query): one request since launch, 2026-11-17 13:56 UTC, ZIP 94102, from the hub home, stored as no-dealer-assigned, copied to Notion (crm_sync done). No ad tracking on it.
+- No alert fired because the system has none: a lead only writes a Notion row. Notification to Clint and Ryan is to be a Notion database automation on Water Leads (page added -> send notification), owned by Notion, not code.
+- CSP now allows Cloudflare Web Analytics' automatic beacon: script-src https://static.cloudflareinsights.com/beacon.min.js and connect-src 'self' (it reports to /cdn-cgi/rum on our own domain). No inline script, no other origin. Test in tests/design.test.ts. Responses carry no no-transform, so injection can work.
+- Web Analytics and Search Console sites are added by Clint in their dashboards (both need his logins).
+- D1: no change. No new reads, writes or scheduled work (docs/d1-budget.md unchanged). 136 tests pass, typecheck clean.
 
 ## 2026-10-29 14:10 UTC: Design B live on every water site, and the form takes every ZIP
 

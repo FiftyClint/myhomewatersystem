@@ -26,6 +26,12 @@ describe('redesign directions', () => {
       expect(t).not.toMatch(/—/);
       expect(t).not.toMatch(/<script(?! type="application\/ld\+json")/);
       expect(r.headers.get('content-security-policy')).toContain("font-src 'self'");
+      // Cloudflare Web Analytics beacon only: one exact script URL, reporting to our own domain. No inline script.
+      const csp = r.headers.get('content-security-policy')!;
+      expect(csp).toContain("script-src https://static.cloudflareinsights.com/beacon.min.js;");
+      expect(csp).toContain("connect-src 'self'");
+      expect(csp).not.toMatch(/script-src[^;]*unsafe/);
+      expect(r.headers.get('cache-control') ?? '').not.toContain('no-transform');
     });
 
     it(`design ${d}: a hub city page and the hub home render with their sources`, async () => {

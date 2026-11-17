@@ -27,7 +27,8 @@ import { timingSafeEqual } from './util.ts';
 
 const MAX_BODY = 16 * 1024;
 const SECURITY_HEADERS: Record<string, string> = {
-  'content-security-policy': "default-src 'none'; style-src 'unsafe-inline'; img-src 'self'; font-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'",
+  // Cloudflare Web Analytics (automatic setup) injects its beacon script and reports to /cdn-cgi/rum on our own domain.
+  'content-security-policy': "default-src 'none'; script-src https://static.cloudflareinsights.com/beacon.min.js; connect-src 'self'; style-src 'unsafe-inline'; img-src 'self'; font-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'",
   'x-content-type-options': 'nosniff',
   'referrer-policy': 'strict-origin-when-cross-origin',
 };
