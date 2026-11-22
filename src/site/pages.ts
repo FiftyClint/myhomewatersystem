@@ -10,6 +10,10 @@ import { cityHref, CITY_SITES } from '../../content/sites.ts';
 
 type Vals = Record<string, string | undefined>;
 
+// Where the Cloudflare Turnstile check goes. The Worker fills it in per host after the page is built
+// (src/site/turnstile.ts), or removes it when the host has no widget.
+export const TURNSTILE_SLOT = '<!--turnstile-->';
+
 const opt = (name: string, value: string, label: string, vals: Vals, type = 'radio') =>
   `<label class="choice"><input type="${type}" name="${name}" value="${value}"${vals[name] === value ? ' checked' : ''}> <span>${label}</span></label>`;
 const err = (errors: Record<string, string>, k: string) => (errors[k] ? `<p class="err" id="${k}-err">${e(errors[k]!)}</p>` : '');
@@ -50,6 +54,7 @@ ${[['soon', 'As soon as possible'], ['months', 'In the next few months'], ['rese
 <p class="small">Please do not include payment, financing, medical or Social Security information.</p>
 <label class="choice"><input type="checkbox" name="consent_service" value="yes"${v.consent_service === 'yes' ? ' checked' : ''}${aria(er, 'consent_service')}> <span>${e(disclosure)} <a href="/privacy/">Privacy</a></span></label>${err(er, 'consent_service')}
 ${textsAllowed(m) ? `<label class="choice"><input type="checkbox" name="consent_sms" value="yes"${v.consent_sms === 'yes' ? ' checked' : ''}> <span>${e(sms)}</span></label>${err(er, 'consent_sms')}` : ''}
+${TURNSTILE_SLOT}${err(er, 'turnstile')}
 <p><button type="submit">Send my request</button></p>
 </form>`;
 }

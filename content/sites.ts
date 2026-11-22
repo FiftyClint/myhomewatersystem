@@ -73,6 +73,9 @@ export const STATE_SITES: StateSite[] = [
   { domain: 'californiawatersystems.com', state: 'CA', stateName: 'California', brand: 'California Water Systems' },
 ];
 
+// Every apex this Worker serves pages on. Turnstile widgets list these; a listed apex also covers www.
+export const allApexDomains = (): string[] => [HUB_DOMAIN, ...CITY_SITES.map((s) => s.domain), ...Object.keys(ALIAS_DOMAINS), ...STATE_SITES.map((s) => s.domain)];
+
 export const normalizeHost = (host: string): string => host.toLowerCase().replace(/:\d+$/, '');
 export const apexOf = (host: string): string => normalizeHost(host).replace(/^www\./, '');
 

@@ -31,6 +31,7 @@ export interface Env {
   SITE_DESIGN?: string; // 'a' or 'b' switches production to a redesign direction once Clint picks one
   ANTHROPIC_API_KEY?: string;
   FORM_LIMITER?: RateLimit;
+  TURNSTILE_WIDGETS?: string; // secret, JSON [{ sitekey, secret, domains }] set by .github/workflows/turnstile.yml
 }
 
 export const PRODUCTION_MARKETS: MarketConfig[] = MARKET_CONFIGS;

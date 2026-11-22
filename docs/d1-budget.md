@@ -52,7 +52,8 @@ Recomputed 2026-11-22 for the bot checks (`migrations/0004_receipt_signals.sql`)
 form time go in a new column of the receipt row the lead already writes, so rows written per lead are
 unchanged. The CRM job reads the same receipt row it already read. A post dropped for being too fast,
 like the honeypot, touches the database not at all. The cron is unchanged, so the daily numbers above
-stand: idle at most 864 rows read and 0 written.
+stand: idle at most 864 rows read and 0 written. The Turnstile check is a call to Cloudflare Siteverify
+before intake and reads or writes no D1 rows; a failed check stores nothing.
 
 ## HighLevel (production, once the token is saved)
 

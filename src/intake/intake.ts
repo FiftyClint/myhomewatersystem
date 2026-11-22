@@ -18,6 +18,7 @@ export const MIN_FILL_MS = 3000;
 export interface RequestSignals {
   host?: string | null; referer?: string | null; userAgent?: string | null; contentType?: string | null;
   country?: string | null; regionCode?: string | null; asn?: number | null; asOrganization?: string | null; colo?: string | null;
+  turnstile?: 'pass' | 'unreachable' | 'off';
 }
 
 // Reasons a stored request looks automated. Each becomes a CRM tag mhws-check-<reason> so a person sees it
@@ -27,6 +28,7 @@ export function suspicion(s: RequestSignals & { fill_ms: number | null }): strin
   if (s.fill_ms === null) out.push('no-form-time');
   if (s.country && s.country !== 'US') out.push('non-us');
   if ((s.contentType ?? '').includes('application/json')) out.push('json-post');
+  if (s.turnstile === 'unreachable') out.push('turnstile-unverified');
   if (!s.referer) out.push('no-referer');
   else if (s.host) { try { if (new URL(s.referer).host !== s.host) out.push('other-site-referer'); } catch { out.push('bad-referer'); } }
   return out;

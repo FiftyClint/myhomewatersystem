@@ -1,0 +1,30 @@
+# Manual only. Creates or updates the Turnstile widgets for every domain and saves them on the production
+# Worker as the secret TURNSTILE_WIDGETS. Saving a secret puts the latest Worker version live with it.
+# Needs the repository secrets CLOUDFLARE_API_TOKEN (with Account > Turnstile > Edit) and CLOUDFLARE_ACCOUNT_ID.
+# Clint approved Turnstile on 2026-11-22 ("Do it").
+name: Turnstile widgets (manual)
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  widgets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - name: Create or update the widgets and save them on the Worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          f="$RUNNER_TEMP/tw.json"
+          node --experimental-strip-types --no-warnings scripts/turnstile-widgets.ts "$f"
+          npx wrangler secret put TURNSTILE_WIDGETS --env production < "$f" > /dev/null
+          rm -f "$f"
+          echo "set TURNSTILE_WIDGETS"
+      - name: Check the Worker answers
+        run: for i in 1 2 3 4 5 6; do curl -fsS https://www.myhomewatersystem.com/healthz && exit 0; sleep 10; done; exit 1
