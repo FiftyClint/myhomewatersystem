@@ -24,8 +24,9 @@ export function handlers(ctx: AppContext): Record<string, Handler> {
       const opp = await getOpportunity(db, p.opportunity_id);
       if (!opp) return { kind: 'fatal', error: 'opportunity missing' };
       const market = marketById(ctx, opp.market_id);
-      const receipt = await db.prepare('SELECT payload_json FROM lead_receipts WHERE id = ?').bind(opp.receipt_id)
-        .first<{ payload_json: string }>();
+      const receipt = await db.prepare('SELECT payload_json, signals_json FROM lead_receipts WHERE id = ?').bind(opp.receipt_id)
+        .first<{ payload_json: string; signals_json: string | null }>();
+      const checks: string[] = receipt?.signals_json ? (JSON.parse(receipt.signals_json).checks ?? []) : [];
       const form = JSON.parse(receipt!.payload_json);
       if (form.purged) return { kind: 'fatal', error: 'payload purged before CRM sync' };
       const contact = (await db.prepare('SELECT * FROM contacts WHERE id = ?').bind(opp.contact_id).first<{ crm_id: string | null }>())!;
@@ -37,7 +38,8 @@ export function handlers(ctx: AppContext): Record<string, Handler> {
           postalCode: form.zip, timezone: market.timezone, source: 'myhomewatersystem.com',
           // HighLevel follow-up workflows key off these tags. SMS workflows must require mhws-sms-ok.
           tags: ['mhws', `mhws-market-${market.slug}`, `mhws-mode-${opp.business_mode}`, `mhws-concern-${opp.concern}`,
-            form.consentSms && textsAllowed(market) ? 'mhws-sms-ok' : 'mhws-no-sms', `mhws-state-${opp.state}`],
+            form.consentSms && textsAllowed(market) ? 'mhws-sms-ok' : 'mhws-no-sms', `mhws-state-${opp.state}`,
+            ...checks.map((k) => `mhws-check-${k}`)],
         });
         const fail = asOutcome(r); if (fail) return fail;
         crmContactId = (r as { value: { crmContactId: string } }).value.crmContactId;

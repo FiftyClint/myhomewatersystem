@@ -13,7 +13,7 @@ import { locationBySlug, locationsInMarket, type CityLocation } from '../content
 import { CITY_ZIPS } from '../content/zips.ts';
 import { aliasTarget, ALIAS_DOMAINS, CITY_SITES, HUB_BRAND, HUB_DOMAIN, normalizeHost, siteForHost, siteForSlug, siteUrl, STATE_SITES, stateSiteForHost, type CitySite } from '../content/sites.ts';
 import type { MarketConfig } from './domain/config.ts';
-import { handleIntake, findMarket } from './intake/intake.ts';
+import { handleIntake, findMarket, type RequestSignals } from './intake/intake.ts';
 import { NO_DEALER_ID } from './domain/no-dealer.ts';
 import { isOpen } from './site/city.ts';
 import { providerPage } from './dealer/page.ts';
@@ -23,7 +23,7 @@ import { syncConfig } from './domain/repo.ts';
 import { runJobs } from './worker/jobs.ts';
 import { credentialStmts, hasLiveWork, runChecks } from './worker/checks.ts';
 import { handlers } from './worker/handlers.ts';
-import { timingSafeEqual } from './util.ts';
+import { formRequestId, timingSafeEqual } from './util.ts';
 
 const MAX_BODY = 16 * 1024;
 const SECURITY_HEADERS: Record<string, string> = {
@@ -46,6 +46,20 @@ const XML = 'application/xml', TEXT = 'text/plain', JSONT = 'application/json';
 // The city a ZIP belongs to, within the market that serves it.
 function cityForZip(zip: string, m: MarketConfig): CityLocation | undefined {
   return locationsInMarket(m.id).find((l) => (CITY_ZIPS[l.slug] ?? []).includes(zip));
+}
+
+// Request facts kept with each lead so a person can judge whether it came from a browser on our site.
+// Cloudflare request.cf fields: developers.cloudflare.com/workers/runtime-apis/request/#incomingrequestcfproperties
+function requestSignals(req: Request): RequestSignals {
+  const cf = (req as Request & { cf?: Record<string, unknown> }).cf ?? {};
+  const h = (k: string, n: number) => req.headers.get(k)?.slice(0, n) ?? null;
+  const ref = req.headers.get('referer');
+  let referer: string | null = null;
+  try { if (ref) { const u = new URL(ref); referer = `${u.origin}${u.pathname}`.slice(0, 200); } } catch { referer = 'unparseable'; }
+  const str = (v: unknown) => (typeof v === 'string' ? v.slice(0, 100) : null);
+  return { host: new URL(req.url).host, referer, userAgent: h('user-agent', 300), contentType: h('content-type', 80),
+    country: str(cf.country), regionCode: str(cf.regionCode), asn: typeof cf.asn === 'number' ? cf.asn : null,
+    asOrganization: str(cf.asOrganization), colo: str(cf.colo) };
 }
 
 async function readForm(req: Request): Promise<Record<string, string> | null> {
@@ -86,7 +100,7 @@ async function citySite(req: Request, url: URL, env: Env, site: CitySite, city: 
   if (path === '/water.json') return asset(cityWaterJson(site, city, m), JSONT);
   if (path === '/') {
     const zip = url.searchParams.get('zip') ?? undefined;
-    return html(200, page(cityTitle(site, city), cityDescription(city), cityHome(design, site, city, m, crypto.randomUUID(), env.BASE_URL, { vals: { zip, ...prefill(url) } }),
+    return html(200, page(cityTitle(site, city), cityDescription(city), cityHome(design, site, city, m, formRequestId(), env.BASE_URL, { vals: { zip, ...prefill(url) } }),
       false, { canonical: `${base}/`, jsonLd: cityJsonLd(site, city, m),
         alternates: `<link rel="alternate" type="application/json" href="${base}/water.json"><link rel="alternate" type="text/plain" title="llms.txt" href="${base}/llms.txt">` }));
   }
@@ -216,7 +230,7 @@ export default {
         const c = q ? listedCities(ctx.markets).find((l) => l.name.toLowerCase() === q) : undefined;
         if (c) { const s2 = siteForSlug(c.slug); return Response.redirect(s2 ? `${siteUrl(s2)}/` : `${env.BASE_URL}/locations/${c.slug}/`, 303); }
         if (!zip) return Response.redirect(`${env.BASE_URL}/#request`, 303);
-        return html(200, page('Check your water | My Home Water System', 'How to check your drinking water in any U.S. city or on a private well.', checkNotOnFileV2(zip.slice(0, 60), false, crypto.randomUUID()), true));
+        return html(200, page('Check your water | My Home Water System', 'How to check your drinking water in any U.S. city or on a private well.', checkNotOnFileV2(zip.slice(0, 60), false, formRequestId()), true));
       }
       const m = /^\d{5}$/.test(zip) ? findMarket(ctx.markets, zip, !staging) : null;
       if (m) {
@@ -230,7 +244,7 @@ export default {
         const closed = ctx.markets.find((x) => x.zips.includes(zip));
         const c = closed && cityForZip(zip, closed);
         if (c) { const s2 = siteForSlug(c.slug); return Response.redirect(s2 ? `${siteUrl(s2)}/?zip=${zip}#request` : `${env.BASE_URL}/locations/${c.slug}/?zip=${zip}#request`, 303); }
-        return html(200, page('Check your water | My Home Water System', 'How to check your drinking water in any U.S. city or on a private well.', checkNotOnFileV2(zip, true, crypto.randomUUID()), true));
+        return html(200, page('Check your water | My Home Water System', 'How to check your drinking water in any U.S. city or on a private well.', checkNotOnFileV2(zip, true, formRequestId()), true));
       }
       return html(200, page('Not in our service area | My Home Water System', 'Service availability', /^\d{5}$/.test(zip) ? outOfAreaBody(zip) : '<h1>Enter a 5-digit ZIP code</h1><p><a href="/">Back</a></p>', true));
     }
@@ -246,12 +260,12 @@ export default {
       // A hub city page stays noindex and out of the sitemap until its market has a launch approval.
       if (city && cityMarket) return html(200, page(`Water softeners and filtration in ${city.name} | My Home Water System`,
         `${city.name} water hardness as published by the local utility, and how to get a written water treatment quote.`,
-        hubCity(design, city, cityMarket, crypto.randomUUID(), env.BASE_URL, { vals: { zip, ...prefill(url) } }), !cityMarket.launch_approval_id,
+        hubCity(design, city, cityMarket, formRequestId(), env.BASE_URL, { vals: { zip, ...prefill(url) } }), !cityMarket.launch_approval_id,
         { jsonLd: hubCityJsonLd(city, cityMarket, `${env.BASE_URL}/locations/${city.slug}/`) }));
       const m = ctx.markets.find((x) => x.slug === loc[1]);
       if (!m) return html(404, page('Not found', 'Not found', '<h1>Page not found</h1>', true));
       return html(200, page(`Water treatment in ${m.name} | My Home Water System`, `Water treatment options and quotes in ${m.name}.`,
-        locationsInMarket(m.id).length ? clusterBody(m, crypto.randomUUID(), { vals: { zip } }) : marketBody(m, crypto.randomUUID(), { vals: { zip } })));
+        locationsInMarket(m.id).length ? clusterBody(m, formRequestId(), { vals: { zip } }) : marketBody(m, formRequestId(), { vals: { zip } })));
     }
 
     if (path === '/service-areas/') return html(200, page('Service areas | My Home Water System', 'Where we take requests.', serviceAreasBody(ctx.markets)));
@@ -274,7 +288,7 @@ export default {
       if (!staging && !env.HASH_PEPPER) return html(503, page('Unavailable', 'Error', unavailableBody(siteMarket?.tracking_phone), true));
       // A database error (for example D1's daily limit) shows the try-again page, never a raw Worker error.
       const r: Awaited<ReturnType<typeof handleIntake>> = await handleIntake(form, { db: ctx.db, markets: ctx.markets, policy: ctx.policy,
-        hashPepper: env.HASH_PEPPER ?? 'staging-pepper', requireLaunchable: !staging, anyZip: true })
+        hashPepper: env.HASH_PEPPER ?? 'staging-pepper', requireLaunchable: !staging, anyZip: true, signals: requestSignals(req) })
         .catch((err) => { console.error('intake failed', err instanceof Error ? err.message : String(err)); return { status: 'unavailable' as const, reason: 'storage_error' }; });
       const wantsJson = (req.headers.get('accept') ?? '').includes('application/json');
       if (wantsJson) return new Response(JSON.stringify(r.status === 'invalid' ? { status: r.status, errors: r.errors } : r), {
@@ -290,7 +304,7 @@ export default {
         case 'out_of_area': return html(200, page('Not in our service area', 'Service availability', outOfAreaBody(r.zip), true));
         case 'unavailable': return html(503, page('Please try again', 'Error', unavailableBody(siteMarket?.tracking_phone), true));
         case 'invalid': {
-          const rid0 = form.request_id ?? crypto.randomUUID();
+          const rid0 = form.request_id ?? formRequestId();
           // The no-dealer form: back to the page it was on, a city page whose market is not open or the check page.
           if (form.market === NO_DEALER_ID && !r.market) {
             const back = { vals: form, errors: r.errors };
@@ -302,7 +316,7 @@ export default {
           }
           const m = r.market ?? ctx.markets.find((x) => x.id === form.market) ?? ctx.markets.find((x) => x.zips.includes(form.zip ?? ''));
           if (!m) return html(422, page('Check your details', 'Error', '<h1>Please check your ZIP code</h1><p><a href="/">Start again</a></p>', true));
-          const rid = form.request_id ?? crypto.randomUUID();
+          const rid = form.request_id ?? formRequestId();
           if (site && siteCity && siteMarket && siteMarket.id === m.id) {
             return html(422, page('Check your details', 'Error', cityHome(design, site, siteCity, m, rid, env.BASE_URL, { vals: form, errors: r.errors }), true));
           }

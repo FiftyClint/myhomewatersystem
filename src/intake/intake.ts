@@ -5,11 +5,32 @@ import { auditStmt, enqueueStmt, exceptionStmt, syncConfigStmts } from '../domai
 import { needsRouting } from '../domain/pipeline.ts';
 import { serviceDisclosure, smsDisclosure } from './disclosure.ts';
 import { NO_DEALER_ID, NO_DEALER_MARKET, namesOnlyUs } from '../domain/no-dealer.ts';
-import { normalizeEmail, normalizePhone, nowIso, sha256Hex, uuid } from '../util.ts';
+import { normalizeEmail, normalizePhone, nowIso, requestIdTime, sha256Hex, uuid } from '../util.ts';
 
 export const FORM_VERSION = 'inquiry-v1';
 const CONCERNS: Concern[] = ['hardness', 'taste_odor', 'drinking_water', 'not_sure'];
 const MAX_FIELD = 200;
+// Our own threshold, not a published figure: the form has eight required answers, and a person does not
+// read and fill them in under this many milliseconds. Faster posts are treated like the honeypot.
+export const MIN_FILL_MS = 3000;
+
+// What the edge saw when the form was posted (Cloudflare request.cf and headers). No IP address is kept.
+export interface RequestSignals {
+  host?: string | null; referer?: string | null; userAgent?: string | null; contentType?: string | null;
+  country?: string | null; regionCode?: string | null; asn?: number | null; asOrganization?: string | null; colo?: string | null;
+}
+
+// Reasons a stored request looks automated. Each becomes a CRM tag mhws-check-<reason> so a person sees it
+// before calling. A flag never drops the request; only the honeypot and the fill time do.
+export function suspicion(s: RequestSignals & { fill_ms: number | null }): string[] {
+  const out: string[] = [];
+  if (s.fill_ms === null) out.push('no-form-time');
+  if (s.country && s.country !== 'US') out.push('non-us');
+  if ((s.contentType ?? '').includes('application/json')) out.push('json-post');
+  if (!s.referer) out.push('no-referer');
+  else if (s.host) { try { if (new URL(s.referer).host !== s.host) out.push('other-site-referer'); } catch { out.push('bad-referer'); } }
+  return out;
+}
 
 export interface IntakeInput { [k: string]: string | undefined }
 
@@ -90,10 +111,16 @@ export interface IntakeDeps {
   db: Sql; markets: MarketConfig[]; policy: Policy; hashPepper: string; requireLaunchable: boolean; now?: Date;
   // true: a ZIP no open market serves is stored under NO_DEALER_MARKET instead of turned away (Clint, 2026-10-29).
   anyZip?: boolean;
+  signals?: RequestSignals;
 }
 
 export async function handleIntake(input: IntakeInput, deps: IntakeDeps): Promise<IntakeResult> {
   if ((input.website ?? '').trim() !== '') return { status: 'discarded' }; // honeypot field humans never see
+  const nowMs = (deps.now ?? new Date()).getTime();
+  const rendered = requestIdTime((input.request_id ?? '').trim());
+  // A render time in the future or over a day old is not trusted as a fill time.
+  const fillMs = rendered !== null && nowMs >= rendered && nowMs - rendered < 86400000 ? nowMs - rendered : null;
+  if (fillMs !== null && fillMs < MIN_FILL_MS) return { status: 'discarded' };
   const v = validate(input);
   if (!v.ok) return { status: 'invalid', errors: v.errors };
   const c = v.value;
@@ -147,6 +174,8 @@ export async function handleIntake(input: IntakeInput, deps: IntakeDeps): Promis
 
   const receiptId = uuid(), oppId = uuid();
   const payload = JSON.stringify(c);
+  const sig = { ...(deps.signals ?? {}), fill_ms: fillMs };
+  const signals = JSON.stringify({ ...sig, checks: suspicion(sig) });
   const svcText = serviceDisclosure(shown), smsText = smsDisclosure(shown);
   const svcHash = await sha256Hex(svcText), smsHash = await sha256Hex(smsText);
   const parties = JSON.stringify(market.business_mode === 'direct' || noDealer ? ['My Home Water System'] : ['My Home Water System', recipient]);
@@ -157,9 +186,9 @@ export async function handleIntake(input: IntakeInput, deps: IntakeDeps): Promis
   const stmts: Stmt[] = [
     ...(stored?.config_json === JSON.stringify(market) ? [] : syncConfigStmts(db, [market])),
     db.prepare(
-      `INSERT INTO lead_receipts (id, request_id, source, form_version, received_at, payload_hash, payload_json, utm_json)
-       VALUES (?, ?, 'website', ?, ?, ?, ?, ?)`,
-    ).bind(receiptId, c.requestId, FORM_VERSION, at, await sha256Hex(payload), payload, JSON.stringify(c.utm)),
+      `INSERT INTO lead_receipts (id, request_id, source, form_version, received_at, payload_hash, payload_json, utm_json, signals_json)
+       VALUES (?, ?, 'website', ?, ?, ?, ?, ?, ?)`,
+    ).bind(receiptId, c.requestId, FORM_VERSION, at, await sha256Hex(payload), payload, JSON.stringify(c.utm), signals),
   ];
   if (!existing) {
     stmts.push(db.prepare(

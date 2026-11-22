@@ -1,6 +1,16 @@
 # Status
 
-Last updated: 2026-11-17
+Last updated: 2026-11-22
+
+## 2026-11-22: bot checks on the request form
+
+- Four no-dealer requests arrived 2026-11-17 to 11-22 (three ZIP 94102, one 95204). All came from the hub home form with no UTM, identical answers (homeowner, city water, "soon", no note, no texts) and out-of-state phone area codes (347, 602, 469, 718). The honeypot did not catch them. Not proven bots; Clint to report how the 11-17 call went.
+- Clint said "Yes" to bot protection. Shipped now:
+  - Form request ids are UUIDv7, carrying the page render time (`formRequestId` in `src/util.ts`). A post sent under 3 seconds after render (`MIN_FILL_MS`, our own threshold) is dropped like the honeypot.
+  - Each receipt stores `signals_json` (migration 0004): host, referer (no query string), user agent, content type, Cloudflare country, region, ASN and network name, colo, and fill time. No IP address.
+  - Checks flagged on the lead, never dropping it: no-form-time, non-us, json-post, no-referer, other-site-referer, bad-referer. Each becomes a Notion tag `mhws-check-<name>`.
+- Not shipped: Cloudflare Turnstile. The free plan allows 10 hostnames per widget and 20 widgets per account (developers.cloudflare.com/turnstile/plans), and we serve about 49 domains, so it needs several widgets created in Clint's Cloudflare account. Decide after the signals show what is posting.
+- D1: no new rows per lead, no cron change (docs/d1-budget.md recomputed). Tests: tests/bot-signals.test.ts.
 
 ## 2026-11-17: analytics, Search Console, lead alerts
 

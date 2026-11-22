@@ -1,5 +1,22 @@
 export const uuid = (): string => crypto.randomUUID();
 
+// Request ids for the homeowner form are UUIDv7 (RFC 9562): the first 48 bits are the time the page was
+// rendered, in Unix milliseconds. The form posts the id back, so the server can tell how long the form was
+// open before it was sent, without another hidden field.
+export function formRequestId(nowMs: number = Date.now()): string {
+  const r = crypto.getRandomValues(new Uint8Array(10));
+  const t = Math.max(0, Math.floor(nowMs)).toString(16).padStart(12, '0').slice(-12);
+  const h = [...r].map((b) => b.toString(16).padStart(2, '0')).join('');
+  const variant = ((r[2]! & 0x3f) | 0x80).toString(16).padStart(2, '0');
+  return `${t.slice(0, 8)}-${t.slice(8, 12)}-7${h.slice(0, 3)}-${variant}${h.slice(6, 8)}-${h.slice(8, 20)}`;
+}
+
+// The render time in an id from formRequestId, or null for any other id (for example a random v4 id).
+export function requestIdTime(id: string): number | null {
+  const m = /^([0-9a-f]{8})-([0-9a-f]{4})-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.exec(id);
+  return m ? parseInt(m[1]! + m[2]!, 16) : null;
+}
+
 export const nowIso = (d: Date = new Date()): string => d.toISOString();
 
 export async function sha256Hex(input: string): Promise<string> {

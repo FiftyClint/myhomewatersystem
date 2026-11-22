@@ -48,6 +48,12 @@ so the 100,000 write limit holds about 660 leads a day. Before this commit each 
 re-inserted its market's ZIP rows and scanned the whole ZIP table; it now does that only when the
 market's config changed.
 
+Recomputed 2026-11-22 for the bot checks (`migrations/0004_receipt_signals.sql`): the request facts and
+form time go in a new column of the receipt row the lead already writes, so rows written per lead are
+unchanged. The CRM job reads the same receipt row it already read. A post dropped for being too fast,
+like the honeypot, touches the database not at all. The cron is unchanged, so the daily numbers above
+stand: idle at most 864 rows read and 0 written.
+
 ## HighLevel (production, once the token is saved)
 
 Calls to HighLevel are made by the jobs a lead already creates, so they add no scheduled work and no D1
