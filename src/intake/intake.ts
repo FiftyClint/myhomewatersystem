@@ -19,6 +19,7 @@ export interface RequestSignals {
   host?: string | null; referer?: string | null; userAgent?: string | null; contentType?: string | null;
   country?: string | null; regionCode?: string | null; asn?: number | null; asOrganization?: string | null; colo?: string | null;
   turnstile?: 'pass' | 'unreachable' | 'off';
+  zipStates?: string[] | null; // states of the city page that lists the ZIP typed, from content/locations.ts; null when no page lists it
 }
 
 // Reasons a stored request looks automated. Each becomes a CRM tag mhws-check-<reason> so a person sees it
@@ -29,6 +30,9 @@ export function suspicion(s: RequestSignals & { fill_ms: number | null }): strin
   if (s.country && s.country !== 'US') out.push('non-us');
   if ((s.contentType ?? '').includes('application/json')) out.push('json-post');
   if (s.turnstile === 'unreachable') out.push('turnstile-unverified');
+  // Cloudflare places the visitor's IP in a state (regionCode). A ZIP from one state typed by a visitor in
+  // another is common for fake requests; it is also true of travellers, VPNs and some mobile networks.
+  if (s.country === 'US' && s.regionCode && s.zipStates?.length && !s.zipStates.includes(s.regionCode)) out.push('zip-state-mismatch');
   if (!s.referer) out.push('no-referer');
   else if (s.host) { try { if (new URL(s.referer).host !== s.host) out.push('other-site-referer'); } catch { out.push('bad-referer'); } }
   return out;

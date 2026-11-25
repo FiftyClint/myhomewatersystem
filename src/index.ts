@@ -11,6 +11,7 @@ import { robotsTxt } from './site/bots.ts';
 import { isSyndicated } from './site/noindex.ts';
 import { locationBySlug, locationsInMarket, type CityLocation } from '../content/locations.ts';
 import { CITY_ZIPS } from '../content/zips.ts';
+import { LOCATIONS } from '../content/locations.ts';
 import { aliasTarget, ALIAS_DOMAINS, CITY_SITES, HUB_BRAND, HUB_DOMAIN, normalizeHost, siteForHost, siteForSlug, siteUrl, STATE_SITES, stateSiteForHost, type CitySite } from '../content/sites.ts';
 import type { MarketConfig } from './domain/config.ts';
 import { handleIntake, findMarket, type RequestSignals } from './intake/intake.ts';
@@ -47,6 +48,12 @@ const XML = 'application/xml', TEXT = 'text/plain', JSONT = 'application/json';
 // The city a ZIP belongs to, within the market that serves it.
 function cityForZip(zip: string, m: MarketConfig): CityLocation | undefined {
   return locationsInMarket(m.id).find((l) => (CITY_ZIPS[l.slug] ?? []).includes(zip));
+}
+
+// The state(s) of the city page that lists a ZIP, or null when no page lists it. 'MO/KS' covers both.
+function statesForZip(zip: string): string[] | null {
+  const loc = LOCATIONS.find((l) => (CITY_ZIPS[l.slug] ?? []).includes(zip));
+  return loc ? loc.state.split('/') : null;
 }
 
 // Request facts kept with each lead so a person can judge whether it came from a browser on our site.
@@ -296,7 +303,7 @@ async function route(req: Request, env: Env, exec?: ExecutionContext): Promise<R
     const r: Awaited<ReturnType<typeof handleIntake>> = ts === 'fail'
       ? { status: 'invalid', errors: { turnstile: 'Please complete the check above the button, then send again.' } }
       : await handleIntake(form, { db: ctx.db, markets: ctx.markets, policy: ctx.policy,
-        hashPepper: env.HASH_PEPPER ?? 'staging-pepper', requireLaunchable: !staging, anyZip: true, signals: { ...requestSignals(req), turnstile: ts } })
+        hashPepper: env.HASH_PEPPER ?? 'staging-pepper', requireLaunchable: !staging, anyZip: true, signals: { ...requestSignals(req), turnstile: ts, zipStates: statesForZip(form.zip ?? '') } })
         .catch((err) => { console.error('intake failed', err instanceof Error ? err.message : String(err)); return { status: 'unavailable' as const, reason: 'storage_error' }; });
     const wantsJson = (req.headers.get('accept') ?? '').includes('application/json');
     if (wantsJson) return new Response(JSON.stringify(r.status === 'invalid' ? { status: r.status, errors: r.errors } : r), {

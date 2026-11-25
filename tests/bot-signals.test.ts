@@ -80,3 +80,30 @@ describe('untrusted render times', () => {
     }
   });
 });
+
+// Clint, 2026-11-25 ("Yes"): two more requests typed San Francisco's first listed ZIP from Mississippi and Connecticut.
+describe('ZIP state against the visitor state', () => {
+  it('flags a US visitor in another state than the ZIP, and not one in the same state or a ZIP no page lists', () => {
+    const base = { fill_ms: 50000, host: 'a.com', referer: 'https://a.com/', country: 'US' };
+    expect(suspicion({ ...base, regionCode: 'CT', zipStates: ['CA'] })).toEqual(['zip-state-mismatch']);
+    expect(suspicion({ ...base, regionCode: 'CA', zipStates: ['CA'] })).toEqual([]);
+    expect(suspicion({ ...base, regionCode: 'KS', zipStates: ['MO', 'KS'] })).toEqual([]);
+    expect(suspicion({ ...base, regionCode: 'CT', zipStates: null })).toEqual([]);
+  });
+
+  it('the live form records the ZIP state and flags a mismatch (SYNTHETIC request)', async () => {
+    const db = (await import('./helpers.ts')).sqliteDb();
+    // Production config: San Francisco has no open market there, so its ZIPs take the no-dealer form.
+    const env = { DB: db, ENVIRONMENT: 'production', BASE_URL: 'https://www.myhomewatersystem.com', CRM_PROVIDER: 'mock', LINK_SECRET: 't', HASH_PEPPER: 'p', SITE_DESIGN: 'b' } as any;
+    const body = new URLSearchParams({ request_id: formRequestId(Date.now() - 40000), page: '/', website: '', market: NO_DEALER_ID, zip: '94102',
+      homeowner: 'yes', concern: 'hardness', water_source: 'municipal', first_name: 'Test', last_name: 'Mismatch', contact_method: 'email',
+      email: 'mismatch-test@example.com', consent_service: 'yes' });
+    const req = new Request('https://sanfranciscowatersystems.com/api/inquiry', { method: 'POST', body,
+      headers: { 'content-type': 'application/x-www-form-urlencoded', referer: 'https://sanfranciscowatersystems.com/' } });
+    Object.defineProperty(req, 'cf', { value: { country: 'US', regionCode: 'CT', asn: 7922, asOrganization: 'Synthetic ISP', colo: 'BOS' } });
+    const r = await worker.fetch(req, env, { waitUntil() {} } as any);
+    expect(r.status).toBe(200);
+    const row = db.raw.prepare('SELECT signals_json FROM lead_receipts WHERE request_id = ?').get(body.get('request_id')!) as any;
+    expect(JSON.parse(row.signals_json)).toMatchObject({ zipStates: ['CA'], regionCode: 'CT', checks: ['zip-state-mismatch'] });
+  });
+});
