@@ -5,6 +5,9 @@ Last updated: 2026-11-25
 ## 2026-11-25: ZIP-state flag
 
 - Two more no-dealer requests on 2026-11-23 from sanfranciscowatersystems.com, ZIP 94102 again, sent from Mississippi (AT&T) and Connecticut (Comcast) on real browsers in 53 and 66 seconds; no check flagged them. 94102 is the first ZIP the San Francisco page lists. Six requests in all since 11-17; five used 94102; none from California addresses by phone or network.
+- Ad test approved: $1,500 for month one (option B). Draft build sheet `docs/ads/month-1-test.md`: Google Search in Phoenix, Las Vegas and San Antonio, $500 each. Not live.
+- Fixed: the sites dropped ad click IDs (all six leads have empty utm). A landing URL with utm_*, gclid, gbraid, wbraid, fbclid or msclkid now sets a 30-day first-party cookie `mhws_src`; the form post merges it into the lead's utm_json, and the Notion row gets `mhws-src-google-ads` (or -microsoft-ads, -meta, -<utm_source>, -none). Tests: tests/ad-attribution.test.ts. The privacy page draft should mention this cookie before ads run.
+- Open: the no-dealer form tells people no local company is set up. Paid traffic into that page needs Clint's call on what the page promises.
 - New check (Clint, "Yes"): `zip-state-mismatch` when a US visitor's Cloudflare region is not the state of the city page that lists the ZIP typed. Flag only (tag mhws-check-zip-state-mismatch). ZIPs no city page lists are not checked. No D1 change.
 
 ## 2026-11-22: bot checks on the request form

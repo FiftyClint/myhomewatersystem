@@ -13,6 +13,19 @@ const MAX_FIELD = 200;
 // Our own threshold, not a published figure: the form has eight required answers, and a person does not
 // read and fill them in under this many milliseconds. Faster posts are treated like the honeypot.
 export const MIN_FILL_MS = 3000;
+// Campaign tags and ad click IDs kept with a lead. gclid, gbraid and wbraid are Google Ads click IDs,
+// fbclid Meta's, msclkid Microsoft Ads'.
+export const AD_PARAMS = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'gbraid', 'wbraid', 'fbclid', 'msclkid'];
+
+// Where a lead came from, as a CRM tag: an ad network when a click ID is present, else utm_source, else none.
+export function sourceTag(utm: Record<string, string> | undefined): string {
+  const u = utm ?? {};
+  if (u.gclid || u.gbraid || u.wbraid) return 'mhws-src-google-ads';
+  if (u.msclkid) return 'mhws-src-microsoft-ads';
+  if (u.fbclid) return 'mhws-src-meta';
+  const s = (u.utm_source ?? '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 30);
+  return s ? `mhws-src-${s}` : 'mhws-src-none';
+}
 
 // What the edge saw when the form was posted (Cloudflare request.cf and headers). No IP address is kept.
 export interface RequestSignals {
@@ -89,7 +102,7 @@ export function validate(i: IntakeInput): { ok: true; value: Clean } | { ok: fal
 
   if (Object.keys(errors).length) return { ok: false, errors };
   const utm: Record<string, string> = {};
-  for (const k of ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'fbclid']) {
+  for (const k of AD_PARAMS) {
     const v = s(k); if (v) utm[k] = v;
   }
   return { ok: true, value: {

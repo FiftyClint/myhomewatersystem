@@ -1,4 +1,5 @@
 import { NO_DEALER_ID } from '../domain/no-dealer.ts';
+import { sourceTag } from '../intake/intake.ts';
 import type { AppContext } from './context.ts';
 import { marketById } from './context.ts';
 import type { Handler, JobOutcome } from './jobs.ts';
@@ -39,7 +40,7 @@ export function handlers(ctx: AppContext): Record<string, Handler> {
           // HighLevel follow-up workflows key off these tags. SMS workflows must require mhws-sms-ok.
           tags: ['mhws', `mhws-market-${market.slug}`, `mhws-mode-${opp.business_mode}`, `mhws-concern-${opp.concern}`,
             form.consentSms && textsAllowed(market) ? 'mhws-sms-ok' : 'mhws-no-sms', `mhws-state-${opp.state}`,
-            ...checks.map((k) => `mhws-check-${k}`)],
+            sourceTag(form.utm), ...checks.map((k) => `mhws-check-${k}`)],
         });
         const fail = asOutcome(r); if (fail) return fail;
         crmContactId = (r as { value: { crmContactId: string } }).value.crmContactId;

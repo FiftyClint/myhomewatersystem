@@ -14,7 +14,7 @@ import { CITY_ZIPS } from '../content/zips.ts';
 import { LOCATIONS } from '../content/locations.ts';
 import { aliasTarget, ALIAS_DOMAINS, CITY_SITES, HUB_BRAND, HUB_DOMAIN, normalizeHost, siteForHost, siteForSlug, siteUrl, STATE_SITES, stateSiteForHost, type CitySite } from '../content/sites.ts';
 import type { MarketConfig } from './domain/config.ts';
-import { handleIntake, findMarket, type RequestSignals } from './intake/intake.ts';
+import { AD_PARAMS, handleIntake, findMarket, type RequestSignals } from './intake/intake.ts';
 import { NO_DEALER_ID } from './domain/no-dealer.ts';
 import { isOpen } from './site/city.ts';
 import { providerPage } from './dealer/page.ts';
@@ -48,6 +48,22 @@ const XML = 'application/xml', TEXT = 'text/plain', JSONT = 'application/json';
 // The city a ZIP belongs to, within the market that serves it.
 function cityForZip(zip: string, m: MarketConfig): CityLocation | undefined {
   return locationsInMarket(m.id).find((l) => (CITY_ZIPS[l.slug] ?? []).includes(zip));
+}
+
+// Ad attribution: the campaign tags from the landing URL, kept 30 days in a first-party cookie.
+const SRC_COOKIE = 'mhws_src';
+function adParamsFrom(p: URLSearchParams): Record<string, string> | null {
+  const out: Record<string, string> = {};
+  for (const k of AD_PARAMS) { const v = p.get(k); if (v) out[k] = v.slice(0, 200); }
+  return Object.keys(out).length ? out : null;
+}
+function adParamsFromCookie(cookie: string | null): Record<string, string> {
+  const raw = (cookie ?? '').match(new RegExp(`(?:^|;\\s*)${SRC_COOKIE}=([^;]+)`))?.[1];
+  if (!raw) return {};
+  try {
+    const v = JSON.parse(decodeURIComponent(raw));
+    return Object.fromEntries(AD_PARAMS.filter((k) => typeof v?.[k] === 'string').map((k) => [k, String(v[k]).slice(0, 200)]));
+  } catch { return {}; }
 }
 
 // The state(s) of the city page that lists a ZIP, or null when no page lists it. 'MO/KS' covers both.
@@ -295,6 +311,8 @@ async function route(req: Request, env: Env, exec?: ExecutionContext): Promise<R
     if (!staging && !env.HASH_PEPPER) return html(503, page('Unavailable', 'Error', unavailableBody(siteMarket?.tracking_phone), true));
     // Turnstile, when this host has a widget. A failed check asks the person to try again; Cloudflare being
     // unreachable keeps the request and flags it. The token is not form data, so it is never stored.
+    // Campaign tags from the ad click that brought this visitor, unless the form itself carries them.
+    for (const [k, v] of Object.entries(adParamsFromCookie(req.headers.get('cookie')))) if (!form[k]) form[k] = v;
     const tw = widgetForHost(parseWidgets(env.TURNSTILE_WIDGETS), url.host);
     const token = form[TOKEN_FIELD];
     delete form[TOKEN_FIELD];
@@ -368,8 +386,15 @@ async function route(req: Request, env: Env, exec?: ExecutionContext): Promise<R
 
 export default {
   // Every page passes through applyTurnstile, which fills or removes the form's Turnstile slot for the host.
+  // A visit that arrives from an ad keeps its campaign tags in a cookie, so the request form can carry them
+  // even when the person reads other pages first.
   async fetch(req: Request, env: Env, exec?: ExecutionContext): Promise<Response> {
-    return applyTurnstile(await route(req, env, exec), widgetForHost(parseWidgets(env.TURNSTILE_WIDGETS), new URL(req.url).host));
+    const res = await applyTurnstile(await route(req, env, exec), widgetForHost(parseWidgets(env.TURNSTILE_WIDGETS), new URL(req.url).host));
+    const src = req.method === 'GET' ? adParamsFrom(new URL(req.url).searchParams) : null;
+    if (!src) return res;
+    const out = new Response(res.body, res);
+    out.headers.append('set-cookie', `${SRC_COOKIE}=${encodeURIComponent(JSON.stringify(src))}; Path=/; Max-Age=2592000; Secure; HttpOnly; SameSite=Lax`);
+    return out;
   },
 
   // Cron, every 5 minutes in production, none on staging. An idle site touches the database once per tick
